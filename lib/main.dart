@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screens/song_list_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
-    url: 'https://wjqqqjngzurrjejrblfb.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqcXFxam5nenVycmplanJibGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxNzMzMDUsImV4cCI6MjA2Nzc0OTMwNX0.xFnuSFVeInEIDKYj9zQuZO0j0b15xnzlbyOxnkuWlsA',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
-  runApp(
-    const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SongListScreen(),
-    ),
-  );
+  runApp(const ProviderScope(child: WorshipLamal()));
 }
