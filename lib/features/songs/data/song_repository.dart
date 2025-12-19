@@ -11,12 +11,5 @@ class SongRepository {
     return await _remote.fetchSongs();
   }
 
-  /// Fetch a single song by ID
-  Future<Song> getSongById(String id) async {
-    final songs = await getSongs();
-    return songs.firstWhere(
-      (song) => song.id == id,
-      orElse: () => throw Exception('Song not found'),
-    );
-  }
+  Future<Song> getSongById(String id) => _remote.fetchSongById(id);
 }

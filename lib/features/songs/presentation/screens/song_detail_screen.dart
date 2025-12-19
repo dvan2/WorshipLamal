@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
 import '../providers/song_provider.dart';
 
@@ -24,7 +25,10 @@ class SongDetailScreen extends ConsumerWidget {
                 song.title,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              Text(song.artist, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                song.artistNames,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 24),
               Expanded(
                 child: ListView(

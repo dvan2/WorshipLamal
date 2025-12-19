@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
 import '../providers/song_provider.dart';
 
@@ -20,7 +21,9 @@ class HomeScreen extends ConsumerWidget {
             final song = songs[index];
             return ListTile(
               title: Text(song.title),
-              subtitle: Text(song.artist),
+              subtitle: Text(
+                '${song.artistNames} • ${song.key ?? '-'} • ${song.bpm ?? '-'} BPM',
+              ),
               onTap: () {
                 context.goNamed('songDetail', pathParameters: {'id': song.id});
               },

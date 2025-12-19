@@ -17,7 +17,12 @@ void main() {
 
   test('getSongs returns songs from api', () async {
     final fakeSongs = [
-      Song(id: '1', title: 'Test Song', artist: 'Test Artist', lyricLines: []),
+      Song(
+        id: '1',
+        title: 'Test Song',
+        artists: [Artist(id: 'a1', name: 'Test Artist')],
+        lyricLines: const [],
+      ),
     ];
 
     when(() => api.fetchSongs()).thenAnswer((_) async => fakeSongs);
@@ -26,6 +31,8 @@ void main() {
 
     expect(result.length, 1);
     expect(result.first.title, 'Test Song');
+    expect(result.first.artists.first.name, 'Test Artist');
+
     verify(() => api.fetchSongs()).called(1);
   });
 }

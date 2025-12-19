@@ -9,35 +9,44 @@ class SongsApi {
 
   /// Fetch all songs with lyric lines
   Future<List<Song>> fetchSongs() async {
-    final response = await _client
-        .from('songs')
-        .select('''
+    final response = await _client.from('songs').select('''
           id,
           title,
-          artist,
+          key,
+          bpm,
+          song_artists(
+          artists(
+          id,
+          name)
+          ),
           lyric_lines (
             content,
             line_number
           )
-        ''')
-        .order('title');
+        ''');
 
     return (response as List).map((item) => Song.fromMap(item)).toList();
   }
 
-  /// Fetch a single song by ID
   Future<Song> fetchSongById(String id) async {
     final response = await _client
         .from('songs')
         .select('''
-          id,
-          title,
-          artist,
-          lyric_lines (
-            content,
-            line_number
+        id,
+        title,
+        key,
+        bpm,
+        song_artists (
+          artists (
+            id,
+            name
           )
-        ''')
+        ),
+        lyric_lines (
+          content,
+          line_number
+        )
+      ''')
         .eq('id', id)
         .single();
 

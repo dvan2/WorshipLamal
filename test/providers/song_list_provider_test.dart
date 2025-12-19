@@ -4,22 +4,14 @@ import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 import '../test_utils/fakes/fake_song_repository.dart';
+import '../test_utils/fakes/fixtures.dart';
 
 void main() {
   test('songListProvider returns songs', () async {
     final container = ProviderContainer(
       overrides: [
         songRepositoryProvider.overrideWithValue(
-          FakeSongRepository(
-            songs: [
-              Song(
-                id: '1',
-                title: 'Fake Song',
-                artist: 'Fake Artist',
-                lyricLines: [],
-              ),
-            ],
-          ),
+          FakeSongRepository(songs: [fakeSong]),
         ),
       ],
     );
