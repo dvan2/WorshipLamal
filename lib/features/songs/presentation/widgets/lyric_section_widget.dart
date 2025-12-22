@@ -5,7 +5,6 @@ import 'package:worship_lamal/features/songs/data/models/lyric_line_model.dart';
 import 'package:worship_lamal/features/songs/presentation/screens/song_detail_screen.dart';
 
 /// Displays a section of lyrics with appropriate styling based on section type
-/// Matches the Kotlin/Compose design with surface containers and accent bars
 class LyricSectionWidget extends StatelessWidget {
   final SectionBlock section;
 

@@ -61,34 +61,28 @@ class _SongDetailContent extends StatelessWidget {
     );
   }
 
-  /// Build ordered sections from flat LyricLine list
-  /// Preserves first-seen order of sections
   List<SectionBlock> _buildSections(List<LyricLine> lyrics) {
     if (lyrics.isEmpty) return [];
 
-    // Use a map to preserve first-seen order of sections
-    final sectionMap = <String, List<LyricLine>>{};
+    final Map<String, List<LyricLine>> order = {};
 
     for (final line in lyrics) {
-      final sectionKey = line.sectionType ?? 'unknown';
-      if (!sectionMap.containsKey(sectionKey)) {
-        sectionMap[sectionKey] = [];
-      }
-      sectionMap[sectionKey]!.add(line);
+      final key = line.sectionType ?? 'unknown';
+
+      // create new bucket if empty, key being section name
+      order.putIfAbsent(key, () => []);
+      order[key]!.add(line);
     }
 
-    // Convert map to list of SectionBlocks
-    return sectionMap.entries.map((entry) {
-      final title = entry.key;
-      final lines = entry.value;
-
-      // Sort lines by line number within each section
-      lines.sort((a, b) => a.lineNumber.compareTo(b.lineNumber));
+    return order.entries.map((entry) {
+      final sectionKey = entry.key;
+      final items = entry.value
+        ..sort((a, b) => (a.lineNumber).compareTo(b.lineNumber));
 
       return SectionBlock(
-        title: _formatSectionTitle(title),
-        sectionType: SongSection.fromString(title),
-        lines: lines,
+        title: _formatSectionTitle(sectionKey),
+        sectionType: SongSection.fromString(sectionKey),
+        lines: items,
       );
     }).toList();
   }
@@ -140,15 +134,14 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-/// Represents one lyrics block on screen
 class SectionBlock {
   final String title;
-  final SongSection sectionType;
   final List<LyricLine> lines;
+  final SongSection sectionType;
 
-  const SectionBlock({
+  SectionBlock({
     required this.title,
-    required this.sectionType,
     required this.lines,
+    required this.sectionType,
   });
 }
