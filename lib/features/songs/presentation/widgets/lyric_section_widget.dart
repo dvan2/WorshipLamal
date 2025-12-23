@@ -17,7 +17,7 @@ class LyricSectionWidget extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppConstants.spacingLg,
+        horizontal: AppConstants.spacingSm,
         vertical: AppConstants.spacingSm,
       ),
       child: hasBlock
@@ -54,7 +54,7 @@ class LyricSectionWidget extends StatelessWidget {
           // Content with padding
           Padding(
             padding: EdgeInsets.only(
-              left: config.accentColor != null ? 22 : 12,
+              left: config.accentColor != null ? 16 : 8,
               top: 12,
               right: 12,
               bottom: 12,
@@ -83,7 +83,7 @@ class LyricSectionWidget extends StatelessWidget {
               line.content,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontSize: 18,
-                height: 1.6,
+                height: 1.4,
                 fontWeight: config.fontWeight,
               ),
             ),
@@ -120,8 +120,8 @@ class LyricSectionWidget extends StatelessWidget {
       default:
         return _SectionConfig(
           backgroundColor: AppColors.verseBackground,
-          accentColor: null,
-          showBackground: false,
+          accentColor: AppColors.primary.withOpacity(0.3),
+          showBackground: true,
           fontWeight: FontWeight.normal,
         );
     }

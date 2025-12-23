@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// Application-wide constants for spacing, sizing, and other values
 class AppConstants {
   AppConstants._(); // Private constructor
@@ -54,9 +52,9 @@ class AppConstants {
   static const Duration animationSlow = Duration(milliseconds: 500);
 
   // Song Detail Screen
-  static const double songDetailPadding = 16.0;
+  static const double songDetailPadding = 12.0;
   static const double songHeaderSpacing = 8.0;
-  static const double sectionSpacing = 24.0;
+  static const double sectionSpacing = 12.0;
   static const double lyricLineSpacing = 8.0;
 
   // Lyric Section
