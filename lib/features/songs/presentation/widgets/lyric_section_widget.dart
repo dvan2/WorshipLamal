@@ -93,38 +93,39 @@ class LyricSectionWidget extends StatelessWidget {
     );
   }
 
-  _SectionConfig _getSectionConfig(SongSection type) {
-    switch (type) {
-      case SongSection.chorus:
-        return _SectionConfig(
-          backgroundColor: AppColors.chorusBackground,
-          accentColor: AppColors.chorusBorder.withOpacity(0.24),
-          showBackground: true,
-          fontWeight: FontWeight.w500,
-        );
-      case SongSection.bridge:
-        return _SectionConfig(
-          backgroundColor: AppColors.bridgeBackground,
-          accentColor: AppColors.bridgeBorder.withOpacity(0.20),
-          showBackground: true,
-          fontWeight: FontWeight.w500,
-        );
-      case SongSection.preChorus:
-        return _SectionConfig(
-          backgroundColor: AppColors.preChorusBackground,
-          accentColor: AppColors.preChorusBorder.withOpacity(0.20),
-          showBackground: true,
-          fontWeight: FontWeight.w500,
-        );
-      case SongSection.verse:
-      default:
-        return _SectionConfig(
-          backgroundColor: AppColors.verseBackground,
-          accentColor: AppColors.primary.withOpacity(0.3),
-          showBackground: true,
-          fontWeight: FontWeight.normal,
-        );
+  _SectionConfig _getSectionConfig(String type) {
+    final lowerType = type.toLowerCase().trim();
+
+    if (lowerType.contains('chorus') && !lowerType.contains('pre')) {
+      return _SectionConfig(
+        backgroundColor: AppColors.chorusBackground,
+        accentColor: AppColors.chorusBorder.withOpacity(0.24),
+        showBackground: true,
+        fontWeight: FontWeight.w500,
+      );
+    } else if (lowerType.contains('bridge')) {
+      return _SectionConfig(
+        backgroundColor: AppColors.bridgeBackground,
+        accentColor: AppColors.bridgeBorder.withOpacity(0.20),
+        showBackground: true,
+        fontWeight: FontWeight.w500,
+      );
+    } else if (lowerType.contains('pre') || lowerType.contains('tag')) {
+      // Handles "Pre-Chorus", "Prechorus", or "Tag"
+      return _SectionConfig(
+        backgroundColor: AppColors.preChorusBackground,
+        accentColor: AppColors.preChorusBorder.withOpacity(0.20),
+        showBackground: true,
+        fontWeight: FontWeight.w500,
+      );
     }
+
+    return _SectionConfig(
+      backgroundColor: AppColors.verseBackground,
+      accentColor: AppColors.primary.withOpacity(0.3),
+      showBackground: true,
+      fontWeight: FontWeight.normal,
+    );
   }
 }
 

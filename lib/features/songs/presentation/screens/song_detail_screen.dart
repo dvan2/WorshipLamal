@@ -67,7 +67,7 @@ class _SongDetailContent extends StatelessWidget {
     final Map<String, List<LyricLine>> order = {};
 
     for (final line in lyrics) {
-      final key = line.sectionType ?? 'unknown';
+      final key = line.sectionType ?? 'Misc';
 
       // create new bucket if empty, key being section name
       order.putIfAbsent(key, () => []);
@@ -80,19 +80,16 @@ class _SongDetailContent extends StatelessWidget {
         ..sort((a, b) => (a.lineNumber).compareTo(b.lineNumber));
 
       return SectionBlock(
-        title: _formatSectionTitle(sectionKey),
-        sectionType: SongSection.fromString(sectionKey),
+        title: _capitalize(sectionKey),
+        sectionType: sectionKey,
         lines: items,
       );
     }).toList();
   }
 
-  /// Format section title for display (e.g., "verse" -> "Verse 1")
-  String _formatSectionTitle(String rawTitle) {
-    final section = SongSection.fromString(rawTitle);
-    return section.displayName.isNotEmpty
-        ? section.displayName
-        : rawTitle.toUpperCase();
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
   }
 }
 
@@ -137,7 +134,7 @@ class _ErrorState extends StatelessWidget {
 class SectionBlock {
   final String title;
   final List<LyricLine> lines;
-  final SongSection sectionType;
+  final String sectionType;
 
   SectionBlock({
     required this.title,
