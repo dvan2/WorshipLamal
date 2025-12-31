@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/features/songs/presentation/screens/setlist_detail_screen.dart';
+import 'package:worship_lamal/features/songs/presentation/screens/song_picker_screen.dart';
 
 import '../../features/songs/presentation/screens/home_screen.dart';
 import '../../features/songs/presentation/screens/song_detail_screen.dart';
@@ -28,6 +29,11 @@ final appRouter = GoRouter(
             // We will build this screen next!
             return SetlistDetailScreen(setlistId: id);
           },
+        ),
+        GoRoute(
+          path: 'song-picker',
+          name: 'songPicker',
+          builder: (context, state) => const SongPickerScreen(),
         ),
       ],
     ),

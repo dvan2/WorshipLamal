@@ -106,4 +106,11 @@ class SetlistsApi {
       'sort_order': order,
     });
   }
+
+  Future<void> updateKeyOverride(String itemId, String newKey) async {
+    await _client
+        .from('setlist_items')
+        .update({'key_override': newKey})
+        .eq('id', itemId);
+  }
 }

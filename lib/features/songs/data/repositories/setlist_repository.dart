@@ -39,4 +39,8 @@ class SetlistRepository {
       order: order,
     );
   }
+
+  Future<void> updateKeyOverride(String itemId, String newKey) async {
+    await _remote.updateKeyOverride(itemId, newKey);
+  }
 }

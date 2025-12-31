@@ -103,4 +103,28 @@ class SetlistController extends AsyncNotifier<void> {
       state = AsyncValue.error(e, stack);
     }
   }
+
+  Future<void> updateKeyOverride({
+    required String setlistId,
+    required String itemId,
+    required String newKey,
+  }) async {
+    state = const AsyncValue.loading();
+
+    try {
+      // 2. Get the Repository using ref.read()
+      final repo = ref.read(setlistRepositoryProvider);
+
+      // 3. Call the Repository method
+      await repo.updateKeyOverride(itemId, newKey);
+
+      // 4. Refresh the UI
+      ref.invalidate(setlistDetailProvider(setlistId));
+
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      debugPrint('Update Key Failed: $e');
+      state = AsyncValue.error(e, stack);
+    }
+  }
 }
