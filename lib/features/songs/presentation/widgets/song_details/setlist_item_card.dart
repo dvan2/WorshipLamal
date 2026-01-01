@@ -84,6 +84,18 @@ class SetlistItemCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 child: _KeyBadge(displayKey: item.displayKey),
               ),
+
+              ReorderableDragStartListener(
+                index: index,
+                child: Container(
+                  padding: const EdgeInsets.all(8), // Make touch target bigger
+                  color: Colors.transparent, // Capture taps on transparent area
+                  child: Icon(
+                    Icons.drag_handle_rounded,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ),
             ],
           ),
         ),

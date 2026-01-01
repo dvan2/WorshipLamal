@@ -163,4 +163,36 @@ class SetlistController extends AsyncNotifier<void> {
       order: item.sortOrder,
     );
   }
+
+  Future<void> reorderSongs({
+    required String setlistId,
+    required List<SetlistItem> currentList,
+    required int oldIndex,
+    required int newIndex,
+  }) async {
+    // 1. Flutter Reorder Quirk Fix
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    // 2. Modify the list locally (create a copy to be safe)
+    final items = List<SetlistItem>.from(currentList);
+    final item = items.removeAt(oldIndex);
+    items.insert(newIndex, item);
+
+    // 3. Update Database
+    // We send the ENTIRE re-sorted list to the repo.
+    // The repo will assign sort_order: 0 to the first item, 1 to the second, etc.
+    final repo = ref.read(setlistRepositoryProvider);
+
+    // Optimistically refresh the UI?
+    // Ideally, we'd update the local state immediately, but for now
+    // we'll just fire the API call and invalidate.
+    try {
+      await repo.reorderSetlistItems(setlistId, items);
+      ref.invalidate(setlistDetailProvider(setlistId));
+    } catch (e) {
+      debugPrint('Reorder failed: $e');
+    }
+  }
 }

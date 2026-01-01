@@ -47,4 +47,23 @@ class SetlistRepository {
   Future<void> removeSong(String itemId) async {
     await _remote.deleteSetlistItem(itemId);
   }
+
+  Future<void> reorderSetlistItems(
+    String setlistId,
+    List<SetlistItem> items,
+  ) async {
+    final updates = items.asMap().entries.map((entry) {
+      final index = entry.key;
+      final item = entry.value;
+
+      return {
+        'id': item.id, // The row to update
+        'setlist_id': setlistId, // <--- FIX: Use the actual setlistId parameter
+        'song_id': item.songId,
+        'sort_order': index,
+      };
+    }).toList();
+
+    await _remote.updateSetlistOrder(updates);
+  }
 }

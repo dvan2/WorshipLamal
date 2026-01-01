@@ -119,4 +119,9 @@ class SetlistsApi {
     // not the song_id.
     await _client.from('setlist_items').delete().eq('id', itemId);
   }
+
+  Future<void> updateSetlistOrder(List<Map<String, dynamic>> updates) async {
+    // "upsert" will update existing rows if the IDs match
+    await _client.from('setlist_items').upsert(updates);
+  }
 }

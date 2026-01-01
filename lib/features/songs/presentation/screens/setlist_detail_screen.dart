@@ -79,20 +79,32 @@ class SetlistDetailScreen extends ConsumerWidget {
             children: [
               SetlistHeader(setlist: setlist),
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80), // Space for FAB
+                child: ReorderableListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: setlist.items.length,
+
+                  buildDefaultDragHandles: false,
+
+                  // 1. The Reorder Callback
+                  onReorder: (oldIndex, newIndex) {
+                    ref
+                        .read(setlistControllerProvider.notifier)
+                        .reorderSongs(
+                          setlistId: setlistId,
+                          currentList: setlist.items,
+                          oldIndex: oldIndex,
+                          newIndex: newIndex,
+                        );
+                  },
+
+                  // 2. The Item Builder
                   itemBuilder: (context, index) {
                     final item = setlist.items[index];
 
+                    // NOTE: Each item in ReorderableListView MUST have a Key
                     return Dismissible(
-                      // 1. UNIQUE KEY: Critical for ensuring the right item is deleted
-                      key: ValueKey(item.id),
-
-                      // 2. SWIPE DIRECTION: Right to Left only
+                      key: ValueKey(item.id), // Key goes here!
                       direction: DismissDirection.endToStart,
-
-                      // 3. BACKGROUND: The red background behind the card
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 24),
@@ -110,28 +122,19 @@ class SetlistDetailScreen extends ConsumerWidget {
                           size: 28,
                         ),
                       ),
-
-                      // 4. ACTION: What happens when swipe finishes
                       onDismissed: (direction) {
                         final controller = ref.read(
                           setlistControllerProvider.notifier,
                         );
-
-                        // A. Remove from Database
                         controller.removeSong(setlistId: setlistId, item: item);
 
-                        // B. Show SnackBar with UNDO button
-                        ScaffoldMessenger.of(
-                          context,
-                        ).clearSnackBars(); // Clear old ones
+                        ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Removed "${item.song.title}"'),
-                            behavior: SnackBarBehavior.floating,
                             action: SnackBarAction(
                               label: 'UNDO',
                               onPressed: () {
-                                // C. Restore the item if Undo is clicked
                                 controller.undoRemove(
                                   setlistId: setlistId,
                                   item: item,
@@ -141,8 +144,6 @@ class SetlistDetailScreen extends ConsumerWidget {
                           ),
                         );
                       },
-
-                      // 5. CHILD: The actual card content
                       child: SetlistItemCard(
                         item: item,
                         index: index,
