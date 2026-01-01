@@ -39,48 +39,26 @@ class SetlistsApi {
     return (response as List).map((item) => Setlist.fromMap(item)).toList();
   }
 
-  /// Fetch a single setlist with FULL details (including lyrics)
   Future<Setlist> fetchSetlistById(String id) async {
     final response = await _client
         .from('setlists')
         .select('''
-          id,
-          title,
-          is_public,
-          created_at,
-          setlist_items (
-            id,
-            sort_order,
-            key_override,
-            song_id,
-            songs (
-              id,
-              title,
-              key,
-              bpm,
-              song_artists (
-                artists (
-                  id,
-                  name
-                )
-              ),
-              lyric_lines (
-                id,
-                content,
-                line_number,
-                section_type
-              )
+        *,
+        setlist_items (
+          *,
+          songs (
+            *,
+            song_artists (
+              artists ( * )
             )
           )
-        ''')
+        )
+      ''')
         .eq('id', id)
+        .order('sort_order', referencedTable: 'setlist_items', ascending: true)
         .single();
 
-    final setlist = Setlist.fromMap(response);
-    // Sort items by the sort_order field locally to be safe
-    setlist.items.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-    return setlist;
+    return Setlist.fromMap(response);
   }
 
   /// Create a new empty setlist
@@ -88,7 +66,7 @@ class SetlistsApi {
     final response = await _client
         .from('setlists')
         .insert({'user_id': userId, 'title': title, 'is_public': false})
-        .select()
+        .select('id')
         .single();
 
     return response['id'];

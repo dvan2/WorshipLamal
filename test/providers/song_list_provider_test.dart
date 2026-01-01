@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 import '../test_utils/fakes/fake_song_repository.dart';

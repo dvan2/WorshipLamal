@@ -6,6 +6,7 @@ class Setlist {
   final DateTime createdAt;
   final bool isPublic;
   final List<SetlistItem> items;
+  final String userId;
 
   Setlist({
     required this.id,
@@ -13,11 +14,13 @@ class Setlist {
     required this.createdAt,
     required this.isPublic,
     required this.items,
+    required this.userId,
   });
 
   factory Setlist.fromMap(Map<String, dynamic> map) {
     return Setlist(
       id: map['id'] ?? '',
+      userId: map['user_id'] ?? '',
       title: map['title'] ?? 'Untitled Setlist',
       createdAt: DateTime.parse(map['created_at']),
       isPublic: map['is_public'] ?? false,

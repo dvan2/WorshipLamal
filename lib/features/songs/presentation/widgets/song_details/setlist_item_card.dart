@@ -8,6 +8,8 @@ class SetlistItemCard extends StatelessWidget {
   final int index;
   final VoidCallback onTap;
 
+  final bool showDragHandle;
+
   final VoidCallback onKeyTap;
 
   const SetlistItemCard({
@@ -15,6 +17,8 @@ class SetlistItemCard extends StatelessWidget {
     required this.index,
     required this.onTap,
     required this.onKeyTap,
+
+    this.showDragHandle = true,
   });
 
   @override
@@ -33,7 +37,6 @@ class SetlistItemCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // 1. Sort Order Number
               Container(
                 width: 32,
                 height: 32,
@@ -85,17 +88,21 @@ class SetlistItemCard extends StatelessWidget {
                 child: _KeyBadge(displayKey: item.displayKey),
               ),
 
-              ReorderableDragStartListener(
-                index: index,
-                child: Container(
-                  padding: const EdgeInsets.all(8), // Make touch target bigger
-                  color: Colors.transparent, // Capture taps on transparent area
-                  child: Icon(
-                    Icons.drag_handle_rounded,
-                    color: AppColors.textTertiary,
+              if (showDragHandle)
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Container(
+                    padding: const EdgeInsets.all(
+                      8,
+                    ), // Make touch target bigger
+                    color:
+                        Colors.transparent, // Capture taps on transparent area
+                    child: Icon(
+                      Icons.drag_handle_rounded,
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

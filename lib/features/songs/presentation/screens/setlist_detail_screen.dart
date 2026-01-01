@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/setlist_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/song_details/empty_setlist_state.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/song_details/setlist_header.dart';
@@ -70,6 +72,10 @@ class SetlistDetailScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (setlist) {
+          // 1. Check Ownership
+          final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+          final isOwner = setlist.userId == currentUserId;
+
           if (setlist.items.isEmpty) {
             return EmptySetlistState(title: setlist.title);
           }
@@ -79,93 +85,9 @@ class SetlistDetailScreen extends ConsumerWidget {
             children: [
               SetlistHeader(setlist: setlist),
               Expanded(
-                child: ReorderableListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: setlist.items.length,
-
-                  buildDefaultDragHandles: false,
-
-                  // 1. The Reorder Callback
-                  onReorder: (oldIndex, newIndex) {
-                    ref
-                        .read(setlistControllerProvider.notifier)
-                        .reorderSongs(
-                          setlistId: setlistId,
-                          currentList: setlist.items,
-                          oldIndex: oldIndex,
-                          newIndex: newIndex,
-                        );
-                  },
-
-                  // 2. The Item Builder
-                  itemBuilder: (context, index) {
-                    final item = setlist.items[index];
-
-                    // NOTE: Each item in ReorderableListView MUST have a Key
-                    return Dismissible(
-                      key: ValueKey(item.id), // Key goes here!
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 24),
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade400,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ),
-                      onDismissed: (direction) {
-                        final controller = ref.read(
-                          setlistControllerProvider.notifier,
-                        );
-                        controller.removeSong(setlistId: setlistId, item: item);
-
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Removed "${item.song.title}"'),
-                            action: SnackBarAction(
-                              label: 'UNDO',
-                              onPressed: () {
-                                controller.undoRemove(
-                                  setlistId: setlistId,
-                                  item: item,
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                      child: SetlistItemCard(
-                        item: item,
-                        index: index,
-                        onTap: () {
-                          context.pushNamed(
-                            'songDetail',
-                            pathParameters: {'id': item.songId},
-                          );
-                        },
-                        onKeyTap: () {
-                          _showKeyPickerDialog(
-                            context,
-                            ref,
-                            item.id,
-                            setlistId,
-                            item.displayKey,
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
+                child: isOwner
+                    ? _buildOwnerList(context, ref, setlist)
+                    : _buildViewerList(context, ref, setlist),
               ),
             ],
           );
@@ -173,6 +95,119 @@ class SetlistDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Widget _buildOwnerList(BuildContext context, WidgetRef ref, Setlist setlist) {
+  return ReorderableListView.builder(
+    padding: const EdgeInsets.only(bottom: 80),
+    itemCount: setlist.items.length,
+
+    buildDefaultDragHandles: false,
+
+    // 1. The Reorder Callback
+    onReorder: (oldIndex, newIndex) {
+      ref
+          .read(setlistControllerProvider.notifier)
+          .reorderSongs(
+            setlistId: setlist.id,
+            currentList: setlist.items,
+            oldIndex: oldIndex,
+            newIndex: newIndex,
+          );
+    },
+
+    // 2. The Item Builder
+    itemBuilder: (context, index) {
+      final item = setlist.items[index];
+
+      // NOTE: Each item in ReorderableListView MUST have a Key
+      return Dismissible(
+        key: ValueKey(item.id), // Key goes here!
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 24),
+          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.red.shade400,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.delete_outline,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+        onDismissed: (direction) {
+          final controller = ref.read(setlistControllerProvider.notifier);
+          controller.removeSong(setlistId: setlist.id, item: item);
+
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Removed "${item.song.title}"'),
+              action: SnackBarAction(
+                label: 'UNDO',
+                onPressed: () {
+                  controller.undoRemove(setlistId: setlist.id, item: item);
+                },
+              ),
+            ),
+          );
+        },
+        child: SetlistItemCard(
+          item: item,
+          index: index,
+          onTap: () {
+            context.pushNamed(
+              'songDetail',
+              pathParameters: {'id': item.songId},
+            );
+          },
+          onKeyTap: () {
+            _showKeyPickerDialog(
+              context,
+              ref,
+              item.id,
+              setlist.id,
+              item.displayKey,
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// READ-ONLY LIST (For Guests/Viewers) - Simple List, No Edit Actions
+// ---------------------------------------------------------------------------
+Widget _buildViewerList(BuildContext context, WidgetRef ref, Setlist setlist) {
+  return ListView.builder(
+    padding: const EdgeInsets.only(bottom: 80),
+    itemCount: setlist.items.length,
+    itemBuilder: (context, index) {
+      final item = setlist.items[index];
+
+      // NO Dismissible wrapper
+      return SetlistItemCard(
+        item: item,
+        index: index,
+        onTap: () => context.pushNamed(
+          'songDetail',
+          pathParameters: {'id': item.songId},
+        ),
+        // Maybe disable key editing too?
+        onKeyTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Only the owner can change keys.")),
+          );
+        },
+        // Hide Drag Handle
+        showDragHandle: false,
+      );
+    },
+  );
 }
 
 void _showKeyPickerDialog(
