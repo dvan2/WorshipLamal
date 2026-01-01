@@ -113,4 +113,10 @@ class SetlistsApi {
         .update({'key_override': newKey})
         .eq('id', itemId);
   }
+
+  Future<void> deleteSetlistItem(String itemId) async {
+    // We delete based on the unique ID of the ROW in setlist_items,
+    // not the song_id.
+    await _client.from('setlist_items').delete().eq('id', itemId);
+  }
 }

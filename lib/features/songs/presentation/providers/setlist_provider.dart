@@ -127,4 +127,40 @@ class SetlistController extends AsyncNotifier<void> {
       state = AsyncValue.error(e, stack);
     }
   }
+
+  // Inside SetlistController class
+
+  Future<void> removeSong({
+    required String setlistId,
+    required SetlistItem
+    item, // We pass the whole item so we can restore it if needed
+  }) async {
+    // 1. Keep a backup in memory for the Undo action
+    final repo = ref.read(setlistRepositoryProvider);
+
+    try {
+      // 2. Delete it immediately
+      await repo.removeSong(item.id);
+
+      // 3. Refresh UI
+      ref.invalidate(setlistDetailProvider(setlistId));
+
+      // 4. We don't set state to loading/error because this happens in the background
+      // while the user sees the row disappear.
+    } catch (e) {
+      debugPrint('Delete failed: $e');
+    }
+  }
+
+  Future<void> undoRemove({
+    required String setlistId,
+    required SetlistItem item,
+  }) async {
+    // Re-add the song with its original sort order
+    await addSong(
+      setlistId: setlistId,
+      songId: item.songId,
+      order: item.sortOrder,
+    );
+  }
 }

@@ -43,4 +43,8 @@ class SetlistRepository {
   Future<void> updateKeyOverride(String itemId, String newKey) async {
     await _remote.updateKeyOverride(itemId, newKey);
   }
+
+  Future<void> removeSong(String itemId) async {
+    await _remote.deleteSetlistItem(itemId);
+  }
 }

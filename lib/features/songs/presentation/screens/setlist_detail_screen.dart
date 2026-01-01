@@ -84,25 +84,84 @@ class SetlistDetailScreen extends ConsumerWidget {
                   itemCount: setlist.items.length,
                   itemBuilder: (context, index) {
                     final item = setlist.items[index];
-                    return SetlistItemCard(
-                      item: item,
-                      index: index,
-                      onTap: () {
-                        // Navigate to Song Detail
-                        context.pushNamed(
-                          'songDetail',
-                          pathParameters: {'id': item.songId},
+
+                    return Dismissible(
+                      // 1. UNIQUE KEY: Critical for ensuring the right item is deleted
+                      key: ValueKey(item.id),
+
+                      // 2. SWIPE DIRECTION: Right to Left only
+                      direction: DismissDirection.endToStart,
+
+                      // 3. BACKGROUND: The red background behind the card
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade400,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+
+                      // 4. ACTION: What happens when swipe finishes
+                      onDismissed: (direction) {
+                        final controller = ref.read(
+                          setlistControllerProvider.notifier,
                         );
-                      },
-                      onKeyTap: () {
-                        _showKeyPickerDialog(
+
+                        // A. Remove from Database
+                        controller.removeSong(setlistId: setlistId, item: item);
+
+                        // B. Show SnackBar with UNDO button
+                        ScaffoldMessenger.of(
                           context,
-                          ref,
-                          item.id,
-                          setlistId,
-                          item.displayKey,
+                        ).clearSnackBars(); // Clear old ones
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Removed "${item.song.title}"'),
+                            behavior: SnackBarBehavior.floating,
+                            action: SnackBarAction(
+                              label: 'UNDO',
+                              onPressed: () {
+                                // C. Restore the item if Undo is clicked
+                                controller.undoRemove(
+                                  setlistId: setlistId,
+                                  item: item,
+                                );
+                              },
+                            ),
+                          ),
                         );
                       },
+
+                      // 5. CHILD: The actual card content
+                      child: SetlistItemCard(
+                        item: item,
+                        index: index,
+                        onTap: () {
+                          context.pushNamed(
+                            'songDetail',
+                            pathParameters: {'id': item.songId},
+                          );
+                        },
+                        onKeyTap: () {
+                          _showKeyPickerDialog(
+                            context,
+                            ref,
+                            item.id,
+                            setlistId,
+                            item.displayKey,
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
