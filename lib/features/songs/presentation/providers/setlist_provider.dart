@@ -26,7 +26,6 @@ final setlistRepositoryProvider = Provider<SetlistRepository>((ref) {
 // -----------------------------------------------------------------------------
 
 /// Fetches the list of all setlists.
-/// Usage: ref.watch(setlistsListProvider)
 final setlistsListProvider = FutureProvider<List<Setlist>>((ref) async {
   final repo = ref.watch(setlistRepositoryProvider);
   return repo.getSetlists();
@@ -34,7 +33,7 @@ final setlistsListProvider = FutureProvider<List<Setlist>>((ref) async {
 
 /// Fetches a SINGLE setlist with full details (lyrics, etc).
 /// Usage: ref.watch(setlistDetailProvider(id))
-final setlistDetailProvider = FutureProvider.family<Setlist, String>((
+final setlistDetailProvider = FutureProvider.family<Setlist?, String>((
   ref,
   id,
 ) async {
@@ -128,8 +127,6 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
-  // Inside SetlistController class
-
   Future<void> removeSong({
     required String setlistId,
     required SetlistItem
@@ -195,4 +192,44 @@ class SetlistController extends AsyncNotifier<void> {
       debugPrint('Reorder failed: $e');
     }
   }
+
+  // -----------------------------------------------------------------------------
+  // NEW: FOLLOWED SETLISTS PROVIDER
+  // -----------------------------------------------------------------------------
+
+  /// Fetches only the setlists the current user is following
+
+  // Add these methods inside your existing SetlistController class
+
+  /// Toggle the follow status of a setlist
+  Future<void> toggleFollow({
+    required String setlistId,
+    required bool isCurrentlyFollowing,
+  }) async {
+    // 1. Optimistic Update or Loading State?
+    // Since this is a simple toggle, we usually don't need a full loading screen,
+    // but preventing double-taps is good.
+
+    try {
+      final repo = ref.read(setlistRepositoryProvider);
+
+      if (isCurrentlyFollowing) {
+        await repo.unfollowSetlist(setlistId);
+      } else {
+        await repo.followSetlist(setlistId);
+      }
+
+      // 2. Refresh the list of followed setlists
+      // This will automatically update the UI button state because the UI watches this list.
+      ref.invalidate(followedSetlistsProvider);
+    } catch (e, stack) {
+      debugPrint('Toggle follow failed: $e');
+      state = AsyncValue.error(e, stack);
+    }
+  }
 }
+
+final followedSetlistsProvider = FutureProvider<List<Setlist>>((ref) async {
+  final repo = ref.watch(setlistRepositoryProvider);
+  return repo.getFollowedSetlists();
+});

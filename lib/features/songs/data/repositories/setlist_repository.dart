@@ -12,7 +12,7 @@ class SetlistRepository {
   }
 
   /// Fetch a single setlist by ID
-  Future<Setlist> getSetlistById(String id) async {
+  Future<Setlist?> getSetlistById(String id) async {
     return await _remote.fetchSetlistById(id);
   }
 
@@ -65,5 +65,31 @@ class SetlistRepository {
     }).toList();
 
     await _remote.updateSetlistOrder(updates);
+  }
+
+  Future<void> followSetlist(String setlistId) async {
+    await _remote.followSetlist(setlistId);
+  }
+
+  Future<void> unfollowSetlist(String setlistId) async {
+    await _remote.unfollowSetlist(setlistId);
+  }
+
+  /// Helper to check if a specific setlist is already being followed.
+  /// This is useful for the UI (showing "Follow" vs "Unfollow" button).
+  Future<bool> isFollowing(String setlistId) async {
+    final followedLists = await _remote.getFollowedSetlists();
+    return followedLists.any((s) => s.id == setlistId);
+  }
+
+  Future<List<Setlist>> getFollowedSetlists() async {
+    return await _remote.getFollowedSetlists();
+  }
+
+  Future<void> updateSetlistPublicStatus(
+    String setlistId,
+    bool isPublic,
+  ) async {
+    await _remote.updateSetlistPublicStatus(setlistId, isPublic);
   }
 }

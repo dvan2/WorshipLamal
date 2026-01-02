@@ -8,6 +8,10 @@ class SetlistsApi {
 
   /// Fetch all setlists (optionally filter by user_id if needed later)
   Future<List<Setlist>> fetchSetlists() async {
+    final currentUserId = _client.auth.currentUser?.id;
+    if (currentUserId == null) {
+      return [];
+    }
     final response = await _client
         .from('setlists')
         .select('''
@@ -34,31 +38,46 @@ class SetlistsApi {
           )
         )
       ''')
+        .eq('user_id', currentUserId)
         .order('created_at', ascending: false);
 
     return (response as List).map((item) => Setlist.fromMap(item)).toList();
   }
 
-  Future<Setlist> fetchSetlistById(String id) async {
-    final response = await _client
-        .from('setlists')
-        .select('''
-        *,
-        setlist_items (
+  Future<Setlist?> fetchSetlistById(String id) async {
+    try {
+      final response = await _client
+          .from('setlists')
+          .select('''
           *,
-          songs (
-            *,
-            song_artists (
-              artists ( * )
+          setlist_items (
+            id,
+            sort_order,
+            key_override,
+            song_id,
+            songs (
+              id,
+              title,
+              key,
+              bpm,
+              song_artists (
+                artists (
+                  id,
+                  name
+                )
+              )
             )
           )
-        )
-      ''')
-        .eq('id', id)
-        .order('sort_order', referencedTable: 'setlist_items', ascending: true)
-        .single();
+        ''')
+          .eq('id', id)
+          .maybeSingle(); // 👈 CHANGE THIS from .single() to .maybeSingle()
 
-    return Setlist.fromMap(response);
+      if (response == null) return null; // Handle the empty case!
+
+      return Setlist.fromMap(response);
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Create a new empty setlist
@@ -101,5 +120,51 @@ class SetlistsApi {
   Future<void> updateSetlistOrder(List<Map<String, dynamic>> updates) async {
     // "upsert" will update existing rows if the IDs match
     await _client.from('setlist_items').upsert(updates);
+  }
+
+  //Set list follow logics
+  // Inside SetlistRepository
+
+  Future<void> followSetlist(String setlistId) async {
+    final userId = _client.auth.currentUser!.id;
+    await _client.from('setlist_subscriptions').insert({
+      'user_id': userId,
+      'setlist_id': setlistId,
+    });
+  }
+
+  Future<void> unfollowSetlist(String setlistId) async {
+    final userId = _client.auth.currentUser!.id;
+    await _client.from('setlist_subscriptions').delete().match({
+      'user_id': userId,
+      'setlist_id': setlistId,
+    });
+  }
+
+  /// Fetch lists I am following
+  Future<List<Setlist>> getFollowedSetlists() async {
+    final userId = _client.auth.currentUser!.id;
+
+    // We join 'setlist_subscriptions' -> 'setlists'
+    final response = await _client
+        .from('setlist_subscriptions')
+        .select('setlists(*)') // Fetch the actual setlist data
+        .eq('user_id', userId);
+
+    // Map the nested data structure back to a List<Setlist>
+    final data = List<Map<String, dynamic>>.from(response);
+    return data
+        .map((row) => Setlist.fromMap(row['setlists'] as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> updateSetlistPublicStatus(
+    String setlistId,
+    bool isPublic,
+  ) async {
+    await _client
+        .from('setlists')
+        .update({'is_public': isPublic})
+        .eq('id', setlistId);
   }
 }

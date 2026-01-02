@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // REQUIRED for Clipboard
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,85 +18,315 @@ class SetlistDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Fetch the specific setlist details
     final setlistAsync = ref.watch(setlistDetailProvider(setlistId));
+    final followedListAsync = ref.watch(followedSetlistsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Setlist Details'),
-        actions: [
-          // Option to edit the setlist title or delete it
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              // TODO: Implement Edit/Delete/Share options
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        label: const Text('Add Songs'),
-        icon: const Icon(Icons.add),
-        onPressed: () async {
-          // 1. Get the current list length to determine sort order
-          // We use .valueOrNull because we might be in loading state,
-          // but usually the data is there if we are clicking the FAB.
-          final currentSetlist = setlistAsync.asData?.value;
-          int nextOrderIndex = (currentSetlist?.items.length ?? 0) + 1;
+    // Calculate "Is Following" (safely handle async data)
+    final isFollowing =
+        followedListAsync.asData?.value.any((s) => s.id == setlistId) ?? false;
 
-          // 2. Open the Picker and wait for results
-          final List<String>? selectedIds = await context
-              .pushNamed<List<String>>('songPicker');
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
 
-          if (selectedIds != null && selectedIds.isNotEmpty) {
-            // 3. Loop through and add them
-            final controller = ref.read(setlistControllerProvider.notifier);
+    return setlistAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
+      data: (setlist) {
+        if (setlist == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text("Unavailable")),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text("Setlist Not Found or Private"),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.pop(),
+                    child: const Text("Go Back"),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        // Check Ownership
+        final isOwner = setlist.userId == currentUserId;
 
-            for (final songId in selectedIds) {
-              await controller.addSong(
-                setlistId: setlistId,
-                songId: songId,
-                order: nextOrderIndex,
-              );
-              nextOrderIndex++;
-            }
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Setlist Details'),
+            actions: [
+              if (isOwner)
+                IconButton(
+                  // Icon changes based on status: Link if public, Share (or Lock) if private
+                  icon: Icon(setlist.isPublic ? Icons.link : Icons.share),
+                  tooltip: 'Share Setlist',
+                  onPressed: () {
+                    _showShareDialog(context, ref, setlist);
+                  },
+                ),
 
-            // Show confirmation
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Added ${selectedIds.length} songs')),
-              );
-            }
-          }
-        },
-      ),
-
-      body: setlistAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (setlist) {
-          // 1. Check Ownership
-          final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-          final isOwner = setlist.userId == currentUserId;
-
-          if (setlist.items.isEmpty) {
-            return EmptySetlistState(title: setlist.title);
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SetlistHeader(setlist: setlist),
-              Expanded(
-                child: isOwner
-                    ? _buildOwnerList(context, ref, setlist)
-                    : _buildViewerList(context, ref, setlist),
+              // Option to edit/delete (Existing)
+              IconButton(
+                icon: const Icon(Icons.more_vert),
+                onPressed: () {
+                  // TODO: Implement Edit/Delete options
+                },
               ),
             ],
-          );
-        },
-      ),
+          ),
+          floatingActionButton: isOwner
+              ? FloatingActionButton.extended(
+                  label: const Text('Add Songs'),
+                  icon: const Icon(Icons.add),
+                  onPressed: () async {
+                    // 1. Get current list length
+                    int nextOrderIndex = (setlist.items.length) + 1;
+
+                    // 2. Open Picker
+                    final List<String>? selectedIds = await context
+                        .pushNamed<List<String>>('songPicker');
+
+                    if (selectedIds != null && selectedIds.isNotEmpty) {
+                      // 3. Loop and Add
+                      final controller = ref.read(
+                        setlistControllerProvider.notifier,
+                      );
+
+                      for (final songId in selectedIds) {
+                        await controller.addSong(
+                          setlistId: setlistId,
+                          songId: songId,
+                          order: nextOrderIndex,
+                        );
+                        nextOrderIndex++;
+                      }
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added ${selectedIds.length} songs'),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                )
+              : null, // Hide FAB for guests
+          body: Builder(
+            builder: (context) {
+              if (setlist.items.isEmpty) {
+                return EmptySetlistState(title: setlist.title);
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SetlistHeader(setlist: setlist),
+
+                  // FOLLOW BUTTON SECTION (For Non-Owners)
+                  if (!isOwner)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      color: Theme.of(context).colorScheme.surface,
+                      child: isFollowing
+                          ? OutlinedButton.icon(
+                              onPressed: () {
+                                ref
+                                    .read(setlistControllerProvider.notifier)
+                                    .toggleFollow(
+                                      setlistId: setlist.id,
+                                      isCurrentlyFollowing: true,
+                                    );
+                              },
+                              icon: const Icon(Icons.check),
+                              label: const Text(
+                                "Following (Updates Automatically)",
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.green,
+                                side: const BorderSide(color: Colors.green),
+                              ),
+                            )
+                          : ElevatedButton.icon(
+                              onPressed: () {
+                                ref
+                                    .read(setlistControllerProvider.notifier)
+                                    .toggleFollow(
+                                      setlistId: setlist.id,
+                                      isCurrentlyFollowing: false,
+                                    );
+                              },
+                              icon: const Icon(Icons.bookmark_add_outlined),
+                              label: const Text("Follow this Setlist"),
+                            ),
+                    ),
+
+                  // LIST VIEW
+                  Expanded(
+                    child: isOwner
+                        ? _buildOwnerList(context, ref, setlist)
+                        : _buildViewerList(context, ref, setlist),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// SHARE DIALOG LOGIC
+// ---------------------------------------------------------------------------
+void _showShareDialog(BuildContext context, WidgetRef ref, Setlist setlist) {
+  // Construct the deep link (Replace with your actual domain scheme)
+  final link = "https://worshiplamal.app/setlist/${setlist.id}";
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // Allow it to expand if needed
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              setlist.isPublic ? "Share Setlist" : "Make Public & Share?",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+
+            if (!setlist.isPublic) ...[
+              const Text(
+                "This setlist is currently Private. To share it, it must be made Public (view-only). You can make it Private again later.",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.public),
+                  label: const Text("Make Public & Copy Link"),
+                  onPressed: () async {
+                    // 1. UPDATE DB: Unlock the list
+                    final repo = ref.read(setlistRepositoryProvider);
+                    // Ensure you have this method in your repository!
+                    await repo.updateSetlistPublicStatus(setlist.id, true);
+
+                    // 2. COPY LINK
+                    await Clipboard.setData(ClipboardData(text: link));
+
+                    // 3. REFRESH UI & CLOSE
+                    ref.invalidate(setlistDetailProvider(setlist.id));
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Link copied! Setlist is now Public."),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ] else ...[
+              // ALREADY PUBLIC: Show the Link and Copy option
+              const Text(
+                "Anyone with this link can view this setlist and follow updates.",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.link, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        link,
+                        style: TextStyle(color: Colors.grey.shade800),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy),
+                      tooltip: "Copy Link",
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: link));
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Link copied to clipboard!"),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  onPressed: () async {
+                    // MAKE PRIVATE AGAIN
+                    final repo = ref.read(setlistRepositoryProvider);
+                    await repo.updateSetlistPublicStatus(setlist.id, false);
+
+                    ref.invalidate(setlistDetailProvider(setlist.id));
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Setlist is now Private."),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text("Stop Sharing (Make Private)"),
+                ),
+              ),
+            ],
+            // Add some bottom padding for safety
+            const SizedBox(height: 16),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// EXISTING HELPER WIDGETS
+// ---------------------------------------------------------------------------
 
 Widget _buildOwnerList(BuildContext context, WidgetRef ref, Setlist setlist) {
   return ReorderableListView.builder(
@@ -179,9 +410,6 @@ Widget _buildOwnerList(BuildContext context, WidgetRef ref, Setlist setlist) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// READ-ONLY LIST (For Guests/Viewers) - Simple List, No Edit Actions
-// ---------------------------------------------------------------------------
 Widget _buildViewerList(BuildContext context, WidgetRef ref, Setlist setlist) {
   return ListView.builder(
     padding: const EdgeInsets.only(bottom: 80),
