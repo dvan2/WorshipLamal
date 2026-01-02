@@ -139,4 +139,28 @@ class FakeSetlistRepository implements SetlistRepository {
       // Copy with new status
     }
   }
+
+  @override
+  Future<void> followSetlist(String setlistId) {
+    // TODO: implement followSetlist
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Setlist>> getFollowedSetlists() {
+    // TODO: implement getFollowedSetlists
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> isFollowing(String setlistId) {
+    // TODO: implement isFollowing
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> unfollowSetlist(String setlistId) {
+    // TODO: implement unfollowSetlist
+    throw UnimplementedError();
+  }
 }

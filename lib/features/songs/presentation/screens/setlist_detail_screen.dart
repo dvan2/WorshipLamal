@@ -189,7 +189,7 @@ class SetlistDetailScreen extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 void _showShareDialog(BuildContext context, WidgetRef ref, Setlist setlist) {
   // Construct the deep link (Replace with your actual domain scheme)
-  final link = "https://worshiplamal.app/setlist/${setlist.id}";
+  final link = "worship-lamal-f1b1c.web.app/setlist/${setlist.id}";
 
   showModalBottomSheet(
     context: context,
@@ -323,10 +323,6 @@ void _showShareDialog(BuildContext context, WidgetRef ref, Setlist setlist) {
     },
   );
 }
-
-// ---------------------------------------------------------------------------
-// EXISTING HELPER WIDGETS
-// ---------------------------------------------------------------------------
 
 Widget _buildOwnerList(BuildContext context, WidgetRef ref, Setlist setlist) {
   return ReorderableListView.builder(
