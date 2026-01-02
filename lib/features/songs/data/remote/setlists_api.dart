@@ -141,20 +141,45 @@ class SetlistsApi {
     });
   }
 
-  /// Fetch lists I am following
   Future<List<Setlist>> getFollowedSetlists() async {
     final userId = _client.auth.currentUser!.id;
 
-    // We join 'setlist_subscriptions' -> 'setlists'
     final response = await _client
         .from('setlist_subscriptions')
-        .select('setlists(*)') // Fetch the actual setlist data
+        .select('''
+        setlists (
+          *,
+          setlist_items (
+            id,
+            sort_order,
+            key_override,
+            song_id,
+            songs (
+              id,
+              title,
+              key,
+              bpm,
+              song_artists (
+                artists (
+                  id,
+                  name
+                )
+              )
+            )
+          )
+        )
+      ''')
         .eq('user_id', userId);
 
     // Map the nested data structure back to a List<Setlist>
     final data = List<Map<String, dynamic>>.from(response);
+
+    // We have to filter out any nulls in case a setlist was deleted
+    // but the subscription row still exists (rare but possible)
     return data
-        .map((row) => Setlist.fromMap(row['setlists'] as Map<String, dynamic>))
+        .map((row) => row['setlists'])
+        .where((s) => s != null)
+        .map((s) => Setlist.fromMap(s as Map<String, dynamic>))
         .toList();
   }
 
