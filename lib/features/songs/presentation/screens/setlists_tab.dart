@@ -14,108 +14,113 @@ class SetlistsTab extends ConsumerWidget {
     final mySetlistsAsync = ref.watch(setlistsListProvider);
     final followedSetlistsAsync = ref.watch(followedSetlistsProvider);
 
-    return Scaffold(
-      // 👇 1. ADD APP BAR WITH JOIN ACTION
-      appBar: AppBar(
-        title: const Text('Setlists'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.input),
-            tooltip: "Join via ID",
-            onPressed: () => _showJoinByIdDialog(context),
+    return Stack(
+      children: [
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton(
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.add),
+            onPressed: () => _showCreateDialog(context, ref),
           ),
-        ],
-      ),
+        ),
 
-      // The "+" Button (Only creates YOUR lists)
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add),
-        onPressed: () => _showCreateDialog(context, ref),
-      ),
-
-      // Handle loading/error states for both
-      body: mySetlistsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading yours: $err')),
-        data: (mySetlists) {
-          return followedSetlistsAsync.when(
+        Expanded(
+          child: mySetlistsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) =>
-                Center(child: Text('Error loading followed: $err')),
-            data: (followedSetlists) {
-              // 2. CHECK EMPTY STATE (Only if BOTH are empty)
-              if (mySetlists.isEmpty && followedSetlists.isEmpty) {
-                return _EmptySetlistState();
-              }
+                Center(child: Text('Error loading yours: $err')),
+            data: (mySetlists) {
+              return followedSetlistsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) =>
+                    Center(child: Text('Error loading followed: $err')),
+                data: (followedSetlists) {
+                  // CHECK EMPTY STATE
+                  if (mySetlists.isEmpty && followedSetlists.isEmpty) {
+                    return _EmptySetlistState();
+                  }
 
-              // 3. COMBINE EVERYTHING into a CustomScrollView
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: CustomScrollView(
-                  slivers: [
-                    // SECTION A: MY SETLISTS
-                    if (mySetlists.isNotEmpty) ...[
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.only(bottom: 8, left: 4),
-                          child: Text(
-                            "My Setlists",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
+                  // COMBINE EVERYTHING
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: CustomScrollView(
+                      slivers: [
+                        // SECTION A: MY SETLISTS
+                        if (mySetlists.isNotEmpty) ...[
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(4, 16, 0, 8),
+                              child: Text(
+                                "My Setlists",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final setlist = mySetlists[index];
-                          return _SetlistCard(setlist: setlist, isOwner: true);
-                        }, childCount: mySetlists.length),
-                      ),
-                    ],
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final setlist = mySetlists[index];
+                              return _SetlistCard(
+                                setlist: setlist,
+                                isOwner: true,
+                              );
+                            }, childCount: mySetlists.length),
+                          ),
+                        ],
 
-                    // Spacing between sections
-                    if (mySetlists.isNotEmpty && followedSetlists.isNotEmpty)
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        // SPACING
+                        if (mySetlists.isNotEmpty &&
+                            followedSetlists.isNotEmpty)
+                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                    // SECTION B: FOLLOWED SETLISTS
-                    if (followedSetlists.isNotEmpty) ...[
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.only(bottom: 8, left: 4),
-                          child: Text(
-                            "Following",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
+                        // SECTION B: FOLLOWED SETLISTS
+                        if (followedSetlists.isNotEmpty) ...[
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(4, 16, 0, 8),
+                              child: Text(
+                                "Following",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final setlist = followedSetlists[index];
-                          return _SetlistCard(
-                            setlist: setlist,
-                            isOwner: false, // Visual cue that this is read-only
-                          );
-                        }, childCount: followedSetlists.length),
-                      ),
-                    ],
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final setlist = followedSetlists[index];
+                              return _SetlistCard(
+                                setlist: setlist,
+                                isOwner: false,
+                              );
+                            }, childCount: followedSetlists.length),
+                          ),
+                        ],
 
-                    // Extra space at bottom for FAB
-                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                  ],
-                ),
+                        // Extra space at bottom so list isn't hidden behind FAB
+                        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                      ],
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -156,11 +161,7 @@ class SetlistsTab extends ConsumerWidget {
       ),
     );
 
-    // If we got an ID, navigate to it
     if (setlistId != null && setlistId.isNotEmpty && context.mounted) {
-      // GoRouter will trigger the SetlistDetailScreen,
-      // which will then query Supabase.
-      // If the ID is invalid or private, the detail screen will show an error.
       context.pushNamed('setlistDetail', pathParameters: {'id': setlistId});
     }
   }
@@ -290,10 +291,7 @@ class _SetlistCard extends StatelessWidget {
           ),
         ),
 
-        title: Text(
-          setlist.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: Text(setlist.title),
 
         subtitle: Row(
           children: [

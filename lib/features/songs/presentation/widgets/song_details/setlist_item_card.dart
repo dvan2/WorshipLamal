@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
+import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
@@ -55,24 +56,24 @@ class SetlistItemCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
 
-              // 2. Song Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       item.song.title,
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: AppConstants.fontSizeMd,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppConstants.spacingXs),
                     Text(
                       item.song.artistNames,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
-                        fontSize: 14,
+                        fontSize: AppConstants.fontSizeSm,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
