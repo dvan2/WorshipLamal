@@ -83,7 +83,7 @@ class SetlistItemCard extends StatelessWidget {
 
               // 3. Key Badge
               InkWell(
-                onTap: onKeyTap, // <--- Trigger the callback
+                onTap: onKeyTap,
                 borderRadius: BorderRadius.circular(8),
                 child: _KeyBadge(displayKey: item.displayKey),
               ),
