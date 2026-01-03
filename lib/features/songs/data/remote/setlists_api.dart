@@ -70,6 +70,11 @@ class SetlistsApi {
           )
         ''')
           .eq('id', id)
+          .order(
+            'sort_order',
+            referencedTable: 'setlist_items',
+            ascending: true,
+          )
           .maybeSingle(); // 👈 CHANGE THIS from .single() to .maybeSingle()
 
       if (response == null) return null; // Handle the empty case!

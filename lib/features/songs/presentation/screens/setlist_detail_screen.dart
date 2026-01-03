@@ -413,7 +413,6 @@ Widget _buildViewerList(BuildContext context, WidgetRef ref, Setlist setlist) {
     itemBuilder: (context, index) {
       final item = setlist.items[index];
 
-      // NO Dismissible wrapper
       return SetlistItemCard(
         item: item,
         index: index,
