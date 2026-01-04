@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/profile/presentation/profile_tab.dart';
-import 'package:worship_lamal/features/songs/presentation/screens/setlists_tab.dart';
+import 'package:worship_lamal/features/setlists/presentation/screens/setlists_tab.dart';
 import 'songs_tab.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {

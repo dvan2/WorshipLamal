@@ -13,9 +13,6 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> {
   final _repo = AuthRepository();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +77,6 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // VIEW 1: The Dashboard
   Widget _buildLoggedInView(User user) {
     return Center(
       child: Column(
@@ -100,100 +96,5 @@ class _ProfileTabState extends State<ProfileTab> {
         ],
       ),
     );
-  }
-
-  Widget _buildLoginForm() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "Welcome Back",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-
-          // Only Email & Password needed here
-          TextField(
-            controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              border: OutlineInputBorder(),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              // Notice: No boolean flag anymore, this is ALWAYS login
-              onPressed: () => _handleAuth(),
-              child: const Text('Sign In'),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // The Link to the new screen
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SignUpScreen()),
-              );
-            },
-            child: const Text("Don't have an account? Sign Up"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleAuth() async {
-    // 1. Start Loading
-    setState(() => _isLoading = true);
-
-    try {
-      // 2. Call the Repository (Sign In Only)
-      // We add .trim() to remove accidental spaces users might type
-      await _repo.signIn(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-
-      // 3. Success
-      // We call setState to rebuild the widget.
-      // Since _repo.currentUser is now valid, build() will switch to the LoggedInView.
-      if (mounted) {
-        setState(() {});
-      }
-    } catch (e) {
-      // 4. Error Handling
-      if (mounted) {
-        // Parse the error to make it user-friendly, or just show the message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Login Failed: ${e.toString().replaceAll('AuthException:', '').trim()}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      // 5. Stop Loading
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 }

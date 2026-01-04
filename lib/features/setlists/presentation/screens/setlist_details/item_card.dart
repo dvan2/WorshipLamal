@@ -4,6 +4,7 @@ import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
+// A SetListItem displaying song, artist, key, reorderable
 class SetlistItemCard extends StatelessWidget {
   final SetlistItem item;
   final int index;

@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
-import 'package:worship_lamal/features/songs/presentation/providers/setlist_provider.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/song_details/empty_setlist_state.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/song_details/setlist_header.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/song_details/setlist_item_card.dart';
+import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
+import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/empty.dart';
+import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/header.dart';
+import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/item_card.dart';
 
 class SetlistDetailScreen extends ConsumerWidget {
   final String setlistId;

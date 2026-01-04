@@ -68,8 +68,9 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
               data: (songs) {
-                if (songs.isEmpty)
+                if (songs.isEmpty) {
                   return const Center(child: Text("No songs found"));
+                }
 
                 return ListView.separated(
                   itemCount: songs.length,
