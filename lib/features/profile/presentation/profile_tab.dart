@@ -52,22 +52,24 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Navigate to Signup to "Upgrade" this account
-                Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SignUpScreen()),
                 );
+                if (mounted) setState(() {});
               },
               child: const Text("Create Account to Save Data"),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 // Navigate to Login (if they have an existing account elsewhere)
-                Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
+                if (mounted) setState(() {});
               },
               child: const Text("I already have an account"),
             ),
@@ -87,14 +89,28 @@ class _ProfileTabState extends State<ProfileTab> {
           Text(user.email ?? 'Anonymous User'),
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: () async {
-              await _repo.signOut();
-              setState(() {}); // Refresh UI
-            },
+            onPressed: (_handleSignOut),
             child: const Text('Sign Out'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleSignOut() async {
+    // 1. Sign out the current account
+    await _repo.signOut();
+
+    // 2. Immediately sign in as Guest (Anonymously)
+    // This ensures 'currentUser' is never null for long
+    try {
+      await Supabase.instance.client.auth.signInAnonymously();
+    } catch (e) {
+      debugPrint("Error signing in anonymously: $e");
+    }
+
+    // 3. Refresh the UI
+    // The build method will now see the new Guest user and show _buildGuestView
+    if (mounted) setState(() {});
   }
 }
