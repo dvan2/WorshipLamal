@@ -93,7 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       case 1:
         return const Text(
-          'My Setlists',
+          'Setlists',
           style: TextStyle(fontWeight: FontWeight.bold),
         );
       case 2:

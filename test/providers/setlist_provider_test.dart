@@ -34,7 +34,7 @@ void main() {
 
     // 2. Act: Add a song
     final controller = container.read(setlistControllerProvider.notifier);
-    await controller.addSong(setlistId: setlistId!, songId: 'song_1', order: 0);
+    await controller.addSong(setlistId: setlistId, songId: 'song_1', order: 0);
 
     // 3. Assert: Fetch the specific setlist and check items
     final setlist = await fakeRepo.getSetlistById(setlistId);
@@ -45,16 +45,16 @@ void main() {
   test('Ownership Check: Users only own setlists they created', () async {
     // SCENARIO 1: User A creates a setlist
     fakeRepo.mockCurrentUserId = 'user_A'; // Log in as User A
-    final setlistId_A = await fakeRepo.createSetlist('User A Service');
+    final setlistidA = await fakeRepo.createSetlist('User A Service');
 
     // SCENARIO 2: User B creates a setlist
     fakeRepo.mockCurrentUserId = 'user_B'; // Log in as User B
-    final setlistId_B = await fakeRepo.createSetlist('User B Service');
+    final setlistidB = await fakeRepo.createSetlist('User B Service');
 
     // ASSERTIONS
     // Fetch both lists
-    final setlistA = await fakeRepo.getSetlistById(setlistId_A);
-    final setlistB = await fakeRepo.getSetlistById(setlistId_B);
+    final setlistA = await fakeRepo.getSetlistById(setlistidA);
+    final setlistB = await fakeRepo.getSetlistById(setlistidB);
 
     // TEST: Logic for User A
     const currentUser = 'user_A';

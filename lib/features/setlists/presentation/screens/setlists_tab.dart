@@ -16,7 +16,6 @@ class SetlistsTab extends ConsumerWidget {
 
     return Stack(
       children: [
-        // 1. THE CONTENT (Must be First so it's the "Bottom Layer")
         mySetlistsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('Error: $err')),
@@ -75,7 +74,6 @@ class SetlistsTab extends ConsumerWidget {
           },
         ),
 
-        // 2. THE FAB (Must be Last so it floats "On Top")
         Positioned(
           bottom: 16,
           right: 16,
