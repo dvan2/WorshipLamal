@@ -16,8 +16,66 @@ class SetlistsTab extends ConsumerWidget {
 
     return Stack(
       children: [
-        // FAB (Positioned First or Last depending on if you want it over content)
-        // Usually put LAST in a Stack to be on top, but here works too.
+        // 1. THE CONTENT (Must be First so it's the "Bottom Layer")
+        mySetlistsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(child: Text('Error: $err')),
+          data: (mySetlists) {
+            return followedSetlistsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+              data: (followedSetlists) {
+                if (mySetlists.isEmpty && followedSetlists.isEmpty) {
+                  return _EmptySetlistState();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CustomScrollView(
+                    slivers: [
+                      // --- SECTION A: MY SETLISTS ---
+                      if (mySetlists.isNotEmpty) ...[
+                        const SetlistSectionHeader(title: "My Setlists"),
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => SetlistCard(
+                              setlist: mySetlists[index],
+                              isOwner: true,
+                            ),
+                            childCount: mySetlists.length,
+                          ),
+                        ),
+                      ],
+
+                      // --- SPACING ---
+                      if (mySetlists.isNotEmpty && followedSetlists.isNotEmpty)
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                      // --- SECTION B: FOLLOWED ---
+                      if (followedSetlists.isNotEmpty) ...[
+                        const SetlistSectionHeader(title: "Following"),
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => SetlistCard(
+                              setlist: followedSetlists[index],
+                              isOwner: false,
+                            ),
+                            childCount: followedSetlists.length,
+                          ),
+                        ),
+                      ],
+
+                      // Bottom Spacer for FAB
+                      const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+
+        // 2. THE FAB (Must be Last so it floats "On Top")
         Positioned(
           bottom: 16,
           right: 16,
@@ -28,67 +86,6 @@ class SetlistsTab extends ConsumerWidget {
               context: context,
               builder: (_) => const CreateSetlistDialog(),
             ),
-          ),
-        ),
-
-        Expanded(
-          child: mySetlistsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(child: Text('Error: $err')),
-            data: (mySetlists) {
-              return followedSetlistsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(child: Text('Error: $err')),
-                data: (followedSetlists) {
-                  if (mySetlists.isEmpty && followedSetlists.isEmpty) {
-                    return _EmptySetlistState();
-                  }
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: CustomScrollView(
-                      slivers: [
-                        // --- SECTION A: MY SETLISTS ---
-                        if (mySetlists.isNotEmpty) ...[
-                          const SetlistSectionHeader(title: "My Setlists"),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) => SetlistCard(
-                                setlist: mySetlists[index],
-                                isOwner: true,
-                              ),
-                              childCount: mySetlists.length,
-                            ),
-                          ),
-                        ],
-
-                        // --- SPACING ---
-                        if (mySetlists.isNotEmpty &&
-                            followedSetlists.isNotEmpty)
-                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                        // --- SECTION B: FOLLOWED ---
-                        if (followedSetlists.isNotEmpty) ...[
-                          const SetlistSectionHeader(title: "Following"),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) => SetlistCard(
-                                setlist: followedSetlists[index],
-                                isOwner: false,
-                              ),
-                              childCount: followedSetlists.length,
-                            ),
-                          ),
-                        ],
-
-                        // Bottom Spacer for FAB
-                        const SliverToBoxAdapter(child: SizedBox(height: 100)),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
           ),
         ),
       ],

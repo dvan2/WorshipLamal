@@ -41,7 +41,9 @@ class SetlistsApi {
         .eq('user_id', currentUserId)
         .order('created_at', ascending: false);
 
-    return (response as List).map((item) => Setlist.fromMap(item)).toList();
+    final data = response as List<dynamic>;
+
+    return data.map((e) => Setlist.fromMap(e as Map<String, dynamic>)).toList();
   }
 
   Future<Setlist?> fetchSetlistById(String id) async {
@@ -176,15 +178,22 @@ class SetlistsApi {
       ''')
         .eq('user_id', userId);
 
-    // Map the nested data structure back to a List<Setlist>
-    final data = List<Map<String, dynamic>>.from(response);
+    final listData = response as List<dynamic>;
 
-    // We have to filter out any nulls in case a setlist was deleted
-    // but the subscription row still exists (rare but possible)
-    return data
-        .map((row) => row['setlists'])
-        .where((s) => s != null)
-        .map((s) => Setlist.fromMap(s as Map<String, dynamic>))
+    return listData
+        .map((item) {
+          // 1. Cast item to Map
+          final row = item as Map<String, dynamic>;
+          // 2. Extract the nested object
+          final setlistData = row['setlists'];
+
+          // 3. Handle potential nulls
+          if (setlistData == null) return null;
+
+          // 4. Convert to Setlist
+          return Setlist.fromMap(setlistData as Map<String, dynamic>);
+        })
+        .whereType<Setlist>() // 5. Remove nulls
         .toList();
   }
 

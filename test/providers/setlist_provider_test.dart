@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worship_lamal/features/songs/presentation/providers/setlist_provider.dart';
+import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
 import '../test_utils/fakes/fake_setlist_repository.dart';
 
 void main() {
