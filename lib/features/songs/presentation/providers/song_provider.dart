@@ -99,7 +99,7 @@ final filteredSongsProvider = FutureProvider<List<Song>>((ref) async {
     case SongSortOption.newest:
       // Assuming you have an ID or CreatedAt field.
       // If using ID for "newest", higher ID usually means newer.
-      filteredList.sort((a, b) => b.id.compareTo(a.id));
+      filteredList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       break;
     // case SongSortOption.oldest:
     //   filteredList.sort((a, b) => a.id.compareTo(b.id));
