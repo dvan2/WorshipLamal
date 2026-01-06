@@ -99,7 +99,6 @@ class SetlistDetailScreen extends ConsumerWidget {
                         await controller.addSong(
                           setlistId: setlistId,
                           songId: songId,
-                          order: nextOrderIndex,
                         );
                         nextOrderIndex++;
                       }

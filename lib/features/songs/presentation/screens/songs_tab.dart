@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/add_to_setlist_sheet.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/song_filter_bottom_sheet.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/song_list_item.dart';
 
 class SongsTab extends ConsumerWidget {
@@ -14,10 +17,8 @@ class SongsTab extends ConsumerWidget {
     // This is the logic extracted from your old HomeScreen
     final songsAsync = ref.watch(filteredSongsProvider);
     final searchQuery = ref.watch(searchQueryProvider);
-
     return Column(
       children: [
-        // Pinned Search Bar
         Padding(
           padding: const EdgeInsets.fromLTRB(
             AppConstants.spacingLg,
@@ -49,6 +50,20 @@ class SongsTab extends ConsumerWidget {
                       'songDetail',
                       pathParameters: {'id': song.id},
                     ),
+                    onLongPress: () {
+                      showModalBottomSheet(
+                        context: context,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        builder: (context) => AddToSetlistSheet(
+                          songId: song.id,
+                          songTitle: song.title,
+                        ),
+                      );
+                    },
                   );
                 },
               );
@@ -67,26 +82,57 @@ class _SearchField extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // We watch the query to show/hide the clear button
     final query = ref.watch(searchQueryProvider);
+    final filterState = ref.watch(songFilterProvider);
+    final hasFilters = filterState.isFiltering;
 
     return TextField(
-      // 3. IMPORTANT: Update provider on change. No setState needed!
       onChanged: (value) {
         ref.read(searchQueryProvider.notifier).state = value;
       },
       decoration: InputDecoration(
         hintText: 'Search songs, artists...',
         prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
-        suffixIcon: query.isNotEmpty
-            ? IconButton(
+
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Clear Button (Keep your existing logic)
+            if (query.isNotEmpty)
+              IconButton(
                 icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                onPressed: () {
-                  // Clear the global state
-                  ref.read(searchQueryProvider.notifier).state = '';
-                  // Note: You might need a TextEditingController if you want to clear
-                  // the actual text visually, but for simple cases, this updates the list.
-                },
-              )
-            : null,
+                onPressed: () =>
+                    ref.read(searchQueryProvider.notifier).state = '',
+              ),
+
+            // FILTER BUTTON
+            IconButton(
+              icon: Badge(
+                isLabelVisible: hasFilters,
+                backgroundColor: AppColors.primary,
+                smallSize: 8, // Little dot to show filters are active
+                child: Icon(
+                  Icons.tune, // The "Sliders" icon
+                  color: hasFilters
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                ),
+              ),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true, // Allows sheet to be taller
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  builder: (context) => const SongFilterBottomSheet(),
+                );
+              },
+            ),
+            const SizedBox(width: 8), // Padding
+          ],
+        ),
         filled: true,
         fillColor: AppColors.surfaceVariant,
         border: OutlineInputBorder(

@@ -8,13 +8,20 @@ import 'package:worship_lamal/core/theme/app_constants.dart';
 class SongListItem extends StatelessWidget {
   final Song song;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
-  const SongListItem({super.key, required this.song, required this.onTap});
+  const SongListItem({
+    super.key,
+    required this.song,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: AppConstants.songCardPaddingHorizontal,

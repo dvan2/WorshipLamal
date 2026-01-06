@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
 
 import '../../data/models/song_model.dart';
 import '../../data/remote/songs_api.dart';
@@ -28,21 +29,37 @@ final songDetailProvider = FutureProvider.family<Song, String>((
 // 1. Holds the current search text
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-// 2. Computes the filtered list automatically
-final filteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
-  // Watch the raw data from the database
-  final songsAsync = ref.watch(songListProvider);
-  // Watch the search text
+final filteredSongsProvider = FutureProvider<List<Song>>((ref) async {
+  // 1. Watch all inputs
+  final allSongs = await ref.watch(songListProvider.future);
+
   final query = ref.watch(searchQueryProvider).toLowerCase();
+  final filters = ref.watch(songFilterProvider);
 
-  return songsAsync.whenData((songs) {
-    if (query.isEmpty) return songs;
+  // 2. Apply Logic
+  return allSongs.where((song) {
+    // A. Text Search
+    final matchesText =
+        song.title.toLowerCase().contains(query) ||
+        // Check your model: is it artistName or artistNames?
+        // Using artistNames based on your previous code comments.
+        (song.artistNames).toLowerCase().contains(query);
 
-    return songs.where((song) {
-      final titleMatch = song.title.toLowerCase().contains(query);
-      final artistMatch = song.artistNames.toLowerCase().contains(query);
+    if (!matchesText) return false;
 
-      return titleMatch || artistMatch;
-    }).toList();
-  });
+    // B. Key Filter
+    if (filters.selectedKeys.isNotEmpty) {
+      if (!filters.selectedKeys.contains(song.key)) return false;
+    }
+
+    // C. BPM Filter
+    if (song.bpm != null) {
+      if (song.bpm! < filters.bpmRange.start ||
+          song.bpm! > filters.bpmRange.end) {
+        return false;
+      }
+    }
+
+    return true;
+  }).toList();
 });

@@ -32,7 +32,6 @@ final setlistsListProvider = FutureProvider<List<Setlist>>((ref) async {
 });
 
 /// Fetches a SINGLE setlist with full details (lyrics, etc).
-/// Usage: ref.watch(setlistDetailProvider(id))
 final setlistDetailProvider = FutureProvider.family<Setlist?, String>((
   ref,
   id,
@@ -69,10 +68,10 @@ class SetlistController extends AsyncNotifier<void> {
       // Force the list to re-fetch so the new setlist appears immediately
       ref.invalidate(setlistsListProvider);
 
-      state = const AsyncValue.data(null); // Set UI to success
+      state = const AsyncValue.data(null);
       return newId;
     } catch (e, stack) {
-      state = AsyncValue.error(e, stack); // Set UI to error
+      state = AsyncValue.error(e, stack);
       debugPrint('Create Failed: $e');
 
       state = AsyncValue.error(e, stack);
@@ -80,21 +79,23 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
-  /// Add a song to a setlist
   Future<void> addSong({
     required String setlistId,
     required String songId,
-    required int order,
   }) async {
     state = const AsyncValue.loading();
 
     try {
       final repo = ref.read(setlistRepositoryProvider);
-      await repo.addSong(setlistId: setlistId, songId: songId, order: order);
 
-      // Refresh ONLY the detail view of this specific setlist
+      final setlist = await repo.getSetlistById(setlistId);
+      if (setlist == null) throw Exception("Setlist not found");
+      final newOrder = setlist.items.length;
+
+      await repo.addSong(setlistId: setlistId, songId: songId, order: newOrder);
+
+      // 5. Refresh
       ref.invalidate(setlistDetailProvider(setlistId));
-      // Also refresh the main list (in case we show song counts there)
       ref.invalidate(setlistsListProvider);
 
       state = const AsyncValue.data(null);
@@ -154,11 +155,7 @@ class SetlistController extends AsyncNotifier<void> {
     required SetlistItem item,
   }) async {
     // Re-add the song with its original sort order
-    await addSong(
-      setlistId: setlistId,
-      songId: item.songId,
-      order: item.sortOrder,
-    );
+    await addSong(setlistId: setlistId, songId: item.songId);
   }
 
   Future<void> reorderSongs({
@@ -193,13 +190,7 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
-  // -----------------------------------------------------------------------------
-  // NEW: FOLLOWED SETLISTS PROVIDER
-  // -----------------------------------------------------------------------------
-
-  /// Fetches only the setlists the current user is following
-
-  // Add these methods inside your existing SetlistController class
+  // FOLLOWED SETLISTS PROVIDER
 
   /// Toggle the follow status of a setlist
   Future<void> toggleFollow({
