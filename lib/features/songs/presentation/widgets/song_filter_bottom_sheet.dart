@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
+import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
 import '../providers/song_filter_provider.dart';
 
 class SongFilterBottomSheet extends ConsumerStatefulWidget {
@@ -30,6 +31,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
   // 1. LOCAL STATE (Temporary)
   late Set<String> _tempSelectedKeys;
   late RangeValues _tempBpmRange;
+  late SongSortOption _tempSortOption;
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
     final globalState = ref.read(songFilterProvider);
     _tempSelectedKeys = Set.from(globalState.selectedKeys);
     _tempBpmRange = globalState.bpmRange;
+    _tempSortOption = globalState.sortOption;
   }
 
   void _toggleKey(String key) {
@@ -53,7 +56,12 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        32 + MediaQuery.of(context).viewInsets.bottom,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -67,7 +75,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                "Filter Songs",
+                "Filter & Sort",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               TextButton(
@@ -76,6 +84,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                   setState(() {
                     _tempSelectedKeys = {};
                     _tempBpmRange = const RangeValues(40, 200);
+                    _tempSortOption = SongSortOption.titleAz;
                   });
                 },
                 child: const Text("Reset"),
@@ -83,6 +92,36 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
             ],
           ),
           const Divider(),
+
+          //Sorting
+          const SizedBox(height: 16),
+          const Text("Sort By", style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 0, // Tighter vertical spacing
+            children: SongSortOption.values.map((option) {
+              final isSelected = _tempSortOption == option;
+              return ChoiceChip(
+                label: Text(option.label),
+                selected: isSelected,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() => _tempSortOption = option);
+                  }
+                },
+                // Optional: Custom styling to match your AppColors
+                selectedColor: AppColors.primary.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: isSelected ? AppColors.primary : Colors.black,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                side: isSelected
+                    ? const BorderSide(color: AppColors.primary)
+                    : BorderSide(color: Colors.grey.shade300),
+              );
+            }).toList(),
+          ),
 
           // --- BPM Filter ---
           const SizedBox(height: 16),
@@ -143,7 +182,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
             }).toList(),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
           // --- Show Results Button ---
           SizedBox(
@@ -153,18 +192,24 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () {
-                // 3. COMMIT CHANGES TO GLOBAL STATE
                 ref
                     .read(songFilterProvider.notifier)
                     .setFilters(
                       selectedKeys: _tempSelectedKeys,
                       bpmRange: _tempBpmRange,
+                      sortOption: _tempSortOption,
                     );
                 Navigator.pop(context);
               },
-              child: const Text("Show Results"),
+              child: const Text(
+                "Show Results",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],

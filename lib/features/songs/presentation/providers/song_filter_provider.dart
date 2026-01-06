@@ -1,39 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Ensure this path matches your project structure
+import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
 
-// 1. The State Object (Holds the values)
+// 1. STATE OBJECT
 class SongFilterState {
   final Set<String> selectedKeys;
-  final bpmRange;
+  final RangeValues bpmRange;
   final bool isFiltering;
+  final SongSortOption sortOption;
 
   const SongFilterState({
     this.selectedKeys = const {},
     this.bpmRange = const RangeValues(40, 200), // Default BPM range
     this.isFiltering = false,
+    this.sortOption = SongSortOption.titleAz,
   });
 
-  SongFilterState copyWith({Set<String>? selectedKeys, RangeValues? bpmRange}) {
+  SongFilterState copyWith({
+    Set<String>? selectedKeys,
+    RangeValues? bpmRange,
+    SongSortOption? sortOption,
+  }) {
     return SongFilterState(
       selectedKeys: selectedKeys ?? this.selectedKeys,
       bpmRange: bpmRange ?? this.bpmRange,
-      // Logic: If range is not default OR keys are not empty, we are filtering
+      sortOption: sortOption ?? this.sortOption,
+      // Logic: If range is not default OR keys are not empty, we are filtering.
       isFiltering:
           (selectedKeys ?? this.selectedKeys).isNotEmpty ||
           (bpmRange ?? this.bpmRange) != const RangeValues(40, 200),
     );
   }
-
-  // Helper to reset
-  factory SongFilterState.initial() => const SongFilterState();
 }
 
-// 2. The Notifier (Handles logic)
-class SongFilterNotifier extends StateNotifier<SongFilterState> {
-  SongFilterNotifier() : super(SongFilterState.initial());
+class SongFilterNotifier extends Notifier<SongFilterState> {
+  @override
+  SongFilterState build() {
+    return const SongFilterState(); // Initial State
+  }
 
   void setBpmRange(RangeValues range) {
     state = state.copyWith(bpmRange: range);
+  }
+
+  void setSortOption(SongSortOption option) {
+    state = state.copyWith(sortOption: option);
   }
 
   void toggleKey(String key) {
@@ -51,19 +63,25 @@ class SongFilterNotifier extends StateNotifier<SongFilterState> {
   }
 
   void resetAll() {
-    state = SongFilterState.initial();
+    state = const SongFilterState();
   }
 
+  // Batch update (useful for the "Show Results" button)
   void setFilters({
     required Set<String> selectedKeys,
     required RangeValues bpmRange,
+    required SongSortOption sortOption,
   }) {
-    state = state.copyWith(selectedKeys: selectedKeys, bpmRange: bpmRange);
+    state = state.copyWith(
+      selectedKeys: selectedKeys,
+      bpmRange: bpmRange,
+      sortOption: sortOption,
+    );
   }
 }
 
-// 3. The Provider
+// 3. PROVIDER
 final songFilterProvider =
-    StateNotifierProvider<SongFilterNotifier, SongFilterState>((ref) {
+    NotifierProvider<SongFilterNotifier, SongFilterState>(() {
       return SongFilterNotifier();
     });
