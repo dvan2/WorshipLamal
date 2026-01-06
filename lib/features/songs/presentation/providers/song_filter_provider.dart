@@ -14,7 +14,7 @@ class SongFilterState {
     this.selectedKeys = const {},
     this.bpmRange = const RangeValues(40, 200), // Default BPM range
     this.isFiltering = false,
-    this.sortOption = SongSortOption.titleAz,
+    this.sortOption = SongSortOption.newest,
   });
 
   SongFilterState copyWith({
