@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:worship_lamal/features/songs/data/song_repository.dart';
 import 'package:worship_lamal/features/songs/data/remote/songs_api.dart';
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
+
+import '../test_utils/fakes/fixtures.dart';
 
 class MockSongsApi extends Mock implements SongsApi {}
 
@@ -16,14 +17,7 @@ void main() {
   });
 
   test('getSongs returns songs from api', () async {
-    final fakeSongs = [
-      Song(
-        id: '1',
-        title: 'Test Song',
-        artists: [Artist(id: 'a1', name: 'Test Artist')],
-        lyricLines: const [],
-      ),
-    ];
+    final fakeSongs = [fakeSong];
 
     when(() => api.fetchSongs()).thenAnswer((_) async => fakeSongs);
 

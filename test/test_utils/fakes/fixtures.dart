@@ -7,4 +7,5 @@ final fakeSong = Song(
   title: 'Fake Song',
   artists: [fakeArtist],
   lyricLines: const [],
+  createdAt: DateTime.now(),
 );
