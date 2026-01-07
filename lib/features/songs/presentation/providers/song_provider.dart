@@ -17,7 +17,6 @@ final songRepositoryProvider = Provider<SongRepository>((ref) {
 });
 
 // --- RAW DATA PROVIDER ---
-// Fetches data once and caches it.
 final songListProvider = FutureProvider<List<Song>>((ref) async {
   return ref.read(songRepositoryProvider).getSongs();
 });
@@ -97,12 +96,20 @@ final filteredSongsProvider = FutureProvider<List<Song>>((ref) async {
       filteredList.sort((a, b) => a.artistNames.compareTo(b.artistNames));
       break;
     case SongSortOption.newest:
-      // Assuming you have an ID or CreatedAt field.
-      // If using ID for "newest", higher ID usually means newer.
-      filteredList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      filteredList.sort((a, b) {
+        // Handle Nulls: If date is missing, push to bottom
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      });
       break;
     // case SongSortOption.oldest:
-    //   filteredList.sort((a, b) => a.id.compareTo(b.id));
+    //   filteredList.sort((a, b) {
+    //     // Handle Nulls
+    //     if (a.createdAt == null) return 1;
+    //     if (b.createdAt == null) return -1;
+    //     return a.createdAt!.compareTo(b.createdAt!);
+    //   });
     //   break;
   }
 

@@ -7,14 +7,14 @@ class Song {
   final List<LyricLine> lyricLines;
   final String? key;
   final int? bpm;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   Song({
     required this.id,
     required this.title,
     required this.artists,
     required this.lyricLines,
-    required this.createdAt,
+    this.createdAt,
     this.key,
     this.bpm,
   });
@@ -31,7 +31,9 @@ class Song {
           .toList(),
       key: map['key'] as String?,
       bpm: map['bpm'] as int?,
-      createdAt: DateTime.parse(map['created_at']),
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'])
+          : null,
     );
   }
 }

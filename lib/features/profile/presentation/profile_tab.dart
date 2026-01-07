@@ -1,116 +1,207 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/core/theme/app_colors.dart'; // Ensure you have this or use Colors.blue
 import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
 import 'package:worship_lamal/features/songs/data/repositories/auth_repository.dart';
+// 👇 Import the provider we created in Step 1
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 
-class ProfileTab extends StatefulWidget {
+class ProfileTab extends ConsumerStatefulWidget {
   const ProfileTab({super.key});
 
   @override
-  State<ProfileTab> createState() => _ProfileTabState();
+  ConsumerState<ProfileTab> createState() => _ProfileTabState();
 }
 
-class _ProfileTabState extends State<ProfileTab> {
+class _ProfileTabState extends ConsumerState<ProfileTab> {
   final _repo = AuthRepository();
 
   @override
   Widget build(BuildContext context) {
-    // 1. Check if User is Logged In
     final user = _repo.currentUser;
+    // 1. Watch the Preferences State
+    final prefsState = ref.watch(preferencesProvider);
 
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (user.isAnonymous) {
-      return _buildGuestView();
-    }
+    final isGuest = user.isAnonymous;
 
-    // 2. Otherwise, they are a full User
-    return _buildLoggedInView(user);
-  }
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Profile & Settings"),
+        centerTitle: false,
+      ),
+      body: ListView(
+        children: [
+          // 2. HEADER SECTION (Dynamic based on user type)
+          _buildHeader(user, isGuest),
 
-  Widget _buildGuestView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.person_outline, size: 80, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              "Guest Account",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          const Divider(height: 32),
+
+          // 3. AUDIO PREFERENCES (The New Feature)
+          _buildSectionTitle("Audio Preferences"),
+
+          ListTile(
+            title: const Text("Vocal Mode"),
+            subtitle: Text(
+              prefsState.vocalMode == VocalMode.original
+                  ? "Original Keys"
+                  : "Female Keys (Auto-Lowered)",
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "You can create Setlists, but they will be lost if you delete the app.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () async {
-                // Navigate to Signup to "Upgrade" this account
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                );
-                if (mounted) setState(() {});
+            trailing: SegmentedButton<VocalMode>(
+              segments: const [
+                ButtonSegment(
+                  value: VocalMode.original,
+                  label: Text("Orig"),
+                  icon: Icon(Icons.music_note),
+                ),
+                ButtonSegment(
+                  value: VocalMode.female,
+                  label: Text("Fem"),
+                  icon: Icon(Icons.person_3), // Female icon
+                ),
+              ],
+              selected: {prefsState.vocalMode},
+              onSelectionChanged: (Set<VocalMode> newSelection) {
+                // Update the provider
+                ref
+                    .read(preferencesProvider.notifier)
+                    .setVocalMode(newSelection.first);
               },
-              child: const Text("Create Account to Save Data"),
+              showSelectedIcon: false,
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
-            TextButton(
-              onPressed: () async {
-                // Navigate to Login (if they have an existing account elsewhere)
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-                if (mounted) setState(() {});
-              },
-              child: const Text("I already have an account"),
+          ),
+
+          const Divider(height: 32),
+
+          // 4. ACCOUNT ACTIONS
+          _buildSectionTitle("Account"),
+
+          if (isGuest) ...[
+            // Guest Specific Actions
+            ListTile(
+              leading: const Icon(
+                Icons.cloud_upload_outlined,
+                color: AppColors.primary,
+              ),
+              title: const Text("Sync Data"),
+              subtitle: const Text("Create an account to save setlists"),
+              onTap: () => _navigateTo(const SignUpScreen()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.login),
+              title: const Text("Log In"),
+              onTap: () => _navigateTo(const LoginScreen()),
+            ),
+          ] else ...[
+            // Logged In Actions
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text(
+                "Sign Out",
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: _handleSignOut,
             ),
           ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildLoggedInView(User user) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.account_circle, size: 80, color: Colors.blue),
-          const SizedBox(height: 16),
-          Text(user.email ?? 'Anonymous User'),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: (_handleSignOut),
-            child: const Text('Sign Out'),
+          // Version Number (Good practice)
+          const SizedBox(height: 40),
+          const Center(
+            child: Text(
+              "Version 1.0.0",
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _handleSignOut() async {
-    // 1. Sign out the current account
-    await _repo.signOut();
+  Widget _buildHeader(User user, bool isGuest) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: isGuest
+                ? Colors.grey.shade200
+                : AppColors.primary.withOpacity(0.1),
+            child: Icon(
+              isGuest ? Icons.person_outline : Icons.person,
+              size: 40,
+              color: isGuest ? Colors.grey : AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isGuest ? "Guest Musician" : (user.email ?? "User"),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (isGuest)
+                  const Text(
+                    "Settings are saved to this device.",
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  )
+                else
+                  const Text(
+                    "Account Synced ✅",
+                    style: TextStyle(color: Colors.green, fontSize: 13),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    // 2. Immediately sign in as Guest (Anonymously)
-    // This ensures 'currentUser' is never null for long
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _navigateTo(Widget screen) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => screen),
+    );
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _handleSignOut() async {
+    await _repo.signOut();
     try {
       await Supabase.instance.client.auth.signInAnonymously();
     } catch (e) {
       debugPrint("Error signing in anonymously: $e");
     }
-
-    // 3. Refresh the UI
-    // The build method will now see the new Guest user and show _buildGuestView
     if (mounted) setState(() {});
   }
 }

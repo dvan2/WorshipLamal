@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
+import 'package:worship_lamal/core/utils/key_transposer.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
@@ -27,6 +29,9 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final songsAsync = ref.watch(filteredSongsProvider);
+
+    final prefs = ref.watch(preferencesProvider);
+    final isFemaleMode = prefs.vocalMode == VocalMode.female;
 
     return Scaffold(
       appBar: AppBar(
@@ -79,6 +84,11 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
                     final song = songs[index];
                     final isSelected = _selectedIds.contains(song.id);
 
+                    final originalKey = song.key ?? '';
+                    final displayKey = isFemaleMode
+                        ? KeyTransposer.transpose(originalKey, -5)
+                        : originalKey;
+
                     return CheckboxListTile(
                       value: isSelected,
                       activeColor: AppColors.primary,
@@ -86,7 +96,14 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
                         song.title,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      subtitle: Text('${song.artistNames} • ${song.key}'),
+                      subtitle: Text(
+                        '${song.artistNames} • $displayKey',
+                        style: TextStyle(
+                          color: isFemaleMode
+                              ? AppColors.keyBadgeTransposedText
+                              : null,
+                        ),
+                      ),
                       onChanged: (bool? value) {
                         setState(() {
                           if (value == true) {

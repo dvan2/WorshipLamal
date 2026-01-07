@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/display_key_provider.dart';
 
 /// Reusable song list item widget
 /// Displays song information in a clean, consistent format
-class SongListItem extends StatelessWidget {
+class SongListItem extends ConsumerWidget {
   final Song song;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
@@ -18,7 +21,12 @@ class SongListItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final originalKey = song.key ?? "";
+    final displayKey = ref.watch(displayKeyProvider(originalKey));
+    final isTransposed =
+        ref.watch(preferencesProvider).vocalMode == VocalMode.female;
+
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -33,7 +41,7 @@ class SongListItem extends StatelessWidget {
             SizedBox(width: AppConstants.songCardIconPadding),
             _buildSongInfo(context),
             SizedBox(width: AppConstants.spacingLg),
-            _buildMetadata(context),
+            _buildMetadata(context, displayKey, isTransposed),
           ],
         ),
       ),
@@ -88,33 +96,50 @@ class SongListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadata(BuildContext context) {
+  Widget _buildMetadata(
+    BuildContext context,
+    String displayKey,
+    bool isTransposed,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (song.key != null) _buildKeyBadge(context),
-        if (song.key != null && song.bpm != null)
-          SizedBox(height: AppConstants.spacingXs),
+        if (displayKey.isNotEmpty)
+          _buildKeyBadge(context, displayKey, isTransposed),
+
+        if (displayKey.isNotEmpty && song.bpm != null)
+          const SizedBox(height: AppConstants.spacingXs),
+
         if (song.bpm != null) _buildBpmText(context),
       ],
     );
   }
 
-  Widget _buildKeyBadge(BuildContext context) {
+  Widget _buildKeyBadge(
+    BuildContext context,
+    String keyText,
+    bool isTransposed,
+  ) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.badgePaddingHorizontal,
         vertical: AppConstants.badgePaddingVertical,
       ),
       decoration: BoxDecoration(
-        color: AppColors.keyBadgeBackground,
+        // Purple for Transposed (Female), Blue for Original
+        color: isTransposed
+            ? AppColors.keyBadgeTransposedBackground
+            : AppColors.keyBadgeBackground,
         borderRadius: BorderRadius.circular(AppConstants.badgeRadius),
       ),
       child: Text(
-        song.key!,
+        keyText, // Shows the new key (e.g., "D")
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: AppColors.keyBadgeText,
+          fontWeight: FontWeight.w700, // Make it slightly bolder
+          // Purple text for Transposed
+          color: isTransposed
+              ? AppColors.keyBadgeTransposedText
+              : AppColors.keyBadgeText,
         ),
       ),
     );

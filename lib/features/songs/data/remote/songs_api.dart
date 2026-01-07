@@ -38,6 +38,7 @@ class SongsApi {
         title,
         key,
         bpm,
+        created_at,
         song_artists (
           artists (
             id,

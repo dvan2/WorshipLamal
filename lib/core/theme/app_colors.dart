@@ -32,6 +32,15 @@ class AppColors {
   static const Color keyBadgeBackground = Color(0xFFEEF2FF); // Light indigo
   static const Color keyBadgeText = primary;
 
+  // Transposed Key (Purple/Female) - NEW
+  // I selected a "Purple" that visually pairs well with your "Indigo" primary
+  static const Color keyBadgeTransposedBackground = Color(
+    0xFFFAF5FF,
+  ); // Light purple
+  static const Color keyBadgeTransposedText = Color(
+    0xFF9333EA,
+  ); // Vibrant purple
+
   // Divider & Borders
   static const Color divider = Color(0xFFE5E7EB);
   static const Color border = Color(0xFFD1D5DB);
