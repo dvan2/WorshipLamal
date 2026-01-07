@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/core/utils/key_transposer.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/empty.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/header.dart';
@@ -9,6 +11,8 @@ import 'package:worship_lamal/features/setlists/presentation/screens/setlist_det
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_share_sheet.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_viewer_view.dart';
 import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/songs/data/models/song_model.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 class SetlistDetailScreen extends ConsumerWidget {
   final String setlistId;
@@ -127,9 +131,46 @@ class SetlistDetailScreen extends ConsumerWidget {
         final List<String>? selectedIds = await context.pushNamed('songPicker');
         if (selectedIds != null && selectedIds.isNotEmpty) {
           final controller = ref.read(setlistControllerProvider.notifier);
+          final prefs = ref.read(preferencesProvider);
+
+          // B. Get access to the full song list to look up original keys
+          // We use the raw list provider to ensure we have all songs, not just filtered ones
+          final allSongs = ref.read(songListProvider).asData?.value ?? [];
+
+          // C. Loop through selections
           for (final songId in selectedIds) {
-            await controller.addSong(setlistId: setlistId, songId: songId);
+            String? keyToSave;
+
+            // D. Check for Female Mode
+            if (prefs.vocalMode == VocalMode.female) {
+              // Find the song object to get its original key
+              // (orElse handles the rare edge case where a song ID might not exist locally)
+              final song = allSongs.firstWhere(
+                (s) => s.id == songId,
+                orElse: () => Song(
+                  id: '',
+                  title: '',
+                  artists: [],
+                  lyricLines: [],
+                  createdAt: null /*...*/,
+                ), // Dummy fallback
+              );
+
+              if (song.key != null && song.key!.isNotEmpty) {
+                // Calculate the female key (Original - 5 semitones)
+                keyToSave = KeyTransposer.transpose(song.key!, -5);
+              }
+            }
+
+            // E. Add to DB with the calculated override
+            await controller.addSong(
+              setlistId: setlistId,
+              songId: songId,
+              keyOverride:
+                  keyToSave, // Pass null if Original Mode, or "D" if Female Mode
+            );
           }
+
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Added ${selectedIds.length} songs')),

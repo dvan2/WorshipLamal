@@ -82,6 +82,7 @@ class SetlistController extends AsyncNotifier<void> {
   Future<void> addSong({
     required String setlistId,
     required String songId,
+    String? keyOverride,
   }) async {
     state = const AsyncValue.loading();
 
@@ -92,7 +93,12 @@ class SetlistController extends AsyncNotifier<void> {
       if (setlist == null) throw Exception("Setlist not found");
       final newOrder = setlist.items.length;
 
-      await repo.addSong(setlistId: setlistId, songId: songId, order: newOrder);
+      await repo.addSong(
+        setlistId: setlistId,
+        songId: songId,
+        order: newOrder,
+        keyOverride: keyOverride,
+      );
 
       // 5. Refresh
       ref.invalidate(setlistDetailProvider(setlistId));

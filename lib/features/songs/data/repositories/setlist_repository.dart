@@ -32,11 +32,13 @@ class SetlistRepository {
     required String setlistId,
     required String songId,
     required int order,
+    String? keyOverride,
   }) async {
     return await _remote.addSongToSetlist(
       setlistId: setlistId,
       songId: songId,
       order: order,
+      key_override: keyOverride,
     );
   }
 

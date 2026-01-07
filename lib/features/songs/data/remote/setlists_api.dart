@@ -103,11 +103,13 @@ class SetlistsApi {
     required String setlistId,
     required String songId,
     required int order,
+    String? key_override,
   }) async {
     await _client.from('setlist_items').insert({
       'setlist_id': setlistId,
       'song_id': songId,
       'sort_order': order,
+      'key_override': key_override,
     });
   }
 
