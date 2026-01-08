@@ -44,6 +44,7 @@ class FakeSetlistRepository implements SetlistRepository {
     required String setlistId,
     required String songId,
     required int order,
+    String? keyOverride,
   }) async {
     final index = _setlists.indexWhere((s) => s.id == setlistId);
     if (index == -1) throw Exception('Setlist not found');

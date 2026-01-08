@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/models/lyric_line_model.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/display_key_provider.dart';
 
 import '../providers/song_provider.dart';
 import '../widgets/song_header.dart';
@@ -29,18 +31,28 @@ class SongDetailScreen extends ConsumerWidget {
   }
 }
 
-class _SongDetailContent extends StatelessWidget {
+class _SongDetailContent extends ConsumerWidget {
   final Song song;
 
   const _SongDetailContent({required this.song});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final sections = _buildSections(song.lyricLines);
+
+    final displayKey = ref.watch(displayKeyProvider(song.key ?? ''));
+    final isFemaleMode =
+        ref.watch(preferencesProvider).vocalMode == VocalMode.female;
 
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(child: SongHeader(song: song)),
+        SliverToBoxAdapter(
+          child: SongHeader(
+            song: song,
+            displayKey: displayKey,
+            isTransposed: isFemaleMode,
+          ),
+        ),
         SliverPadding(
           padding: EdgeInsets.all(AppConstants.songDetailPadding),
           sliver: SliverList(

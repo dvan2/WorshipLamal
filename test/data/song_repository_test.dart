@@ -24,8 +24,8 @@ void main() {
     final result = await repository.getSongs();
 
     expect(result.length, 1);
-    expect(result.first.title, 'Test Song');
-    expect(result.first.artists.first.name, 'Test Artist');
+    expect(result.first.title, fakeSong.title);
+    expect(result.first.artists, fakeSong.artists);
 
     verify(() => api.fetchSongs()).called(1);
   });

@@ -43,20 +43,20 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
           const Divider(height: 32),
 
           // 3. AUDIO PREFERENCES (The New Feature)
-          _buildSectionTitle("Audio Preferences"),
+          _buildSectionTitle("Preferences"),
 
           ListTile(
             title: const Text("Vocal Mode"),
             subtitle: Text(
               prefsState.vocalMode == VocalMode.original
-                  ? "Original Keys"
+                  ? "Male Keys (Original)"
                   : "Female Keys (Auto-Lowered)",
             ),
             trailing: SegmentedButton<VocalMode>(
               segments: const [
                 ButtonSegment(
                   value: VocalMode.original,
-                  label: Text("Orig"),
+                  label: Text("Male"),
                   icon: Icon(Icons.music_note),
                 ),
                 ButtonSegment(
@@ -148,7 +148,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isGuest ? "Guest Musician" : (user.email ?? "User"),
+                  isGuest ? "Guest Account" : (user.email ?? "User"),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
