@@ -164,4 +164,10 @@ class FakeSetlistRepository implements SetlistRepository {
     // TODO: implement unfollowSetlist
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> addSetlistItems(List<Map<String, dynamic>> rawItems) {
+    // TODO: implement addSetlistItems
+    throw UnimplementedError();
+  }
 }

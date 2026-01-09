@@ -129,47 +129,12 @@ class SetlistDetailScreen extends ConsumerWidget {
       icon: const Icon(Icons.add),
       onPressed: () async {
         final List<String>? selectedIds = await context.pushNamed('songPicker');
+
         if (selectedIds != null && selectedIds.isNotEmpty) {
-          final controller = ref.read(setlistControllerProvider.notifier);
-          final prefs = ref.read(preferencesProvider);
-
-          // B. Get access to the full song list to look up original keys
-          // We use the raw list provider to ensure we have all songs, not just filtered ones
-          final allSongs = ref.read(songListProvider).asData?.value ?? [];
-
-          // C. Loop through selections
-          for (final songId in selectedIds) {
-            String? keyToSave;
-
-            // D. Check for Female Mode
-            if (prefs.vocalMode == VocalMode.female) {
-              // Find the song object to get its original key
-              // (orElse handles the rare edge case where a song ID might not exist locally)
-              final song = allSongs.firstWhere(
-                (s) => s.id == songId,
-                orElse: () => Song(
-                  id: '',
-                  title: '',
-                  artists: [],
-                  lyricLines: [],
-                  createdAt: null /*...*/,
-                ), // Dummy fallback
-              );
-
-              if (song.key != null && song.key!.isNotEmpty) {
-                // Calculate the female key (Original - 5 semitones)
-                keyToSave = KeyTransposer.transpose(song.key!, -5);
-              }
-            }
-
-            // E. Add to DB with the calculated override
-            await controller.addSong(
-              setlistId: setlistId,
-              songId: songId,
-              keyOverride:
-                  keyToSave, // Pass null if Original Mode, or "D" if Female Mode
-            );
-          }
+          // Just call the controller. Logic is hidden.
+          await ref
+              .read(setlistControllerProvider.notifier)
+              .addSongs(setlistId: setlistId, songIds: selectedIds);
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -37,4 +37,36 @@ void main() {
     expect(song.artists, isEmpty);
     expect(song.lyricLines, isEmpty);
   });
+
+  test('SongUi extension returns correct artist names string', () {
+    // Case 1: Multiple Artists
+    final songMultiple = Song(
+      id: '1',
+      title: 'Title',
+      lyricLines: [],
+      artists: [
+        Artist(id: '1', name: 'Bethel'),
+        Artist(id: '2', name: 'Elevation'),
+      ],
+    );
+    expect(songMultiple.artistNames, 'Bethel, Elevation');
+
+    // Case 2: Single Artist
+    final songSingle = Song(
+      id: '1',
+      title: 'Title',
+      lyricLines: [],
+      artists: [Artist(id: '1', name: 'Hillsong')],
+    );
+    expect(songSingle.artistNames, 'Hillsong');
+
+    // Case 3: No Artists (Edge case in extension)
+    final songEmpty = Song(
+      id: '1',
+      title: 'Title',
+      lyricLines: [],
+      artists: [],
+    );
+    expect(songEmpty.artistNames, 'Unknown');
+  });
 }

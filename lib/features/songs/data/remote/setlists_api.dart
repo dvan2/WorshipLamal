@@ -113,6 +113,11 @@ class SetlistsApi {
     });
   }
 
+  Future<void> addSetlistItems(List<Map<String, dynamic>> items) async {
+    // 'insert' accepts a List of Maps for bulk creation
+    await _client.from('setlist_items').insert(items);
+  }
+
   Future<void> updateKeyOverride(String itemId, String newKey) async {
     await _client
         .from('setlist_items')

@@ -42,6 +42,37 @@ class SetlistRepository {
     );
   }
 
+  /// Bulk add songs to a setlist.
+  /// Handles calculating the correct sort_order for the batch.
+  Future<void> addSetlistItems(List<Map<String, dynamic>> rawItems) async {
+    if (rawItems.isEmpty) return;
+
+    final setlistId = rawItems.first['setlist_id'] as String;
+
+    // 2. Determine the starting Sort Order
+    // We fetch the current setlist to see how many items are already there.
+    // If there are 5 items (indices 0-4), the next one should be index 5.
+    final currentSetlist = await getSetlistById(setlistId);
+    int nextOrderIndex = currentSetlist?.items.length ?? 0;
+
+    // 3. Prepare the data for Supabase
+    // We transform the raw controller data into the database schema
+    final List<Map<String, dynamic>> rowsToInsert = rawItems.map((item) {
+      final order = nextOrderIndex++; // Assign current index, then increment
+
+      return {
+        'setlist_id': setlistId,
+        'song_id': item['song_id'],
+        // MAP KEY: Controller sends 'key', DB expects 'key_override'
+        'key_override': item['key'],
+        'sort_order': order,
+      };
+    }).toList();
+
+    // 4. Send to Remote
+    await _remote.addSetlistItems(rowsToInsert);
+  }
+
   Future<void> updateKeyOverride(String itemId, String newKey) async {
     await _remote.updateKeyOverride(itemId, newKey);
   }

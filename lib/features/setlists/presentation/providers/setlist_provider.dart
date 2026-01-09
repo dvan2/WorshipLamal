@@ -1,9 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/core/utils/key_transposer.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/songs/data/remote/setlists_api.dart';
 import 'package:worship_lamal/features/songs/data/repositories/setlist_repository.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 // -----------------------------------------------------------------------------
 // 1. DATA LAYER (The Piping)
@@ -40,6 +43,11 @@ final setlistDetailProvider = FutureProvider.family<Setlist?, String>((
   return repo.getSetlistById(id);
 });
 
+final followedSetlistsProvider = FutureProvider<List<Setlist>>((ref) async {
+  final repo = ref.watch(setlistRepositoryProvider);
+  return repo.getFollowedSetlists();
+});
+
 // -----------------------------------------------------------------------------
 // 3. CONTROLLER (Mutations: Create, Add, Delete)
 // -----------------------------------------------------------------------------
@@ -72,7 +80,6 @@ class SetlistController extends AsyncNotifier<void> {
       return newId;
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
-      debugPrint('Create Failed: $e');
 
       state = AsyncValue.error(e, stack);
       return null;
@@ -110,6 +117,50 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
+  // In SetlistController class
+  Future<void> addSongs({
+    required String setlistId,
+    required List<String> songIds,
+  }) async {
+    state = const AsyncLoading();
+
+    state = await AsyncValue.guard(() async {
+      final repo = ref.read(setlistRepositoryProvider);
+      final songRepo = ref.read(songRepositoryProvider); // Use repo to be safe
+      final prefs = ref.read(preferencesProvider);
+
+      // 1. Fetch song details needed for transposition (safer than reading list provider)
+      // You might need to implement getSongsByIds in your repo, or fetch individually in parallel.
+      // For now, let's assume we can fetch them or just trust the logic.
+
+      final itemsToAdd = <Map<String, dynamic>>[];
+
+      for (final songId in songIds) {
+        String? keyToSave;
+
+        // Logic moved from UI to Controller
+        if (prefs.vocalMode == VocalMode.female) {
+          final song = await songRepo.getSongById(songId); // Fetch fresh data
+          if (song.key != null) {
+            keyToSave = KeyTransposer.transpose(song.key!, -5);
+          }
+        }
+
+        itemsToAdd.add({
+          'setlist_id': setlistId,
+          'song_id': songId,
+          'key': keyToSave, // The repo's add method needs to support this
+        });
+      }
+
+      // 2. Perform BULK insert (Much faster)
+      await repo.addSetlistItems(itemsToAdd);
+
+      // 3. Refresh
+      ref.invalidate(setlistDetailProvider(setlistId));
+    });
+  }
+
   Future<void> updateKeyOverride({
     required String setlistId,
     required String itemId,
@@ -118,13 +169,10 @@ class SetlistController extends AsyncNotifier<void> {
     state = const AsyncValue.loading();
 
     try {
-      // 2. Get the Repository using ref.read()
       final repo = ref.read(setlistRepositoryProvider);
 
-      // 3. Call the Repository method
       await repo.updateKeyOverride(itemId, newKey);
 
-      // 4. Refresh the UI
       ref.invalidate(setlistDetailProvider(setlistId));
 
       state = const AsyncValue.data(null);
@@ -143,13 +191,11 @@ class SetlistController extends AsyncNotifier<void> {
     final repo = ref.read(setlistRepositoryProvider);
 
     try {
-      // 2. Delete it immediately
       await repo.removeSong(item.id);
 
-      // 3. Refresh UI
       ref.invalidate(setlistDetailProvider(setlistId));
 
-      // 4. We don't set state to loading/error because this happens in the background
+      // don't set state to loading/error because this happens in the background
       // while the user sees the row disappear.
     } catch (e) {
       debugPrint('Delete failed: $e');
@@ -170,7 +216,6 @@ class SetlistController extends AsyncNotifier<void> {
     required int oldIndex,
     required int newIndex,
   }) async {
-    // 1. Flutter Reorder Quirk Fix
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
@@ -225,8 +270,3 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 }
-
-final followedSetlistsProvider = FutureProvider<List<Setlist>>((ref) async {
-  final repo = ref.watch(setlistRepositoryProvider);
-  return repo.getFollowedSetlists();
-});

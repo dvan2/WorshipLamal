@@ -8,7 +8,7 @@ void main() {
   late ProviderContainer container;
 
   setUp(() {
-    fakeRepo = FakeSetlistRepository(); // Start empty
+    fakeRepo = FakeSetlistRepository();
 
     container = ProviderContainer(
       overrides: [setlistRepositoryProvider.overrideWithValue(fakeRepo)],

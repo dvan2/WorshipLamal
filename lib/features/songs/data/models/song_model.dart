@@ -23,9 +23,11 @@ class Song {
     return Song(
       id: map['id'] as String,
       title: map['title'] as String,
-      artists: (map['song_artists'] as List)
-          .map((sa) => Artist.fromMap(sa['artists']))
-          .toList(),
+      artists:
+          (map['song_artists'] as List?)?.map((sa) {
+            return Artist.fromMap(sa['artists']);
+          }).toList() ??
+          [],
       lyricLines: (map['lyric_lines'] as List<dynamic>? ?? [])
           .map((line) => LyricLine.fromMap(line))
           .toList(),
@@ -40,7 +42,7 @@ class Song {
 
 extension SongUi on Song {
   String get artistNames {
-    if (artists.isEmpty) return 'Unknown artist';
+    if (artists.isEmpty) return 'Unknown';
     return artists.map((a) => a.name).join(', ');
   }
 }
@@ -52,6 +54,9 @@ class Artist {
   Artist({required this.id, required this.name});
 
   factory Artist.fromMap(Map<String, dynamic> map) {
-    return Artist(id: map['id'] as String, name: map['name'] as String);
+    return Artist(
+      id: map['id'] as String,
+      name: map['name'] as String? ?? 'Unknown Artist',
+    );
   }
 }
