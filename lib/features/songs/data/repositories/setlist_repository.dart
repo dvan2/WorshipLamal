@@ -49,21 +49,15 @@ class SetlistRepository {
 
     final setlistId = rawItems.first['setlist_id'] as String;
 
-    // 2. Determine the starting Sort Order
-    // We fetch the current setlist to see how many items are already there.
-    // If there are 5 items (indices 0-4), the next one should be index 5.
     final currentSetlist = await getSetlistById(setlistId);
     int nextOrderIndex = currentSetlist?.items.length ?? 0;
 
-    // 3. Prepare the data for Supabase
-    // We transform the raw controller data into the database schema
     final List<Map<String, dynamic>> rowsToInsert = rawItems.map((item) {
-      final order = nextOrderIndex++; // Assign current index, then increment
+      final order = nextOrderIndex++;
 
       return {
         'setlist_id': setlistId,
         'song_id': item['song_id'],
-        // MAP KEY: Controller sends 'key', DB expects 'key_override'
         'key_override': item['key'],
         'sort_order': order,
       };
@@ -77,8 +71,30 @@ class SetlistRepository {
     await _remote.updateKeyOverride(itemId, newKey);
   }
 
-  Future<void> removeSong(String itemId) async {
+  Future<void> removeSong(String setlistId, String itemId) async {
     await _remote.deleteSetlistItem(itemId);
+    final setlist = await getSetlistById(setlistId);
+
+    if (setlist == null || setlist.items.isEmpty) return;
+
+    final updates = <Map<String, dynamic>>[];
+
+    for (int i = 0; i < setlist.items.length; i++) {
+      final item = setlist.items[i];
+
+      // Only send an update if the order is actually wrong
+      if (item.sortOrder != i) {
+        updates.add({
+          'id': item.id,
+          'setlist_id': setlistId,
+          'song_id': item.songId,
+          'sort_order': i,
+        });
+      }
+    }
+    if (updates.isNotEmpty) {
+      await _remote.updateSetlistOrder(updates);
+    }
   }
 
   Future<void> reorderSetlistItems(

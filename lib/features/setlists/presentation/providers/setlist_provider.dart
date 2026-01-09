@@ -141,7 +141,7 @@ class SetlistController extends AsyncNotifier<void> {
     final repo = ref.read(setlistRepositoryProvider);
 
     try {
-      await repo.removeSong(item.id);
+      await repo.removeSong(setlistId, item.id);
 
       ref.invalidate(setlistDetailProvider(setlistId));
       ref.invalidate(setlistsListProvider);
@@ -151,42 +151,18 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
-  Future<void> undoRemove({
-    required String setlistId,
-    required SetlistItem item,
-  }) async {
-    // Re-add the song at the end
-    await addSongs(setlistId: setlistId, songIds: [item.songId]);
-  }
-
   Future<void> reorderSongs({
     required String setlistId,
     required List<SetlistItem> currentList,
-    required int oldIndex,
-    required int newIndex,
   }) async {
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
-
-    // 2. Modify the list locally (create a copy to be safe)
-    final items = List<SetlistItem>.from(currentList);
-    final item = items.removeAt(oldIndex);
-    items.insert(newIndex, item);
-
-    // 3. Update Database
-    // We send the ENTIRE re-sorted list to the repo.
-    // The repo will assign sort_order: 0 to the first item, 1 to the second, etc.
-    final repo = ref.read(setlistRepositoryProvider);
-
-    // Optimistically refresh the UI?
-    // Ideally, we'd update the local state immediately, but for now
-    // we'll just fire the API call and invalidate.
     try {
-      await repo.reorderSetlistItems(setlistId, items);
+      final repo = ref.read(setlistRepositoryProvider);
+      await repo.reorderSetlistItems(setlistId, currentList);
+
       ref.invalidate(setlistDetailProvider(setlistId));
     } catch (e) {
       debugPrint('Reorder failed: $e');
+      ref.invalidate(setlistDetailProvider(setlistId));
     }
   }
 

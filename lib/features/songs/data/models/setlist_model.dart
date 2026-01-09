@@ -32,6 +32,24 @@ class Setlist {
           [],
     );
   }
+
+  Setlist copyWith({
+    String? id,
+    String? title,
+    DateTime? createdAt,
+    bool? isPublic,
+    List<SetlistItem>? items,
+    String? userId,
+  }) {
+    return Setlist(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      createdAt: createdAt ?? this.createdAt,
+      isPublic: isPublic ?? this.isPublic,
+      items: items ?? this.items,
+      userId: userId ?? this.userId,
+    );
+  }
 }
 
 class SetlistItem {
@@ -57,6 +75,25 @@ class SetlistItem {
       sortOrder: map['sort_order'] ?? 0,
       // Map the nested 'song' object returned by Supabase
       song: Song.fromMap(map['songs'] as Map<String, dynamic>),
+    );
+  }
+
+  SetlistItem copyWith({
+    String? id,
+    String? songId,
+    Song? song,
+    String? keyOverride,
+    int? sortOrder,
+  }) {
+    return SetlistItem(
+      id: id ?? this.id,
+      songId: songId ?? this.songId,
+      song: song ?? this.song,
+      // Note: This pattern keeps the old value if you pass null.
+      // If you specifically need to set keyOverride to null (remove the key),
+      // you would need to recreate the object manually or use a specialized pattern.
+      keyOverride: keyOverride ?? this.keyOverride,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
