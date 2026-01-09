@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:worship_lamal/core/utils/key_transposer.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/songs/data/remote/setlists_api.dart';
@@ -20,6 +21,7 @@ final setlistsApiProvider = Provider<SetlistsApi>((ref) {
 
 /// Provides the Repository (Dependent on API)
 final setlistRepositoryProvider = Provider<SetlistRepository>((ref) {
+  ref.watch(authStateProvider);
   final api = ref.watch(setlistsApiProvider);
   return SetlistRepository(api);
 });
@@ -48,12 +50,7 @@ final followedSetlistsProvider = FutureProvider<List<Setlist>>((ref) async {
   return repo.getFollowedSetlists();
 });
 
-// -----------------------------------------------------------------------------
-// 3. CONTROLLER (Mutations: Create, Add, Delete)
-// -----------------------------------------------------------------------------
-
-/// Manages actions like "Create Setlist" or "Add Song".
-/// It handles the Loading state for your UI buttons automatically.
+// CONTROLLER (Mutations: Create, Add, Delete)
 final setlistControllerProvider =
     AsyncNotifierProvider<SetlistController, void>(() {
       return SetlistController();
