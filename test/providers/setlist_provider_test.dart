@@ -1,17 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 import '../test_utils/fakes/fake_setlist_repository.dart';
+import '../test_utils/fakes/fake_song_repository.dart';
 
 void main() {
   late FakeSetlistRepository fakeRepo;
   late ProviderContainer container;
+  late FakeSongRepository fakeSongRepo;
 
   setUp(() {
     fakeRepo = FakeSetlistRepository();
+    fakeSongRepo = FakeSongRepository();
 
     container = ProviderContainer(
-      overrides: [setlistRepositoryProvider.overrideWithValue(fakeRepo)],
+      overrides: [
+        setlistRepositoryProvider.overrideWithValue(fakeRepo),
+        songRepositoryProvider.overrideWithValue(fakeSongRepo),
+        preferencesProvider.overrideWith(() => (MockPreferencesNotifier())),
+      ],
     );
   });
 
@@ -93,7 +102,7 @@ void main() {
 
     // 3. Assert: Attempting to delete should throw an exception
     expect(
-      () async => await fakeRepo.removeSong(itemId),
+      () async => await fakeRepo.removeSong(setlist.id, itemId),
       throwsA(isA<Exception>()),
       reason: "User B should NOT be able to delete User A's song",
     );

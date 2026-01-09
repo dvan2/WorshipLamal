@@ -30,7 +30,7 @@ class FakeSetlistRepository implements SetlistRepository {
     final newSetlist = Setlist(
       id: newId,
       title: title,
-      userId: mockCurrentUserId, // Default fake user
+      userId: mockCurrentUserId,
       createdAt: DateTime.now(),
       isPublic: false,
       items: [],
@@ -51,10 +51,6 @@ class FakeSetlistRepository implements SetlistRepository {
 
     final setlist = _setlists[index];
 
-    // Create a Fake SetlistItem
-    // NOTE: In a real app, the DB fetches the Song details via join.
-    // In a fake, we must construct a dummy Song object or fetch from FakeSongRepo.
-    // For simplicity here, we create a minimal dummy song.
     final newItem = SetlistItem(
       id: 'item_${setlist.items.length + 1}',
       songId: songId,
@@ -62,8 +58,6 @@ class FakeSetlistRepository implements SetlistRepository {
       song: fakeSong,
     );
 
-    // Update the setlist with the new item
-    // We have to replace the setlist object since it might be immutable
     final updatedItems = List<SetlistItem>.from(setlist.items)..add(newItem);
 
     _setlists[index] = Setlist(
@@ -77,7 +71,7 @@ class FakeSetlistRepository implements SetlistRepository {
   }
 
   @override
-  Future<void> removeSong(String itemId) async {
+  Future<void> removeSong(String setlistId, String itemId) async {
     for (var i = 0; i < _setlists.length; i++) {
       final setlist = _setlists[i];
 
@@ -166,8 +160,59 @@ class FakeSetlistRepository implements SetlistRepository {
   }
 
   @override
-  Future<void> addSongsToSet(List<Map<String, dynamic>> rawItems) {
-    // TODO: implement addSetlistItems
-    throw UnimplementedError();
+  Future<void> addSongsToSet(List<Map<String, dynamic>> rawItems) async {
+    if (rawItems.isEmpty) return;
+
+    final setlistId = rawItems.first['setlist_id'] as String;
+
+    // 1. Find the Setlist in memory
+    final index = _setlists.indexWhere((s) => s.id == setlistId);
+    if (index == -1) {
+      throw Exception('Setlist not found for id: $setlistId');
+    }
+    final currentSetlist = _setlists[index];
+
+    // 2. Determine the starting Sort Order
+    // (Matches the "Max + 1" logic we discussed to handle gaps correctly)
+    int nextOrderIndex = 0;
+    if (currentSetlist.items.isNotEmpty) {
+      final maxOrder = currentSetlist.items
+          .map((item) => item.sortOrder)
+          .reduce((curr, next) => curr > next ? curr : next);
+      nextOrderIndex = maxOrder + 1;
+    }
+
+    // 3. Convert Raw Maps to Real SetlistItems
+    final newItems = <SetlistItem>[];
+
+    for (final item in rawItems) {
+      final songId = item['song_id'];
+      final keyOverride =
+          item['key'] ?? item['key_override']; // Handle both keys
+
+      newItems.add(
+        SetlistItem(
+          // Generate a unique-ish ID for the fake item
+          id: 'item_${setlistId}_${nextOrderIndex}_$songId',
+          songId: songId,
+          sortOrder: nextOrderIndex++, // Increment for next item
+          keyOverride: keyOverride,
+          song: fakeSong, // Uses the global 'fakeSong' from fixtures.dart
+        ),
+      );
+    }
+
+    // 4. Update the Fake Database
+    // Create a new Setlist object with the combined list of items
+    final updatedList = List<SetlistItem>.from(currentSetlist.items)
+      ..addAll(newItems);
+
+    _setlists[index] = currentSetlist.copyWith(items: updatedList);
+  }
+
+  // NOTE: If your interface also defines 'addSetlistItems',
+  // you can alias it to this method or implement it similarly.
+  Future<void> addSetlistItems(List<Map<String, dynamic>> items) async {
+    await addSongsToSet(items);
   }
 }
