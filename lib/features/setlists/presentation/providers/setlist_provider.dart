@@ -83,37 +83,6 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
-  Future<void> addSong({
-    required String setlistId,
-    required String songId,
-    String? keyOverride,
-  }) async {
-    state = const AsyncValue.loading();
-
-    try {
-      final repo = ref.read(setlistRepositoryProvider);
-
-      final setlist = await repo.getSetlistById(setlistId);
-      if (setlist == null) throw Exception("Setlist not found");
-      final newOrder = setlist.items.length;
-
-      await repo.addSong(
-        setlistId: setlistId,
-        songId: songId,
-        order: newOrder,
-        keyOverride: keyOverride,
-      );
-
-      // 5. Refresh
-      ref.invalidate(setlistDetailProvider(setlistId));
-      ref.invalidate(setlistsListProvider);
-
-      state = const AsyncValue.data(null);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
   // In SetlistController class
   Future<void> addSongs({
     required String setlistId,
@@ -123,19 +92,14 @@ class SetlistController extends AsyncNotifier<void> {
 
     state = await AsyncValue.guard(() async {
       final repo = ref.read(setlistRepositoryProvider);
-      final songRepo = ref.read(songRepositoryProvider); // Use repo to be safe
+      final songRepo = ref.read(songRepositoryProvider);
       final prefs = ref.read(preferencesProvider);
-
-      // 1. Fetch song details needed for transposition (safer than reading list provider)
-      // You might need to implement getSongsByIds in your repo, or fetch individually in parallel.
-      // For now, let's assume we can fetch them or just trust the logic.
 
       final itemsToAdd = <Map<String, dynamic>>[];
 
       for (final songId in songIds) {
         String? keyToSave;
 
-        // Logic moved from UI to Controller
         if (prefs.vocalMode == VocalMode.female) {
           final song = await songRepo.getSongById(songId); // Fetch fresh data
           if (song.key != null) {
@@ -146,14 +110,12 @@ class SetlistController extends AsyncNotifier<void> {
         itemsToAdd.add({
           'setlist_id': setlistId,
           'song_id': songId,
-          'key': keyToSave, // The repo's add method needs to support this
+          'key': keyToSave,
         });
       }
 
-      // 2. Perform BULK insert (Much faster)
-      await repo.addSetlistItems(itemsToAdd);
+      await repo.addSongsToSet(itemsToAdd);
 
-      // 3. Refresh
       ref.invalidate(setlistDetailProvider(setlistId));
     });
   }
@@ -163,39 +125,29 @@ class SetlistController extends AsyncNotifier<void> {
     required String itemId,
     required String newKey,
   }) async {
-    state = const AsyncValue.loading();
-
     try {
       final repo = ref.read(setlistRepositoryProvider);
-
       await repo.updateKeyOverride(itemId, newKey);
-
       ref.invalidate(setlistDetailProvider(setlistId));
-
-      state = const AsyncValue.data(null);
-    } catch (e, stack) {
+    } catch (e) {
       debugPrint('Update Key Failed: $e');
-      state = AsyncValue.error(e, stack);
     }
   }
 
   Future<void> removeSong({
     required String setlistId,
-    required SetlistItem
-    item, // We pass the whole item so we can restore it if needed
+    required SetlistItem item,
   }) async {
-    // 1. Keep a backup in memory for the Undo action
     final repo = ref.read(setlistRepositoryProvider);
 
     try {
       await repo.removeSong(item.id);
 
       ref.invalidate(setlistDetailProvider(setlistId));
-
-      // don't set state to loading/error because this happens in the background
-      // while the user sees the row disappear.
+      ref.invalidate(setlistsListProvider);
     } catch (e) {
       debugPrint('Delete failed: $e');
+      ref.invalidate(setlistDetailProvider(setlistId));
     }
   }
 
@@ -203,8 +155,8 @@ class SetlistController extends AsyncNotifier<void> {
     required String setlistId,
     required SetlistItem item,
   }) async {
-    // Re-add the song with its original sort order
-    await addSong(setlistId: setlistId, songId: item.songId);
+    // Re-add the song at the end
+    await addSongs(setlistId: setlistId, songIds: [item.songId]);
   }
 
   Future<void> reorderSongs({
@@ -238,17 +190,10 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
-  // FOLLOWED SETLISTS PROVIDER
-
-  /// Toggle the follow status of a setlist
   Future<void> toggleFollow({
     required String setlistId,
     required bool isCurrentlyFollowing,
   }) async {
-    // 1. Optimistic Update or Loading State?
-    // Since this is a simple toggle, we usually don't need a full loading screen,
-    // but preventing double-taps is good.
-
     try {
       final repo = ref.read(setlistRepositoryProvider);
 
@@ -258,8 +203,6 @@ class SetlistController extends AsyncNotifier<void> {
         await repo.followSetlist(setlistId);
       }
 
-      // 2. Refresh the list of followed setlists
-      // This will automatically update the UI button state because the UI watches this list.
       ref.invalidate(followedSetlistsProvider);
     } catch (e, stack) {
       debugPrint('Toggle follow failed: $e');

@@ -44,7 +44,7 @@ class SetlistRepository {
 
   /// Bulk add songs to a setlist.
   /// Handles calculating the correct sort_order for the batch.
-  Future<void> addSetlistItems(List<Map<String, dynamic>> rawItems) async {
+  Future<void> addSongsToSet(List<Map<String, dynamic>> rawItems) async {
     if (rawItems.isEmpty) return;
 
     final setlistId = rawItems.first['setlist_id'] as String;

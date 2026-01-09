@@ -103,9 +103,9 @@ class AddToSetlistSheet extends ConsumerWidget {
                               try {
                                 await ref
                                     .read(setlistControllerProvider.notifier)
-                                    .addSong(
+                                    .addSongs(
                                       setlistId: setlist.id,
-                                      songId: songId,
+                                      songIds: [songId],
                                     );
 
                                 // 3. Show Success Message

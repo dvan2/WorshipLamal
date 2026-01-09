@@ -166,7 +166,7 @@ class FakeSetlistRepository implements SetlistRepository {
   }
 
   @override
-  Future<void> addSetlistItems(List<Map<String, dynamic>> rawItems) {
+  Future<void> addSongsToSet(List<Map<String, dynamic>> rawItems) {
     // TODO: implement addSetlistItems
     throw UnimplementedError();
   }

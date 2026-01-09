@@ -34,7 +34,7 @@ void main() {
 
     // 2. Act: Add a song
     final controller = container.read(setlistControllerProvider.notifier);
-    await controller.addSong(setlistId: setlistId, songId: 'song_1');
+    await controller.addSongs(setlistId: setlistId, songIds: ['song_1']);
 
     // 3. Assert: Fetch the specific setlist and check items
     final setlist = await fakeRepo.getSetlistById(setlistId);
