@@ -131,6 +131,13 @@ class SetlistsApi {
     await _client.from('setlist_items').delete().eq('id', itemId);
   }
 
+  Future<void> deleteAndNormalize(String itemId, String setlistId) async {
+    await _client.rpc(
+      'delete_setlist_item_and_normalize',
+      params: {'target_item_id': itemId, 'target_setlist_id': setlistId},
+    );
+  }
+
   Future<void> updateSetlistOrder(List<Map<String, dynamic>> updates) async {
     // "upsert" will update existing rows if the IDs match
     await _client.from('setlist_items').upsert(updates);

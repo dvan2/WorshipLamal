@@ -50,11 +50,18 @@ class SetlistRepository {
     final setlistId = rawItems.first['setlist_id'] as String;
 
     final currentSetlist = await getSetlistById(setlistId);
-    int nextOrderIndex = currentSetlist?.items.length ?? 0;
+    int nextOrderIndex = 0;
+    if (currentSetlist != null && currentSetlist.items.isNotEmpty) {
+      // Find the highest number in the list
+      final maxOrder = currentSetlist.items
+          .map((item) => item.sortOrder)
+          .reduce((curr, next) => curr > next ? curr : next);
+
+      nextOrderIndex = maxOrder + 1;
+    }
 
     final List<Map<String, dynamic>> rowsToInsert = rawItems.map((item) {
       final order = nextOrderIndex++;
-
       return {
         'setlist_id': setlistId,
         'song_id': item['song_id'],
@@ -63,7 +70,6 @@ class SetlistRepository {
       };
     }).toList();
 
-    // 4. Send to Remote
     await _remote.addSetlistItems(rowsToInsert);
   }
 
@@ -72,29 +78,7 @@ class SetlistRepository {
   }
 
   Future<void> removeSong(String setlistId, String itemId) async {
-    await _remote.deleteSetlistItem(itemId);
-    final setlist = await getSetlistById(setlistId);
-
-    if (setlist == null || setlist.items.isEmpty) return;
-
-    final updates = <Map<String, dynamic>>[];
-
-    for (int i = 0; i < setlist.items.length; i++) {
-      final item = setlist.items[i];
-
-      // Only send an update if the order is actually wrong
-      if (item.sortOrder != i) {
-        updates.add({
-          'id': item.id,
-          'setlist_id': setlistId,
-          'song_id': item.songId,
-          'sort_order': i,
-        });
-      }
-    }
-    if (updates.isNotEmpty) {
-      await _remote.updateSetlistOrder(updates);
-    }
+    await _remote.deleteAndNormalize(itemId, setlistId);
   }
 
   Future<void> reorderSetlistItems(
@@ -106,8 +90,8 @@ class SetlistRepository {
       final item = entry.value;
 
       return {
-        'id': item.id, // The row to update
-        'setlist_id': setlistId, // <--- FIX: Use the actual setlistId parameter
+        'id': item.id,
+        'setlist_id': setlistId,
         'song_id': item.songId,
         'sort_order': index,
       };

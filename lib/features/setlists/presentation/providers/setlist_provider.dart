@@ -117,6 +117,7 @@ class SetlistController extends AsyncNotifier<void> {
       await repo.addSongsToSet(itemsToAdd);
 
       ref.invalidate(setlistDetailProvider(setlistId));
+      ref.invalidate(setlistsListProvider);
     });
   }
 
