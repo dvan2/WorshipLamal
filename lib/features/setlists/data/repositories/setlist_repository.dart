@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:worship_lamal/features/songs/data/remote/setlists_api.dart';
+import 'package:worship_lamal/features/setlists/data/remote/setlists_api.dart';
 import '../models/setlist_model.dart';
 
 class SetlistRepository {

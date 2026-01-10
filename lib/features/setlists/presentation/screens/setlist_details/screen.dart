@@ -8,7 +8,7 @@ import 'package:worship_lamal/features/setlists/presentation/screens/setlist_det
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_owner_view.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_share_sheet.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_viewer_view.dart';
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 
 class SetlistDetailScreen extends ConsumerWidget {
   final String setlistId;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 
 // The Setlist details header showing title, date
 class SetlistHeader extends StatelessWidget {

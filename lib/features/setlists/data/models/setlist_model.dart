@@ -1,4 +1,4 @@
-import './song_model.dart';
+import '../../../songs/data/models/song_model.dart';
 
 class Setlist {
   final String id;

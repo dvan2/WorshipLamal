@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
 
 // Helper function to show the sheet

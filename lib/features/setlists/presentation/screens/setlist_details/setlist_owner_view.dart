@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/key_picker_dialog.dart';
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/item_card.dart';
 

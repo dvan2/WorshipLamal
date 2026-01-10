@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 
 class SetlistCard extends StatelessWidget {
   final Setlist setlist;
