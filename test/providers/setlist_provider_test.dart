@@ -115,4 +115,181 @@ void main() {
       reason: "The song should still remain in the list",
     );
   });
+
+  test(
+    'Vocal Mode: Adding song in Female Mode auto-transposes key (-5)',
+    () async {
+      // 1. Setup: Switch to Female Mode
+      final prefsNotifier =
+          container.read(preferencesProvider.notifier)
+              as MockPreferencesNotifier;
+      prefsNotifier.setMode(VocalMode.female);
+
+      // Setup: Ensure the Fake Song Repo returns a song with a known key
+      // (Assuming FakeSongRepository returns a song with key 'C' by default)
+      // C transposed -5 semitones -> G
+
+      final setlistId = await fakeRepo.createSetlist('Worship Service');
+
+      // 2. Act: Add the song
+      final controller = container.read(setlistControllerProvider.notifier);
+      await controller.addSongs(
+        setlistId: setlistId,
+        songIds: ['song_with_key_C'],
+      );
+
+      // 3. Assert
+      final setlist = await fakeRepo.getSetlistById(setlistId);
+      final item = setlist.items.first;
+
+      expect(
+        item.keyOverride,
+        'G',
+        reason: "Key 'C' should transpose to 'G' in female mode",
+      );
+    },
+  );
+
+  test('Batch Add: Can add multiple songs at once', () async {
+    final setlistId = await fakeRepo.createSetlist('Batch Test');
+    final controller = container.read(setlistControllerProvider.notifier);
+
+    // Act: Add 3 songs
+    await controller.addSongs(
+      setlistId: setlistId,
+      songIds: ['s1', 's2', 's3'],
+    );
+
+    // Assert
+    final setlist = await fakeRepo.getSetlistById(setlistId);
+    expect(setlist.items.length, 3);
+
+    // Check order (0, 1, 2)
+    expect(setlist.items[0].songId, 's1');
+    expect(setlist.items[0].sortOrder, 0);
+    expect(setlist.items[2].songId, 's3');
+    expect(setlist.items[2].sortOrder, 2);
+  });
+
+  test('Reorder: Updates sort order in database', () async {
+    // 1. Setup: Create list with [A, B]
+    final setlistId = await fakeRepo.createSetlist('Reorder Test');
+    final controller = container.read(setlistControllerProvider.notifier);
+    await controller.addSongs(
+      setlistId: setlistId,
+      songIds: ['song_A', 'song_B'],
+    );
+
+    var setlist = await fakeRepo.getSetlistById(setlistId);
+    final itemA = setlist.items[0];
+    final itemB = setlist.items[1];
+
+    // 2. Act: Swap them in memory and send to controller
+    // New Order: [B, A]
+    final reorderedList = [itemB, itemA];
+
+    await controller.reorderSongs(
+      setlistId: setlistId,
+      currentList: reorderedList,
+    );
+
+    // 3. Assert: Fetch fresh from DB and check indices
+    setlist = await fakeRepo.getSetlistById(setlistId);
+
+    expect(
+      setlist.items[0].songId,
+      'song_B',
+      reason: "First item should now be B",
+    );
+    expect(
+      setlist.items[1].songId,
+      'song_A',
+      reason: "Second item should now be A",
+    );
+  });
+
+  test('Update Key Override: Persists new key', () async {
+    // 1. Setup
+    final setlistId = await fakeRepo.createSetlist('Key Test');
+    final controller = container.read(setlistControllerProvider.notifier);
+    await controller.addSongs(setlistId: setlistId, songIds: ['song_1']);
+
+    var setlist = await fakeRepo.getSetlistById(setlistId);
+    final itemId = setlist.items.first.id;
+
+    // 2. Act: Change key to 'F#'
+    await controller.updateKeyOverride(
+      setlistId: setlistId,
+      itemId: itemId,
+      newKey: 'F#',
+    );
+
+    setlist = await fakeRepo.getSetlistById(setlistId);
+    expect(setlist.items.first.keyOverride, 'F#');
+  });
+
+  test('Remove Song: Deletes item and updates count', () async {
+    // 1. Setup
+    final setlistId = await fakeRepo.createSetlist('Delete Test');
+    final controller = container.read(setlistControllerProvider.notifier);
+    await controller.addSongs(
+      setlistId: setlistId,
+      songIds: ['song_to_delete'],
+    );
+
+    var setlist = await fakeRepo.getSetlistById(setlistId);
+    final item = setlist.items.first;
+
+    // 2. Act
+    await controller.removeSong(setlistId: setlistId, item: item);
+
+    // 3. Assert
+    setlist = await fakeRepo.getSetlistById(setlistId);
+    expect(setlist.items.isEmpty, isTrue);
+  });
+
+  test('Toggle Follow: correctly follows and unfollows setlists', () async {
+    // 1. Setup: Create a setlist
+    final setlistId = await fakeRepo.createSetlist('Community Worship');
+    final controller = container.read(setlistControllerProvider.notifier);
+
+    // -------------------------------------------------------------
+    // SCENARIO 1: Follow (currently NOT following)
+    // -------------------------------------------------------------
+
+    // Act
+    await controller.toggleFollow(
+      setlistId: setlistId,
+      isCurrentlyFollowing: false,
+    );
+
+    // Assert
+    var isFollowing = await fakeRepo.isFollowing(setlistId);
+    expect(isFollowing, isTrue, reason: "Should be following after toggle ON");
+
+    // Optional: Check if it appears in the followed list
+    var followedList = await fakeRepo.getFollowedSetlists();
+    expect(followedList.length, 1);
+
+    // -------------------------------------------------------------
+    // SCENARIO 2: Unfollow (currently IS following)
+    // -------------------------------------------------------------
+
+    // Act
+    await controller.toggleFollow(
+      setlistId: setlistId,
+      isCurrentlyFollowing: true, // User IS currently following
+    );
+
+    // Assert
+    isFollowing = await fakeRepo.isFollowing(setlistId);
+    expect(
+      isFollowing,
+      isFalse,
+      reason: "Should NOT be following after toggle OFF",
+    );
+
+    followedList = await fakeRepo.getFollowedSetlists();
+    expect(followedList.isEmpty, isTrue);
+  });
 }

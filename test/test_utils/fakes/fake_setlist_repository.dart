@@ -6,6 +6,7 @@ import 'fixtures.dart';
 class FakeSetlistRepository implements SetlistRepository {
   final List<Setlist> _setlists = [];
   String mockCurrentUserId = 'user_1';
+  final Set<String> _followedSetlistIds = {};
 
   FakeSetlistRepository({List<Setlist>? initialData}) {
     if (initialData != null) _setlists.addAll(initialData);
@@ -120,8 +121,29 @@ class FakeSetlistRepository implements SetlistRepository {
 
   @override
   Future<void> updateKeyOverride(String itemId, String newKey) async {
-    // Logic to find item and update keyOverride field...
-    // (Omitted for brevity, but follows same pattern as add/remove)
+    // 1. Iterate through all setlists to find the one containing the item
+    for (int i = 0; i < _setlists.length; i++) {
+      final setlist = _setlists[i];
+      final itemIndex = setlist.items.indexWhere((item) => item.id == itemId);
+
+      // 2. If found, update it
+      if (itemIndex != -1) {
+        // Create a copy of the item with the new key
+        final updatedItem = setlist.items[itemIndex].copyWith(
+          keyOverride: newKey,
+        );
+
+        // Create a new list of items with the updated item inserted
+        final updatedItems = List<SetlistItem>.from(setlist.items);
+        updatedItems[itemIndex] = updatedItem;
+
+        // Save the updated setlist back to memory
+        _setlists[i] = setlist.copyWith(items: updatedItems);
+        return; // Exit once found and updated
+      }
+    }
+
+    throw Exception('Item with ID $itemId not found');
   }
 
   @override
@@ -136,27 +158,24 @@ class FakeSetlistRepository implements SetlistRepository {
   }
 
   @override
-  Future<void> followSetlist(String setlistId) {
-    // TODO: implement followSetlist
-    throw UnimplementedError();
+  Future<void> followSetlist(String setlistId) async {
+    // Simulate API delay if you want, or just add immediately
+    _followedSetlistIds.add(setlistId);
   }
 
   @override
-  Future<List<Setlist>> getFollowedSetlists() {
-    // TODO: implement getFollowedSetlists
-    throw UnimplementedError();
+  Future<void> unfollowSetlist(String setlistId) async {
+    _followedSetlistIds.remove(setlistId);
   }
 
   @override
-  Future<bool> isFollowing(String setlistId) {
-    // TODO: implement isFollowing
-    throw UnimplementedError();
+  Future<bool> isFollowing(String setlistId) async {
+    return _followedSetlistIds.contains(setlistId);
   }
 
   @override
-  Future<void> unfollowSetlist(String setlistId) {
-    // TODO: implement unfollowSetlist
-    throw UnimplementedError();
+  Future<List<Setlist>> getFollowedSetlists() async {
+    return _setlists.where((s) => _followedSetlistIds.contains(s.id)).toList();
   }
 
   @override

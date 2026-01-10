@@ -34,8 +34,9 @@ class KeyTransposer {
 
     // B. Find Index
     int index = _chromaticScale.indexOf(key);
-    if (index == -1)
+    if (index == -1) {
       return originalKey; // Return original if unknown (e.g. "?")
+    }
 
     // C. Calculate New Index (Circular Math)
     // We add 12 before modulo to handle negative subtraction correctly

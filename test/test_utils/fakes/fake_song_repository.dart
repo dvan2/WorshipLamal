@@ -2,21 +2,22 @@ import 'package:worship_lamal/features/profile/presentation/providers/preference
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/song_repository.dart';
 
-class FakeSongRepository implements SongRepository {
-  FakeSongRepository({this.songs = const []});
+import 'fixtures.dart';
 
-  final List<Song> songs;
+class FakeSongRepository implements SongRepository {
+  final List<Song> _songs;
+  FakeSongRepository({List<Song>? songs}) : _songs = songs ?? kTestSongs;
 
   @override
   Future<List<Song>> getSongs() async {
-    return songs;
+    return _songs;
   }
 
   @override
   Future<Song> getSongById(String id) async {
-    return songs.firstWhere(
+    return _songs.firstWhere(
       (song) => song.id == id,
-      orElse: () => throw Exception('Song not found'),
+      orElse: () => throw Exception('Song not found: $id'),
     );
   }
 }
@@ -33,15 +34,17 @@ class FakeFailingSongRepository implements SongRepository {
   }
 }
 
-// 1. Extend the real Notifier
 class MockPreferencesNotifier extends PreferencesNotifier {
+  // Allow us to change this from the test
+  VocalMode _currentMode = VocalMode.original;
+
+  void setMode(VocalMode mode) {
+    _currentMode = mode;
+    state = PreferencesState(vocalMode: mode); // Update state immediately
+  }
+
   @override
-  // The return type must match your real Notifier's state class!
-  // (It is likely 'PreferencesState', not 'VocalMode')
   PreferencesState build() {
-    // 2. Return the full State Object, not just the enum
-    return const PreferencesState(
-      vocalMode: VocalMode.original, // Set the default for tests
-    );
+    return PreferencesState(vocalMode: _currentMode);
   }
 }
