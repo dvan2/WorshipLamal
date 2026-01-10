@@ -1,5 +1,5 @@
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
-import 'package:worship_lamal/features/songs/data/repositories/setlist_repository.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/repositories/setlist_repository.dart';
 
 import 'fixtures.dart';
 

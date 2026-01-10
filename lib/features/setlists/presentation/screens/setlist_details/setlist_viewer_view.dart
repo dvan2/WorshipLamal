@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/item_card.dart';
 
 class SetlistViewerView extends StatelessWidget {

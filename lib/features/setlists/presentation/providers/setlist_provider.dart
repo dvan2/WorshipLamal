@@ -4,9 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:worship_lamal/core/utils/key_transposer.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
-import 'package:worship_lamal/features/songs/data/models/setlist_model.dart';
-import 'package:worship_lamal/features/songs/data/remote/setlists_api.dart';
-import 'package:worship_lamal/features/songs/data/repositories/setlist_repository.dart';
+import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/setlists/data/remote/setlists_api.dart';
+import 'package:worship_lamal/features/setlists/data/repositories/setlist_repository.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 // -----------------------------------------------------------------------------
