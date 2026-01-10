@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/setlists/data/remote/setlists_api.dart';
 import 'package:worship_lamal/features/setlists/data/repositories/setlist_repository.dart';
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
 import '../test_utils/fakes/fixtures.dart';
 
@@ -34,11 +33,6 @@ void main() {
       () async {
         final setlistId = 'set_123';
 
-        // SCENARIO: The database has a "Gap" or collision potential.
-        // Existing items: [Item A (Order 0), Item B (Order 5)]
-        // Length is 2. If we used "length" for the next order, we'd get 2.
-        // But 2 is less than 5, so the new song would appear in the MIDDLE, not the end.
-
         final existingItems = [
           SetlistItem(id: 'i1', songId: 's1', sortOrder: 0, song: fakeSong),
           SetlistItem(
@@ -58,12 +52,10 @@ void main() {
           isPublic: false,
         );
 
-        // STUB: Return our gapped list when asked
         when(
           () => mockApi.fetchSetlistById(setlistId),
         ).thenAnswer((_) async => mockSetlist);
 
-        // STUB: api.addSetlistItems returns void
         when(() => mockApi.addSetlistItems(any())).thenAnswer((_) async {});
 
         // ACT: Add a new song
@@ -71,9 +63,6 @@ void main() {
           {'setlist_id': setlistId, 'song_id': 'new_song', 'key': 'C'},
         ]);
 
-        // ASSERT:
-        // We verify the API was called with sort_order: 6 (Max + 1)
-        // If your code uses "length" (which is 2), this test will FAIL (which is good!)
         final capturedCall =
             verify(() => mockApi.addSetlistItems(captureAny())).captured.single
                 as List<Map<String, dynamic>>;

@@ -1,32 +1,48 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:worship_lamal/features/songs/data/song_repository.dart';
 import 'package:worship_lamal/features/songs/data/remote/songs_api.dart';
+import 'package:worship_lamal/features/songs/data/song_repository.dart';
 
-import '../test_utils/fakes/fixtures.dart';
+import '../test_utils/fakes/fixtures.dart'; // Import your fixtures
 
+// 1. Mock the API
 class MockSongsApi extends Mock implements SongsApi {}
 
 void main() {
-  late MockSongsApi api;
   late SongRepository repository;
+  late MockSongsApi mockApi;
 
   setUp(() {
-    api = MockSongsApi();
-    repository = SongRepository(api);
+    mockApi = MockSongsApi();
+    repository = SongRepository(mockApi);
   });
 
-  test('getSongs returns songs from api', () async {
-    final fakeSongs = [fakeSong];
+  group('SongRepository', () {
+    test('getSongs returns list of songs from API', () async {
+      // Arrange
+      // Note: Check your actual SongsApi method name. I assumed 'fetchSongs'
+      when(() => mockApi.fetchSongs()).thenAnswer((_) async => kTestSongs);
 
-    when(() => api.fetchSongs()).thenAnswer((_) async => fakeSongs);
+      // Act
+      final result = await repository.getSongs();
 
-    final result = await repository.getSongs();
+      // Assert
+      verify(() => mockApi.fetchSongs()).called(1);
+      expect(result, equals(kTestSongs));
+    });
 
-    expect(result.length, 1);
-    expect(result.first.title, fakeSong.title);
-    expect(result.first.artists, fakeSong.artists);
+    test('getSongById returns specific song from API', () async {
+      final expectedSong = kTestSongs.first;
+      when(
+        () => mockApi.fetchSongById(expectedSong.id),
+      ).thenAnswer((_) async => expectedSong);
 
-    verify(() => api.fetchSongs()).called(1);
+      // Act
+      final result = await repository.getSongById(expectedSong.id);
+
+      // Assert
+      verify(() => mockApi.fetchSongById(expectedSong.id)).called(1);
+      expect(result, equals(expectedSong));
+    });
   });
 }
