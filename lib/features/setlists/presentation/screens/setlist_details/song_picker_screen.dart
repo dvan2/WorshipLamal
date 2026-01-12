@@ -6,6 +6,7 @@ import 'package:worship_lamal/core/utils/key_transposer.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
+import 'package:worship_lamal/features/songs/presentation/screens/songs_tab.dart';
 
 class SongPickerScreen extends ConsumerStatefulWidget {
   const SongPickerScreen({super.key});
@@ -21,14 +22,15 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
   @override
   void initState() {
     super.initState();
-    // Clear any previous search queries so the list is full
-    // We delay this to avoid "cannot modify provider during build" errors
-    Future.microtask(() => ref.read(searchQueryProvider.notifier).clear());
+    Future.microtask(
+      () => ref.read(pickerSearchQueryProvider.notifier).clear(),
+    );
+    Future.microtask(() => ref.read(pickerFilterProvider.notifier).resetAll());
   }
 
   @override
   Widget build(BuildContext context) {
-    final songsAsync = ref.watch(filteredSongsProvider);
+    final songsAsync = ref.watch(pickerFilteredSongsProvider);
 
     final prefs = ref.watch(preferencesProvider);
     final isFemaleMode = prefs.vocalMode == VocalMode.female;
@@ -56,15 +58,9 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
           // Search Bar
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              onChanged: (val) =>
-                  ref.read(searchQueryProvider.notifier).setQuery(val),
-              decoration: const InputDecoration(
-                hintText: 'Search library...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
+            child: SongSearchField(
+              searchProvider: pickerSearchQueryProvider,
+              filterProvider: pickerFilterProvider,
             ),
           ),
           // List

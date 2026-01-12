@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
+import 'package:worship_lamal/core/utils/key_transposer.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
 import '../providers/song_filter_provider.dart';
 
@@ -56,6 +58,8 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final prefs = ref.watch(preferencesProvider);
+    final isFemaleMode = prefs.vocalMode == VocalMode.female;
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -159,15 +163,35 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
 
           // --- Key Filter ---
           const SizedBox(height: 16),
-          const Text("Key", style: TextStyle(fontWeight: FontWeight.w600)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Key", style: TextStyle(fontWeight: FontWeight.w600)),
+              // Optional: Helper text to explain the transposition
+              if (isFemaleMode)
+                Text(
+                  "(Displaying Female Keys)",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.primary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: allKeys.map((key) {
               final isSelected = _tempSelectedKeys.contains(key);
+              String displayLabel = key;
+
+              if (isFemaleMode) {
+                displayLabel = KeyTransposer.transpose(key, -5);
+              }
               return ChoiceChip(
-                label: Text(key),
+                label: Text(displayLabel),
                 selected: isSelected,
                 // Update Local State
                 onSelected: (_) => _toggleKey(key),
