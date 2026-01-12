@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PreferencesService {
   // Define keys here to avoid typos later
   static const _keyVocalMode = 'vocal_mode';
-  static const _keyThemeMode = 'theme_mode';
 
   /// Save the vocal mode (0 = Original, 1 = Female)
   Future<void> saveVocalMode(int modeIndex) async {

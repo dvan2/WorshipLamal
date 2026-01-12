@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// Ensure this path matches your project structure
+import 'package:worship_lamal/core/utils/apply_song_filter.dart';
+import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 // 1. STATE OBJECT
 class SongFilterState {
@@ -80,8 +82,55 @@ class SongFilterNotifier extends Notifier<SongFilterState> {
   }
 }
 
-// 3. PROVIDER
 final songFilterProvider =
     NotifierProvider<SongFilterNotifier, SongFilterState>(() {
       return SongFilterNotifier();
     });
+
+final pickerSearchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(
+  () {
+    return SearchQueryNotifier();
+  },
+);
+
+final pickerFilterProvider =
+    NotifierProvider<SongFilterNotifier, SongFilterState>(() {
+      return SongFilterNotifier();
+    });
+
+class SearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() {
+    return '';
+  }
+
+  void setQuery(String query) {
+    state = query;
+  }
+
+  void clear() {
+    state = '';
+  }
+}
+
+final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(() {
+  return SearchQueryNotifier();
+});
+
+final filteredSongsProvider = FutureProvider<List<Song>>((ref) async {
+  final allSongs = await ref.watch(songListProvider.future);
+
+  final query = ref.watch(searchQueryProvider).toLowerCase();
+  final filters = ref.watch(songFilterProvider);
+
+  return applyFilterAndSort(allSongs: allSongs, query: query, filters: filters);
+});
+
+final pickerFilteredSongsProvider = FutureProvider<List<Song>>((ref) async {
+  final allSongs = await ref.watch(songListProvider.future);
+
+  final query = ref.watch(pickerSearchQueryProvider); // <--- Picker Search
+  final filters = ref.watch(pickerFilterProvider); // <--- Picker Filters
+
+  return applyFilterAndSort(allSongs: allSongs, query: query, filters: filters);
+});

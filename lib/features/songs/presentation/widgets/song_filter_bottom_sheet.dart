@@ -5,7 +5,8 @@ import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
 import '../providers/song_filter_provider.dart';
 
 class SongFilterBottomSheet extends ConsumerStatefulWidget {
-  const SongFilterBottomSheet({super.key});
+  final NotifierProvider<SongFilterNotifier, SongFilterState> targetProvider;
+  const SongFilterBottomSheet({super.key, required this.targetProvider});
 
   @override
   ConsumerState<SongFilterBottomSheet> createState() =>
@@ -37,10 +38,10 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
   void initState() {
     super.initState();
     // 2. Initialize with the CURRENT global filters
-    final globalState = ref.read(songFilterProvider);
-    _tempSelectedKeys = Set.from(globalState.selectedKeys);
-    _tempBpmRange = globalState.bpmRange;
-    _tempSortOption = globalState.sortOption;
+    final currentState = ref.read(widget.targetProvider);
+    _tempSelectedKeys = Set.from(currentState.selectedKeys);
+    _tempBpmRange = currentState.bpmRange;
+    _tempSortOption = currentState.sortOption;
   }
 
   void _toggleKey(String key) {
@@ -198,7 +199,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
               ),
               onPressed: () {
                 ref
-                    .read(songFilterProvider.notifier)
+                    .read(widget.targetProvider.notifier)
                     .setFilters(
                       selectedKeys: _tempSelectedKeys,
                       bpmRange: _tempBpmRange,

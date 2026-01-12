@@ -9,9 +9,8 @@ import 'package:worship_lamal/features/setlists/data/remote/setlists_api.dart';
 import 'package:worship_lamal/features/setlists/data/repositories/setlist_repository.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
-// -----------------------------------------------------------------------------
 // 1. DATA LAYER (The Piping)
-// -----------------------------------------------------------------------------
+//Using Providers for read-only state that won't change
 
 /// Provides the raw API client
 final setlistsApiProvider = Provider<SetlistsApi>((ref) {
@@ -27,8 +26,9 @@ final setlistRepositoryProvider = Provider<SetlistRepository>((ref) {
 });
 
 // -----------------------------------------------------------------------------
+
 // 2. READ ONLY PROVIDERS (Fetching Data)
-// -----------------------------------------------------------------------------
+// Same thing but just using Future since Supabase calls takes network time
 
 /// Fetches the list of all setlists.
 final setlistsListProvider = FutureProvider<List<Setlist>>((ref) async {
@@ -51,12 +51,15 @@ final followedSetlistsProvider = FutureProvider<List<Setlist>>((ref) async {
 });
 
 // CONTROLLER (Mutations: Create, Add, Delete)
+// To read data and also change use Async Notifier
+
 final setlistControllerProvider =
     AsyncNotifierProvider<SetlistController, void>(() {
       return SetlistController();
     });
 
 class SetlistController extends AsyncNotifier<void> {
+  // Changing 'state' value forces rebuild for anything that watches
   @override
   Future<void> build() async {
     // Initial state is idle
@@ -83,7 +86,6 @@ class SetlistController extends AsyncNotifier<void> {
     }
   }
 
-  // In SetlistController class
   Future<void> addSongs({
     required String setlistId,
     required List<String> songIds,

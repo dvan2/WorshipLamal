@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/utils/key_transposer.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
-import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
 class SongPickerScreen extends ConsumerStatefulWidget {
@@ -23,7 +23,7 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
     super.initState();
     // Clear any previous search queries so the list is full
     // We delay this to avoid "cannot modify provider during build" errors
-    Future.microtask(() => ref.read(searchQueryProvider.notifier).state = '');
+    Future.microtask(() => ref.read(searchQueryProvider.notifier).clear());
   }
 
   @override
@@ -58,7 +58,7 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               onChanged: (val) =>
-                  ref.read(searchQueryProvider.notifier).state = val,
+                  ref.read(searchQueryProvider.notifier).setQuery(val),
               decoration: const InputDecoration(
                 hintText: 'Search library...',
                 prefixIcon: Icon(Icons.search),
