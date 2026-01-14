@@ -51,6 +51,7 @@ class SongsTab extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final song = songs[index];
                   return SongListItem(
+                    key: ValueKey(song.id),
                     song: song,
                     onTap: () => context.goNamed(
                       'songDetail',
