@@ -84,7 +84,7 @@ class SongsTab extends ConsumerWidget {
   }
 }
 
-class SongSearchField extends ConsumerWidget {
+class SongSearchField extends ConsumerStatefulWidget {
   final NotifierProvider<SearchQueryNotifier, String> searchProvider;
   final NotifierProvider<SongFilterNotifier, SongFilterState> filterProvider;
 
@@ -95,15 +95,35 @@ class SongSearchField extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SongSearchField> createState() => _SongSearchFieldState();
+}
+
+class _SongSearchFieldState extends ConsumerState<SongSearchField> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // We watch the query to show/hide the clear button
-    final query = ref.watch(searchProvider);
-    final filterState = ref.watch(filterProvider);
+    final query = ref.watch(widget.searchProvider);
+    final filterState = ref.watch(widget.filterProvider);
     final hasFilters = filterState.isFiltering;
 
+    ref.listen(widget.searchProvider, (previous, next) {
+      if (next.isEmpty && _controller.text.isNotEmpty) {
+        _controller.clear();
+      }
+    });
+
     return TextField(
+      controller: _controller,
       onChanged: (value) {
-        ref.read(searchProvider.notifier).setQuery(value);
+        ref.read(widget.searchProvider.notifier).setQuery(value);
       },
       decoration: InputDecoration(
         hintText: 'Search songs, artists...',
@@ -116,7 +136,8 @@ class SongSearchField extends ConsumerWidget {
             if (query.isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                onPressed: () => ref.read(searchProvider.notifier).clear(),
+                onPressed: () =>
+                    ref.read(widget.searchProvider.notifier).clear(),
               ),
 
             // FILTER BUTTON
@@ -141,8 +162,9 @@ class SongSearchField extends ConsumerWidget {
                       top: Radius.circular(20),
                     ),
                   ),
-                  builder: (context) =>
-                      SongFilterBottomSheet(targetProvider: filterProvider),
+                  builder: (context) => SongFilterBottomSheet(
+                    targetProvider: widget.filterProvider,
+                  ),
                 );
               },
             ),
