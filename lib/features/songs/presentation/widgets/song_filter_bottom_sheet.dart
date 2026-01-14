@@ -35,6 +35,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
   late Set<String> _tempSelectedKeys;
   late RangeValues _tempBpmRange;
   late SongSortOption _tempSortOption;
+  late bool _tempShowFavoritesOnly;
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
     _tempSelectedKeys = Set.from(currentState.selectedKeys);
     _tempBpmRange = currentState.bpmRange;
     _tempSortOption = currentState.sortOption;
+    _tempShowFavoritesOnly = currentState.showFavoritesOnly;
   }
 
   void _toggleKey(String key) {
@@ -90,11 +92,30 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                     _tempSelectedKeys = {};
                     _tempBpmRange = const RangeValues(40, 200);
                     _tempSortOption = SongSortOption.titleAz;
+                    _tempShowFavoritesOnly = false;
                   });
                 },
                 child: const Text("Reset"),
               ),
             ],
+          ),
+          const Divider(),
+
+          SwitchListTile(
+            title: const Text(
+              "Favorites Only",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            secondary: Icon(
+              _tempShowFavoritesOnly ? Icons.favorite : Icons.favorite_border,
+              color: _tempShowFavoritesOnly ? Colors.red : Colors.grey,
+            ),
+            value: _tempShowFavoritesOnly,
+            onChanged: (val) {
+              setState(() => _tempShowFavoritesOnly = val);
+            },
+            activeColor: AppColors.primary,
+            contentPadding: EdgeInsets.zero, // Aligns with other text
           ),
           const Divider(),
 
@@ -228,6 +249,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                       selectedKeys: _tempSelectedKeys,
                       bpmRange: _tempBpmRange,
                       sortOption: _tempSortOption,
+                      showFavoritesOnly: _tempShowFavoritesOnly, // <--- Pass it
                     );
                 Navigator.pop(context);
               },

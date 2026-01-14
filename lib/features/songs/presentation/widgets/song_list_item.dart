@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:worship_lamal/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/display_key_provider.dart';
 
-/// Reusable song list item widget
-/// Displays song information in a clean, consistent format
-class SongListItem extends ConsumerWidget {
+class SongListItem extends ConsumerStatefulWidget {
   final Song song;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
@@ -21,27 +20,47 @@ class SongListItem extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final originalKey = song.key ?? "";
+  ConsumerState<SongListItem> createState() => _SongListItemState();
+}
+
+class _SongListItemState extends ConsumerState<SongListItem> {
+  bool? _optimisticFavorite;
+
+  @override
+  Widget build(BuildContext context) {
+    final originalKey = widget.song.key ?? "";
     final displayKey = ref.watch(displayKeyProvider(originalKey));
     final isTransposed =
         ref.watch(preferencesProvider).vocalMode == VocalMode.female;
 
+    final favoritesAsync = ref.watch(favoritesListProvider);
+    final currentFavorites = favoritesAsync.value ?? [];
+    final isDatabaseFavorite = currentFavorites.any(
+      (f) => f.songId == widget.song.id,
+    );
+
+    final isFavorite = _optimisticFavorite ?? isDatabaseFavorite;
+
     return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       child: Padding(
-        padding: EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: AppConstants.songCardPaddingHorizontal,
           vertical: AppConstants.songCardPaddingVertical,
         ),
         child: Row(
           children: [
             _buildLeadingIcon(),
-            SizedBox(width: AppConstants.songCardIconPadding),
+            const SizedBox(width: AppConstants.songCardIconPadding),
             _buildSongInfo(context),
-            SizedBox(width: AppConstants.spacingLg),
-            _buildMetadata(context, displayKey, isTransposed),
+            const SizedBox(width: AppConstants.spacingLg),
+            _buildTrailingActions(
+              context,
+              displayKey,
+              isTransposed,
+              isFavorite,
+            ),
           ],
         ),
       ),
@@ -69,12 +88,18 @@ class SongListItem extends ConsumerWidget {
   }
 
   Widget _buildSongInfo(BuildContext context) {
+    final String subtitleText;
+    if (widget.song.bpm != null) {
+      subtitleText = '${widget.song.artistNames} • ${widget.song.bpm} BPM';
+    } else {
+      subtitleText = widget.song.artistNames;
+    }
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            song.title,
+            widget.song.title,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
               height: 1.2,
@@ -82,9 +107,9 @@ class SongListItem extends ConsumerWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: AppConstants.spacingXs),
+          const SizedBox(height: AppConstants.spacingXs),
           Text(
-            song.artistNames,
+            subtitleText,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(height: 1.2),
@@ -93,25 +118,6 @@ class SongListItem extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMetadata(
-    BuildContext context,
-    String displayKey,
-    bool isTransposed,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (displayKey.isNotEmpty)
-          _buildKeyBadge(context, displayKey, isTransposed),
-
-        if (displayKey.isNotEmpty && song.bpm != null)
-          const SizedBox(height: AppConstants.spacingXs),
-
-        if (song.bpm != null) _buildBpmText(context),
-      ],
     );
   }
 
@@ -126,17 +132,15 @@ class SongListItem extends ConsumerWidget {
         vertical: AppConstants.badgePaddingVertical,
       ),
       decoration: BoxDecoration(
-        // Purple for Transposed (Female), Blue for Original
         color: isTransposed
             ? AppColors.keyBadgeTransposedBackground
             : AppColors.keyBadgeBackground,
         borderRadius: BorderRadius.circular(AppConstants.badgeRadius),
       ),
       child: Text(
-        keyText, // Shows the new key (e.g., "D")
+        keyText,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontWeight: FontWeight.w700, // Make it slightly bolder
-          // Purple text for Transposed
+          fontWeight: FontWeight.w700,
           color: isTransposed
               ? AppColors.keyBadgeTransposedText
               : AppColors.keyBadgeText,
@@ -145,12 +149,46 @@ class SongListItem extends ConsumerWidget {
     );
   }
 
-  Widget _buildBpmText(BuildContext context) {
-    return Text(
-      '${song.bpm} BPM',
-      style: Theme.of(
-        context,
-      ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+  Widget _buildTrailingActions(
+    BuildContext context,
+    String displayKey,
+    bool isTransposed,
+    bool isFavorite,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: () {
+            setState(() {
+              _optimisticFavorite = !isFavorite;
+            });
+
+            // B. BACKGROUND NETWORK CALL
+            ref
+                .read(favoriteControllerProvider.notifier)
+                .toggleFavorite(
+                  songId: widget.song.id,
+                  isCurrentlyFavorite: isFavorite, // Pass original state
+                );
+          },
+          // Added a Key to ensure the icon animation triggers correctly
+          key: ValueKey(isFavorite),
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite
+                ? Colors.red
+                : AppColors.textSecondary.withOpacity(0.5),
+            size: 24,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          splashRadius: 20,
+        ),
+        const SizedBox(width: 12),
+        if (displayKey.isNotEmpty)
+          _buildKeyBadge(context, displayKey, isTransposed),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/utils/apply_song_filter.dart';
+import 'package:worship_lamal/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
@@ -11,27 +12,32 @@ class SongFilterState {
   final RangeValues bpmRange;
   final bool isFiltering;
   final SongSortOption sortOption;
+  final bool showFavoritesOnly;
 
   const SongFilterState({
     this.selectedKeys = const {},
     this.bpmRange = const RangeValues(40, 200), // Default BPM range
     this.isFiltering = false,
     this.sortOption = SongSortOption.newest, //Default
+    this.showFavoritesOnly = false,
   });
 
   SongFilterState copyWith({
     Set<String>? selectedKeys,
     RangeValues? bpmRange,
     SongSortOption? sortOption,
+    bool? showFavoritesOnly,
   }) {
     return SongFilterState(
       selectedKeys: selectedKeys ?? this.selectedKeys,
       bpmRange: bpmRange ?? this.bpmRange,
       sortOption: sortOption ?? this.sortOption,
+      showFavoritesOnly: showFavoritesOnly ?? this.showFavoritesOnly,
       // Logic: If range is not default OR keys are not empty, we are filtering.
       isFiltering:
           (selectedKeys ?? this.selectedKeys).isNotEmpty ||
-          (bpmRange ?? this.bpmRange) != const RangeValues(40, 200),
+          (bpmRange ?? this.bpmRange) != const RangeValues(40, 200) ||
+          (showFavoritesOnly ?? this.showFavoritesOnly),
     );
   }
 }
@@ -48,6 +54,10 @@ class SongFilterNotifier extends Notifier<SongFilterState> {
 
   void setSortOption(SongSortOption option) {
     state = state.copyWith(sortOption: option);
+  }
+
+  void toggleFavoritesFilter() {
+    state = state.copyWith(showFavoritesOnly: !state.showFavoritesOnly);
   }
 
   void toggleKey(String key) {
@@ -73,11 +83,13 @@ class SongFilterNotifier extends Notifier<SongFilterState> {
     required Set<String> selectedKeys,
     required RangeValues bpmRange,
     required SongSortOption sortOption,
+    required bool showFavoritesOnly,
   }) {
     state = state.copyWith(
       selectedKeys: selectedKeys,
       bpmRange: bpmRange,
       sortOption: sortOption,
+      showFavoritesOnly: showFavoritesOnly,
     );
   }
 }
@@ -123,14 +135,36 @@ final filteredSongsProvider = FutureProvider<List<Song>>((ref) async {
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final filters = ref.watch(songFilterProvider);
 
-  return applyFilterAndSort(allSongs: allSongs, query: query, filters: filters);
+  Set<String> favoriteIds = {};
+  if (filters.showFavoritesOnly) {
+    final favorites = await ref.watch(favoritesListProvider.future);
+    favoriteIds = favorites.map((f) => f.songId).toSet();
+  }
+
+  return applyFilterAndSort(
+    allSongs: allSongs,
+    query: query,
+    filters: filters,
+    favoriteIds: favoriteIds,
+  );
 });
 
 final pickerFilteredSongsProvider = FutureProvider<List<Song>>((ref) async {
   final allSongs = await ref.watch(songListProvider.future);
 
-  final query = ref.watch(pickerSearchQueryProvider); // <--- Picker Search
-  final filters = ref.watch(pickerFilterProvider); // <--- Picker Filters
+  Set<String> favoriteIds = {};
+  final filters = ref.watch(pickerFilterProvider);
+  final query = ref.watch(pickerSearchQueryProvider);
 
-  return applyFilterAndSort(allSongs: allSongs, query: query, filters: filters);
+  if (filters.showFavoritesOnly) {
+    final favorites = await ref.watch(favoritesListProvider.future);
+    favoriteIds = favorites.map((f) => f.songId).toSet();
+  }
+
+  return applyFilterAndSort(
+    allSongs: allSongs,
+    query: query,
+    filters: filters,
+    favoriteIds: favoriteIds,
+  );
 });

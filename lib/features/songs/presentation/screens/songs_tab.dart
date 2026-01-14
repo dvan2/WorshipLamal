@@ -36,6 +36,7 @@ class SongsTab extends ConsumerWidget {
         // Expanded List
         Expanded(
           child: songsAsync.when(
+            skipLoadingOnReload: true,
             data: (songs) {
               if (songs.isEmpty && searchQuery.isNotEmpty) {
                 return const Center(child: Text("No songs found"));

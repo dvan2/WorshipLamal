@@ -6,6 +6,7 @@ List<Song> applyFilterAndSort({
   required List<Song> allSongs,
   required String query,
   required SongFilterState filters,
+  required Set<String> favoriteIds,
 }) {
   // 1. Filtering
   final cleanQuery = query.toLowerCase();
@@ -29,6 +30,10 @@ List<Song> applyFilterAndSort({
           song.bpm! > filters.bpmRange.end) {
         return false;
       }
+    }
+
+    if (filters.showFavoritesOnly) {
+      if (!favoriteIds.contains(song.id)) return false;
     }
     return true;
   }).toList();
