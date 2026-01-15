@@ -109,79 +109,97 @@ class _SongSearchFieldState extends ConsumerState<SongSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    // We watch the query to show/hide the clear button
     final query = ref.watch(widget.searchProvider);
     final filterState = ref.watch(widget.filterProvider);
     final hasFilters = filterState.isFiltering;
 
+    // Sync Controller with Provider
     ref.listen(widget.searchProvider, (previous, next) {
       if (next.isEmpty && _controller.text.isNotEmpty) {
         _controller.clear();
       }
     });
 
-    return TextField(
-      controller: _controller,
-      onChanged: (value) {
-        ref.read(widget.searchProvider.notifier).setQuery(value);
-      },
-      decoration: InputDecoration(
-        hintText: 'Search songs, artists...',
-        prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
-
-        suffixIcon: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Clear Button
-            if (query.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                onPressed: () =>
-                    ref.read(widget.searchProvider.notifier).clear(),
+    return Row(
+      children: [
+        // 1. EXPANDED SEARCH BAR
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            onChanged: (value) {
+              ref.read(widget.searchProvider.notifier).setQuery(value);
+            },
+            decoration: InputDecoration(
+              hintText: 'Search songs...',
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
               ),
+              // Only the Clear Button lives here now
+              suffixIcon: query.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () =>
+                          ref.read(widget.searchProvider.notifier).clear(),
+                    )
+                  : null,
+              filled: true,
+              fillColor: AppColors.surfaceVariant,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(
+                  12,
+                ), // Matching rounded corners
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              isDense: true, // Makes it look slightly more compact/modern
+            ),
+          ),
+        ),
 
-            // FILTER BUTTON
-            IconButton(
-              icon: Badge(
+        const SizedBox(width: 12),
+
+        // 2. DETACHED FILTER BUTTON
+        // Provides a consistent, large touch target that never moves
+        Material(
+          color: AppColors.surfaceVariant, // Match search bar color
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (context) => SongFilterBottomSheet(
+                  targetProvider: widget.filterProvider,
+                ),
+              );
+            },
+            child: Container(
+              height: 48, // Standard touch target height
+              width: 48,
+              alignment: Alignment.center,
+              child: Badge(
                 isLabelVisible: hasFilters,
                 backgroundColor: AppColors.primary,
-                smallSize: 8, // Little dot to show filters are active
+                smallSize: 8,
                 child: Icon(
-                  Icons.tune, // The "Sliders" icon
+                  Icons.tune_rounded, // Rounded variant looks softer
                   color: hasFilters
                       ? AppColors.primary
                       : AppColors.textSecondary,
                 ),
               ),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true, // Allows sheet to be taller
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  builder: (context) => SongFilterBottomSheet(
-                    targetProvider: widget.filterProvider,
-                  ),
-                );
-              },
             ),
-            const SizedBox(width: 8), // Padding
-          ],
+          ),
         ),
-        filled: true,
-        fillColor: AppColors.surfaceVariant,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.spacingLg,
-          vertical: AppConstants.spacingMd,
-        ),
-      ),
+      ],
     );
   }
 }

@@ -127,8 +127,10 @@ class _SongListItemState extends ConsumerState<SongListItem> {
     bool isTransposed,
   ) {
     return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.badgePaddingHorizontal,
         vertical: AppConstants.badgePaddingVertical,
       ),
       decoration: BoxDecoration(
