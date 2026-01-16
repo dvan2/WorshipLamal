@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/key_picker_dialog.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/display_key_provider.dart';
+import 'package:worship_lamal/features/userkey/presentation/providers/user_keys_provider.dart';
 
 class SongListItem extends ConsumerStatefulWidget {
   final Song song;
@@ -28,10 +30,28 @@ class _SongListItemState extends ConsumerState<SongListItem> {
 
   @override
   Widget build(BuildContext context) {
+    final userKeysMap = ref.watch(userPreferredKeysMapProvider);
+    final userPreferredKey = userKeysMap[widget.song.id];
     final originalKey = widget.song.key ?? "";
-    final displayKey = ref.watch(displayKeyProvider(originalKey));
-    final isTransposed =
+    final autoTransposedKey = ref.watch(displayKeyProvider(originalKey));
+    final isFemaleMode =
         ref.watch(preferencesProvider).vocalMode == VocalMode.female;
+
+    final String finalDisplayKey;
+
+    // 1. CHANGE: Replace 'bool isHighlighted' with two specific states
+    bool isUserPreferred = false;
+    bool isAutoTransposed = false;
+
+    if (userPreferredKey != null) {
+      // CASE 1: User Preference (Highest Priority)
+      finalDisplayKey = userPreferredKey;
+      isUserPreferred = true; // <--- Mark as user preference
+    } else {
+      // CASE 2: Auto-Transpose (Fallback)
+      finalDisplayKey = autoTransposedKey;
+      isAutoTransposed = isFemaleMode; // <--- Mark as auto-transposed
+    }
 
     final favoritesAsync = ref.watch(favoritesListProvider);
     final currentFavorites = favoritesAsync.value ?? [];
@@ -57,9 +77,11 @@ class _SongListItemState extends ConsumerState<SongListItem> {
             const SizedBox(width: AppConstants.spacingLg),
             _buildTrailingActions(
               context,
-              displayKey,
-              isTransposed,
+              finalDisplayKey,
+              isUserPreferred,
+              isAutoTransposed,
               isFavorite,
+              userPreferredKey,
             ),
           ],
         ),
@@ -124,28 +146,46 @@ class _SongListItemState extends ConsumerState<SongListItem> {
   Widget _buildKeyBadge(
     BuildContext context,
     String keyText,
-    bool isTransposed,
+    bool isUserPreferred,
+    bool isAutoTransposed,
+    String? currentPreferredKey,
   ) {
-    return Container(
-      width: 40,
-      height: 40,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppConstants.badgePaddingVertical,
-      ),
-      decoration: BoxDecoration(
-        color: isTransposed
-            ? AppColors.keyBadgeTransposedBackground
-            : AppColors.keyBadgeBackground,
-        borderRadius: BorderRadius.circular(AppConstants.badgeRadius),
-      ),
-      child: Text(
-        keyText,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: isTransposed
-              ? AppColors.keyBadgeTransposedText
-              : AppColors.keyBadgeText,
+    final Color baseColor;
+
+    if (isUserPreferred) {
+      baseColor = Colors.amber.shade800; // Your Teal/Brand color
+    } else if (isAutoTransposed) {
+      baseColor = const Color(0xFFE91E63);
+    } else {
+      baseColor = AppColors.primary; // Default/Original
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showKeyPicker(context, currentPreferredKey),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: baseColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: baseColor.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+          ),
+          child: Text(
+            keyText,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              // Use the solid base color for text so it's readable
+              color: baseColor,
+            ),
+          ),
         ),
       ),
     );
@@ -154,8 +194,10 @@ class _SongListItemState extends ConsumerState<SongListItem> {
   Widget _buildTrailingActions(
     BuildContext context,
     String displayKey,
-    bool isTransposed,
+    bool isUserPreferred,
+    bool isAutoTransposed,
     bool isFavorite,
+    String? currentPreferredKey,
   ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -189,8 +231,37 @@ class _SongListItemState extends ConsumerState<SongListItem> {
         ),
         const SizedBox(width: 12),
         if (displayKey.isNotEmpty)
-          _buildKeyBadge(context, displayKey, isTransposed),
+          _buildKeyBadge(
+            context,
+            displayKey,
+            isUserPreferred,
+            isAutoTransposed,
+            currentPreferredKey,
+          ),
       ],
+    );
+  }
+
+  void _showKeyPicker(BuildContext context, String? currentPreferredKey) {
+    showDialog(
+      context: context,
+      builder: (context) => KeyPickerDialog(
+        currentKey: currentPreferredKey,
+
+        // Handle Selection (Save to Supabase)
+        onKeySelected: (newKey) {
+          ref
+              .read(userKeyControllerProvider.notifier)
+              .setKey(widget.song.id, newKey);
+        },
+
+        // Handle Reset (Delete from Supabase)
+        onReset: () {
+          ref
+              .read(userKeyControllerProvider.notifier)
+              .revertKey(widget.song.id);
+        },
+      ),
     );
   }
 }

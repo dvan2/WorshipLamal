@@ -1,13 +1,17 @@
+// lib/features/songs/presentation/widgets/key_picker_dialog.dart
+
 import 'package:flutter/material.dart';
 
 class KeyPickerDialog extends StatelessWidget {
-  final String currentKey;
+  final String? currentKey; // Nullable if no key is selected
   final Function(String) onKeySelected;
+  final VoidCallback? onReset; // New callback for resetting
 
   const KeyPickerDialog({
     super.key,
     required this.currentKey,
     required this.onKeySelected,
+    this.onReset,
   });
 
   static const _keys = [
@@ -46,6 +50,16 @@ class KeyPickerDialog extends StatelessWidget {
         }).toList(),
       ),
       actions: [
+        // Only show Reset if a reset callback is provided AND we have a current custom key
+        if (onReset != null && currentKey != null)
+          TextButton(
+            onPressed: () {
+              onReset!();
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Reset to Original'),
+          ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
