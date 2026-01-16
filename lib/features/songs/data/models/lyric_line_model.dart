@@ -3,12 +3,14 @@ class LyricLine {
   final String content;
   final int lineNumber;
   final String? sectionType;
+  final String? contentChordPro;
 
   LyricLine({
     required this.id,
     required this.content,
     required this.lineNumber,
     this.sectionType,
+    this.contentChordPro,
   });
 
   factory LyricLine.fromMap(Map<String, dynamic> map) {
@@ -17,6 +19,7 @@ class LyricLine {
       content: map['content']?.toString() ?? '',
       lineNumber: (map['line_number'] as num?)?.toInt() ?? 0,
       sectionType: map['section_type']?.toString(), // Direct String mapping
+      contentChordPro: map['content_chord_pro']?.toString(),
     );
   }
 }

@@ -38,6 +38,35 @@ class Song {
           : null,
     );
   }
+
+  List<SectionBlock> get sections {
+    if (lyricLines.isEmpty) return [];
+
+    final Map<String, List<LyricLine>> order = {};
+
+    for (final line in lyricLines) {
+      final key = line.sectionType ?? 'Misc';
+      order.putIfAbsent(key, () => []);
+      order[key]!.add(line);
+    }
+
+    return order.entries.map((entry) {
+      final sectionKey = entry.key;
+      final items = entry.value
+        ..sort((a, b) => (a.lineNumber).compareTo(b.lineNumber));
+
+      return SectionBlock(
+        title: _capitalize(sectionKey),
+        sectionType: sectionKey,
+        lines: items,
+      );
+    }).toList();
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
 }
 
 extension SongUi on Song {
@@ -59,4 +88,16 @@ class Artist {
       name: map['name'] as String? ?? 'Unknown Artist',
     );
   }
+}
+
+class SectionBlock {
+  final String title;
+  final List<LyricLine> lines;
+  final String sectionType;
+
+  SectionBlock({
+    required this.title,
+    required this.lines,
+    required this.sectionType,
+  });
 }

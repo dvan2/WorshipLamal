@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
-import 'package:worship_lamal/features/songs/presentation/screens/song_detail_screen.dart';
+import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
 class LyricSectionWidget extends StatelessWidget {
   final SectionBlock section;

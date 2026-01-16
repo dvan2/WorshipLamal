@@ -37,14 +37,21 @@ class AppColors {
   static const Color border = Color(0xFFD1D5DB);
 
   // Song Section Colors
-  static const Color chorusBackground = Color(0xFFFEF3C7); // Light yellow
-  static const Color chorusBorder = Color(0xFFFBBF24); // Yellow
-  static const Color verseBackground = Color(0xFFF3F4F6); // Light gray
-  static const Color verseBorder = Color(0xFFD1D5DB); // Gray
-  static const Color bridgeBackground = Color(0xFFDCFCE7); // Light green
-  static const Color bridgeBorder = Color(0xFF34D399); // Green
-  static const Color preChorusBackground = Color(0xFFE0E7FF); // Light indigo
-  static const Color preChorusBorder = Color(0xFF818CF8); // Indigo
+  // Song Section Colors (Polished Material 3 style)
+
+  static const Color verseBackground = Color(0xFFF7F8FA);
+  static const Color verseBorder = Color(0xFFE1E4EC);
+  static const Color chorusBackground = Color(0xFFFFF4D6); // warm cream
+  static const Color chorusBorder = Color(0xFFFFD36A); // muted gold
+  static const Color preChorusBackground = Color(0xFFF1F0FF);
+  static const Color preChorusBorder = Color(0xFF8C86E8);
+  static const Color bridgeBackground = Color(0xFFF0F7F2);
+  static const Color bridgeBorder = Color(0xFF6FBF8A);
+
+  static const Color verseText = Color(0xFF374151); // Cool dark gray
+  static const Color chorusText = Color(0xFF8A5A00); // Deep warm brown
+  static const Color preChorusText = Color(0xFF4338CA); // Indigo-700
+  static const Color bridgeText = Color(0xFF166534);
 
   // Surface variants (Material 3 style)
   static const Color surfaceContainerLow = Color(0xFFFAFAFA);

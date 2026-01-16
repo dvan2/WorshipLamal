@@ -23,7 +23,8 @@ class SongsApi {
           id,
           content,
           line_number,
-          section_type
+          section_type,
+          content_chord_pro
         )
       ''');
 
@@ -49,7 +50,8 @@ class SongsApi {
           id,
           content,
           line_number,
-          section_type
+          section_type,
+          content_chord_pro
         )
       ''')
         .eq('id', id)
