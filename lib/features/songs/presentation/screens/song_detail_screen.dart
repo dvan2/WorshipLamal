@@ -10,43 +10,26 @@ import 'package:worship_lamal/features/songs/presentation/widgets/chord_line_ren
 import '../providers/song_provider.dart';
 import '../widgets/song_header.dart';
 
-class SongDetailScreen extends ConsumerStatefulWidget {
+class SongDetailScreen extends ConsumerWidget {
   final String songId;
   final String? overrideKey;
 
   const SongDetailScreen({super.key, required this.songId, this.overrideKey});
 
   @override
-  ConsumerState<SongDetailScreen> createState() => _SongDetailScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final songAsync = ref.watch(songDetailProvider(songId));
 
-class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
-  bool _isChordMode = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final songAsync = ref.watch(songDetailProvider(widget.songId));
+    final prefs = ref.watch(preferencesProvider);
+    final isChordMode = prefs.contentMode == ContentMode.chords;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Song'),
-        actions: [
-          IconButton(
-            icon: Icon(_isChordMode ? Icons.lyrics : Icons.piano),
-            tooltip: _isChordMode ? "Show Lyrics" : "Show Chords",
-            onPressed: () {
-              setState(() {
-                _isChordMode = !_isChordMode;
-              });
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Song')),
       body: songAsync.when(
         data: (song) => _SongDetailContent(
           song: song,
-          isChordMode: _isChordMode,
-          overrideKey: widget.overrideKey,
+          isChordMode: isChordMode,
+          overrideKey: overrideKey,
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _ErrorState(error: err.toString()),
@@ -68,10 +51,8 @@ class _SongDetailContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Using the Logic from Song Model
     final sections = song.sections;
 
-    // Calculate the "Smart Default" (User Pref > Vocal Mode > Original)
     final smartDefaultKey = ref.watch(
       displayKeyProvider((originalKey: song.key, songId: song.id)),
     );
@@ -102,7 +83,6 @@ class _SongDetailContent extends ConsumerWidget {
                       ? AppConstants.sectionSpacing
                       : 0,
                 ),
-                // 2. Unified Builder
                 child: _buildSection(context, section, displayKey),
               );
             }, childCount: sections.length),
@@ -117,21 +97,15 @@ class _SongDetailContent extends ConsumerWidget {
     SectionBlock section,
     String currentKey,
   ) {
-    // Determine colors based on section type
     final config = _getSectionConfig(section.sectionType);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24.0),
       width: double.infinity,
       decoration: BoxDecoration(
-        // Use the specific background color for this section type
         color: config.backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          // Use the specific border/accent color
-          color: config.borderColor,
-          width: 1.5,
-        ),
+        border: Border.all(color: config.borderColor, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -164,13 +138,14 @@ class _SongDetailContent extends ConsumerWidget {
               ),
             ),
 
-            // LINES LOOP (Lyrics/Chords)
+            // LINES LOOP
             ...section.lines.map((line) {
+              // 3. LOGIC SIMPLIFIED: Just check the boolean passed in
               if (isChordMode) {
                 // === CHORD MODE ===
                 final contentToRender = line.contentChordPro ?? line.content;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
+                  padding: const EdgeInsets.only(bottom: 20.0),
                   child: ChordLineRenderer(
                     line: contentToRender,
                     targetKey: currentKey,
@@ -211,37 +186,31 @@ class _SongDetailContent extends ConsumerWidget {
   _SectionConfig _getSectionConfig(String type) {
     final lowerType = type.toLowerCase().trim();
 
-    // CHORUS
     if (lowerType.contains('chorus') && !lowerType.contains('pre')) {
       return _SectionConfig(
-        backgroundColor: AppColors.chorusBackground, // e.g., Light Blue
+        backgroundColor: AppColors.chorusBackground,
         borderColor: AppColors.chorusBorder.withValues(alpha: 0.3),
         headerColor: AppColors.chorusBorder.withValues(alpha: 0.15),
-        textColor: AppColors.chorusText, // Darker Blue
+        textColor: AppColors.chorusText,
       );
-    }
-    // BRIDGE
-    else if (lowerType.contains('bridge')) {
+    } else if (lowerType.contains('bridge')) {
       return _SectionConfig(
-        backgroundColor: AppColors.bridgeBackground, // e.g., Light Orange
+        backgroundColor: AppColors.bridgeBackground,
         borderColor: AppColors.bridgeBorder.withValues(alpha: 0.3),
         headerColor: AppColors.bridgeBorder.withValues(alpha: 0.15),
-        textColor: AppColors.bridgeText, // Darker Orange
+        textColor: AppColors.bridgeText,
       );
-    }
-    // PRE-CHORUS / TAG
-    else if (lowerType.contains('pre') || lowerType.contains('tag')) {
+    } else if (lowerType.contains('pre') || lowerType.contains('tag')) {
       return _SectionConfig(
-        backgroundColor: AppColors.preChorusBackground, // e.g., Light Purple
+        backgroundColor: AppColors.preChorusBackground,
         borderColor: AppColors.preChorusBorder.withValues(alpha: 0.3),
         headerColor: AppColors.preChorusBorder.withValues(alpha: 0.15),
         textColor: AppColors.preChorusText,
       );
     }
 
-    // DEFAULT (Verse)
     return _SectionConfig(
-      backgroundColor: AppColors.verseBackground, // e.g., White/Gray
+      backgroundColor: AppColors.verseBackground,
       borderColor: AppColors.primary.withValues(alpha: 0.1),
       headerColor: AppColors.primary.withValues(alpha: 0.08),
       textColor: AppColors.verseText,

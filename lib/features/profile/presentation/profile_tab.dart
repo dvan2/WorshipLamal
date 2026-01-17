@@ -80,6 +80,40 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
             ),
           ),
 
+          ListTile(
+            title: const Text("Display Mode"),
+            subtitle: Text(
+              prefsState.contentMode == ContentMode.lyrics
+                  ? "Show Lyrics Only"
+                  : "Show Chords & Lyrics",
+            ),
+            trailing: SegmentedButton<ContentMode>(
+              segments: const [
+                ButtonSegment(
+                  value: ContentMode.lyrics,
+                  label: Text("Lyrics"),
+                  icon: Icon(Icons.text_fields),
+                ),
+                ButtonSegment(
+                  value: ContentMode.chords,
+                  label: Text("Chords"),
+                  icon: Icon(Icons.music_note),
+                ),
+              ],
+              selected: {prefsState.contentMode},
+              onSelectionChanged: (Set<ContentMode> newSelection) {
+                ref
+                    .read(preferencesProvider.notifier)
+                    .setContentMode(newSelection.first);
+              },
+              showSelectedIcon: false,
+              style: const ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
+
           const Divider(height: 32),
 
           // 4. ACCOUNT ACTIONS

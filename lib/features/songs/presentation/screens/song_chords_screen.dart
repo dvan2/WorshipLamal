@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/chord_line_renderer.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/chord_view_toolbar.dart'; // From previous step
 
 class SongChordsScreen extends ConsumerWidget {
   final String songId;

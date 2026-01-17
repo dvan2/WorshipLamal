@@ -1,52 +1,69 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/shared_preferences.dart';
 
-// Simple Enum for your modes
 enum VocalMode { original, female }
 
-// 1. The State Class
+enum ContentMode { lyrics, chords }
+
 class PreferencesState {
   final VocalMode vocalMode;
   final bool isLoading;
+  final ContentMode contentMode;
 
   const PreferencesState({
+    // Defaults
     this.vocalMode = VocalMode.original,
     this.isLoading = true,
+    this.contentMode = ContentMode.lyrics,
   });
 
-  PreferencesState copyWith({VocalMode? vocalMode, bool? isLoading}) {
+  PreferencesState copyWith({
+    VocalMode? vocalMode,
+    bool? isLoading,
+    ContentMode? contentMode,
+  }) {
     return PreferencesState(
       vocalMode: vocalMode ?? this.vocalMode,
       isLoading: isLoading ?? this.isLoading,
+      contentMode: contentMode ?? this.contentMode,
     );
   }
 }
 
-// 2. The Notifier
 class PreferencesNotifier extends Notifier<PreferencesState> {
   final _service = PreferencesService();
 
   @override
   PreferencesState build() {
-    // Load the saved value immediately when the app starts
     _loadPreferences();
     return const PreferencesState(isLoading: true);
   }
 
   Future<void> _loadPreferences() async {
-    final savedIndex = await _service.getVocalMode();
-    // Convert integer back to Enum
-    final mode = VocalMode.values[savedIndex];
+    // Load Vocal Mode
+    final vocalIndex = await _service.getVocalMode();
+    final vocalMode = VocalMode.values[vocalIndex];
 
-    state = state.copyWith(vocalMode: mode, isLoading: false);
+    // 1. Load Content Mode
+    final contentIndex = await _service.getContentMode();
+    final contentMode = ContentMode.values[contentIndex];
+
+    state = state.copyWith(
+      vocalMode: vocalMode,
+      contentMode: contentMode, // Update state
+      isLoading: false,
+    );
   }
 
   Future<void> setVocalMode(VocalMode mode) async {
-    // 1. Update UI immediately (Optimistic update)
     state = state.copyWith(vocalMode: mode);
-
-    // 2. Save to storage in background
     await _service.saveVocalMode(mode.index);
+  }
+
+  // 2. Add Setter for Content Mode
+  Future<void> setContentMode(ContentMode mode) async {
+    state = state.copyWith(contentMode: mode);
+    await _service.saveContentMode(mode.index);
   }
 }
 

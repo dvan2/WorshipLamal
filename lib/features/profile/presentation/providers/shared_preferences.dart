@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PreferencesService {
   // Define keys here to avoid typos later
   static const _keyVocalMode = 'vocal_mode';
+  static const _keyContentMode = 'content_mode';
 
   /// Save the vocal mode (0 = Original, 1 = Female)
   Future<void> saveVocalMode(int modeIndex) async {
@@ -14,5 +15,16 @@ class PreferencesService {
   Future<int> getVocalMode() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_keyVocalMode) ?? 0;
+  }
+
+  Future<void> saveContentMode(int modeIndex) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyContentMode, modeIndex);
+  }
+
+  Future<int> getContentMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Default to 0 (Lyrics) if nothing saved
+    return prefs.getInt(_keyContentMode) ?? 0;
   }
 }
