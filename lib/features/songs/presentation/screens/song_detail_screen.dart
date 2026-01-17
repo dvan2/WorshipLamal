@@ -12,8 +12,9 @@ import '../widgets/song_header.dart';
 
 class SongDetailScreen extends ConsumerStatefulWidget {
   final String songId;
+  final String? overrideKey;
 
-  const SongDetailScreen({super.key, required this.songId});
+  const SongDetailScreen({super.key, required this.songId, this.overrideKey});
 
   @override
   ConsumerState<SongDetailScreen> createState() => _SongDetailScreenState();
@@ -42,8 +43,11 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         ],
       ),
       body: songAsync.when(
-        data: (song) =>
-            _SongDetailContent(song: song, isChordMode: _isChordMode),
+        data: (song) => _SongDetailContent(
+          song: song,
+          isChordMode: _isChordMode,
+          overrideKey: widget.overrideKey,
+        ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _ErrorState(error: err.toString()),
       ),
@@ -54,15 +58,26 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
 class _SongDetailContent extends ConsumerWidget {
   final Song song;
   final bool isChordMode;
+  final String? overrideKey;
 
-  const _SongDetailContent({required this.song, required this.isChordMode});
+  const _SongDetailContent({
+    required this.song,
+    required this.isChordMode,
+    this.overrideKey,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Using the Logic from Song Model
+    // Using the Logic from Song Model
     final sections = song.sections;
 
-    final displayKey = ref.watch(displayKeyProvider(song.key ?? ''));
+    // Calculate the "Smart Default" (User Pref > Vocal Mode > Original)
+    final smartDefaultKey = ref.watch(
+      displayKeyProvider((originalKey: song.key, songId: song.id)),
+    );
+
+    final displayKey = overrideKey ?? smartDefaultKey;
+
     final isFemaleMode =
         ref.watch(preferencesProvider).vocalMode == VocalMode.female;
 
@@ -155,7 +170,7 @@ class _SongDetailContent extends ConsumerWidget {
                 // === CHORD MODE ===
                 final contentToRender = line.contentChordPro ?? line.content;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
+                  padding: const EdgeInsets.only(bottom: 10.0),
                   child: ChordLineRenderer(
                     line: contentToRender,
                     targetKey: currentKey,
@@ -248,7 +263,6 @@ class _SectionConfig {
   });
 }
 
-// ... _ErrorState class remains the same ...
 class _ErrorState extends StatelessWidget {
   final String error;
 

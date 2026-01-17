@@ -18,7 +18,8 @@ final appRouter = GoRouter(
           name: 'songDetail',
           builder: (context, state) {
             final songId = state.pathParameters['id']!;
-            return SongDetailScreen(songId: songId);
+            final overrideKey = state.uri.queryParameters['key'];
+            return SongDetailScreen(songId: songId, overrideKey: overrideKey);
           },
         ),
         GoRoute(

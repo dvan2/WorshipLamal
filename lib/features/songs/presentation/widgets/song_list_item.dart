@@ -30,28 +30,17 @@ class _SongListItemState extends ConsumerState<SongListItem> {
 
   @override
   Widget build(BuildContext context) {
+    final finalDisplayKey = ref.watch(
+      displayKeyProvider((
+        originalKey: widget.song.key,
+        songId: widget.song.id,
+      )),
+    );
+
     final userKeysMap = ref.watch(userPreferredKeysMapProvider);
-    final userPreferredKey = userKeysMap[widget.song.id];
-    final originalKey = widget.song.key ?? "";
-    final autoTransposedKey = ref.watch(displayKeyProvider(originalKey));
-    final isFemaleMode =
-        ref.watch(preferencesProvider).vocalMode == VocalMode.female;
-
-    final String finalDisplayKey;
-
-    // 1. CHANGE: Replace 'bool isHighlighted' with two specific states
+    final userPreferredKey = userKeysMap[widget.song.id]; // Null if not set
     bool isUserPreferred = false;
     bool isAutoTransposed = false;
-
-    if (userPreferredKey != null) {
-      // CASE 1: User Preference (Highest Priority)
-      finalDisplayKey = userPreferredKey;
-      isUserPreferred = true; // <--- Mark as user preference
-    } else {
-      // CASE 2: Auto-Transpose (Fallback)
-      finalDisplayKey = autoTransposedKey;
-      isAutoTransposed = isFemaleMode; // <--- Mark as auto-transposed
-    }
 
     final favoritesAsync = ref.watch(favoritesListProvider);
     final currentFavorites = favoritesAsync.value ?? [];
