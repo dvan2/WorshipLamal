@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/features/favorites/presentation/providers/favorites_provider.dart';
-import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/key_picker_dialog.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';

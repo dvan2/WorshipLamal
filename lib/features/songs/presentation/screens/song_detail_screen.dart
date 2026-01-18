@@ -100,7 +100,7 @@ class _SongDetailContent extends ConsumerWidget {
     final config = _getSectionConfig(section.sectionType);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 24.0),
+      margin: const EdgeInsets.only(bottom: 12.0),
       width: double.infinity,
       decoration: BoxDecoration(
         color: config.backgroundColor,
@@ -115,14 +115,14 @@ class _SongDetailContent extends ConsumerWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // HEADER PILL
             Container(
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: 6),
               decoration: BoxDecoration(
                 color: config.headerColor,
                 borderRadius: BorderRadius.circular(6),
@@ -145,7 +145,7 @@ class _SongDetailContent extends ConsumerWidget {
                 // === CHORD MODE ===
                 final contentToRender = line.contentChordPro ?? line.content;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
+                  padding: const EdgeInsets.only(bottom: 12.0),
                   child: ChordLineRenderer(
                     line: contentToRender,
                     targetKey: currentKey,
@@ -165,7 +165,7 @@ class _SongDetailContent extends ConsumerWidget {
               } else {
                 // === LYRIC MODE ===
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
+                  padding: const EdgeInsets.only(bottom: 6.0),
                   child: Text(
                     line.content,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
