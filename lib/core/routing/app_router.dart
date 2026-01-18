@@ -27,8 +27,14 @@ final appRouter = GoRouter(
           name: 'setlistDetail',
           builder: (context, state) {
             final id = state.pathParameters['id']!;
+
+            final autoFollowParam = state.uri.queryParameters['auto_follow'];
+            final shouldAutoFollow = autoFollowParam == 'true';
             // We will build this screen next!
-            return SetlistDetailScreen(setlistId: id);
+            return SetlistDetailScreen(
+              setlistId: id,
+              autoFollow: shouldAutoFollow,
+            );
           },
         ),
         GoRoute(
