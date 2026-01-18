@@ -10,14 +10,68 @@ import 'package:worship_lamal/features/setlists/presentation/screens/setlist_det
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_viewer_view.dart';
 import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 
-class SetlistDetailScreen extends ConsumerWidget {
+class SetlistDetailScreen extends ConsumerStatefulWidget {
   final String setlistId;
-  const SetlistDetailScreen({super.key, required this.setlistId});
+  final bool autoFollow;
+  const SetlistDetailScreen({
+    super.key,
+    required this.setlistId,
+    this.autoFollow = false,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final setlistAsync = ref.watch(setlistDetailProvider(setlistId));
+  ConsumerState<SetlistDetailScreen> createState() =>
+      _SetlistDetailScreenState();
+}
+
+class _SetlistDetailScreenState extends ConsumerState<SetlistDetailScreen> {
+  bool _hasAttemptedAutoFollow = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final setlistAsync = ref.watch(setlistDetailProvider(widget.setlistId));
+    final followedAsync = ref.watch(followedSetlistsProvider);
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+
+    if (widget.autoFollow && !_hasAttemptedAutoFollow) {
+      // We need both the Setlist AND the Followed List to be loaded to make a decision
+      if (setlistAsync.hasValue && followedAsync.hasValue) {
+        final setlist = setlistAsync.value;
+        final followedList = followedAsync.value ?? [];
+
+        if (setlist != null) {
+          final isOwner = setlist.userId == currentUserId;
+          final isAlreadyFollowing = followedList.any(
+            (s) => s.id == setlist.id,
+          );
+
+          // Only follow if: NOT owner AND NOT already following
+          if (!isOwner && !isAlreadyFollowing) {
+            // Mark as attempted immediately so we don't loop
+            _hasAttemptedAutoFollow = true;
+
+            // Schedule the state change for after the build frame
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ref
+                  .read(setlistControllerProvider.notifier)
+                  .toggleFollow(
+                    setlistId: setlist.id,
+                    isCurrentlyFollowing: false, // We know it's false
+                  );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("You are now following this setlist!"),
+                ),
+              );
+            });
+          } else {
+            // If they are owner or already following, just mark as done
+            _hasAttemptedAutoFollow = true;
+          }
+        }
+      }
+    }
 
     return setlistAsync.when(
       loading: () =>
@@ -130,7 +184,7 @@ class SetlistDetailScreen extends ConsumerWidget {
           // Just call the controller. Logic is hidden.
           await ref
               .read(setlistControllerProvider.notifier)
-              .addSongs(setlistId: setlistId, songIds: selectedIds);
+              .addSongs(setlistId: widget.setlistId, songIds: selectedIds);
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

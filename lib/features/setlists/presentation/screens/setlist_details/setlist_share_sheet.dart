@@ -10,7 +10,8 @@ void showSetlistShareSheet(
   WidgetRef ref,
   Setlist setlist,
 ) {
-  final link = "worship-lamal-f1b1c.web.app/setlist/${setlist.id}";
+  final link =
+      "worship-lamal-f1b1c.web.app/setlist/${setlist.id}?auto_follow=true";
 
   showModalBottomSheet(
     context: context,
