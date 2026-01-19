@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/display_key_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/chord_line_renderer.dart';
@@ -12,9 +13,9 @@ import '../widgets/song_header.dart';
 
 class SongDetailScreen extends ConsumerWidget {
   final String songId;
-  final String? overrideKey;
+  final String? setlistId;
 
-  const SongDetailScreen({super.key, required this.songId, this.overrideKey});
+  const SongDetailScreen({super.key, required this.songId, this.setlistId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,13 +24,35 @@ class SongDetailScreen extends ConsumerWidget {
     final prefs = ref.watch(preferencesProvider);
     final isChordMode = prefs.contentMode == ContentMode.chords;
 
+    String? realtimeOverrideKey;
+
+    if (setlistId != null) {
+      final setlistAsync = ref.watch(setlistDetailProvider(setlistId!));
+
+      // If we have data, find THIS song inside that setlist
+      if (setlistAsync.value != null) {
+        final setlist = setlistAsync.value!;
+        // Find the specific item for this song
+        // (We use .firstWhereOrNull in case it was deleted remotely)
+        try {
+          final item = setlist.items.firstWhere((i) => i.songId == songId);
+          // Get the live key from the stream!
+          if (item.keyOverride != null && item.keyOverride!.isNotEmpty) {
+            realtimeOverrideKey = item.keyOverride;
+          }
+        } catch (_) {
+          // Song might have been removed from setlist while we are viewing it
+        }
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Song')),
       body: songAsync.when(
         data: (song) => _SongDetailContent(
           song: song,
           isChordMode: isChordMode,
-          overrideKey: overrideKey,
+          overrideKey: realtimeOverrideKey,
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _ErrorState(error: err.toString()),

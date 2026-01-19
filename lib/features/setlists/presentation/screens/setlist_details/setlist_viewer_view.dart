@@ -20,16 +20,10 @@ class SetlistViewerView extends StatelessWidget {
           index: index,
           showDragHandle: false, // Hide drag handle
           onTap: () {
-            final Map<String, String> queryParams = {};
-
-            if (item.keyOverride != null && item.keyOverride!.isNotEmpty) {
-              queryParams['key'] = item.keyOverride!;
-            }
-
             context.pushNamed(
               'songDetail',
               pathParameters: {'id': item.song.id},
-              queryParameters: queryParams,
+              queryParameters: {'setlistId': setlist.id},
             );
           },
           onKeyTap: () {

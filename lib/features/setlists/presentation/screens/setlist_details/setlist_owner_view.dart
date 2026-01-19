@@ -67,14 +67,10 @@ class _SetlistOwnerViewState extends ConsumerState<SetlistOwnerView> {
             item: item,
             index: index,
             onTap: () {
-              final Map<String, String> queryParams = {};
-              if (item.keyOverride != null && item.keyOverride!.isNotEmpty) {
-                queryParams['key'] = item.keyOverride!;
-              }
               context.pushNamed(
                 'songDetail',
                 pathParameters: {'id': item.song.id},
-                queryParameters: queryParams,
+                queryParameters: {'setlistId': widget.setlist.id},
               );
             },
             onKeyTap: () => _showKeyPicker(context, ref, item),
