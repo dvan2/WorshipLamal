@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -37,12 +39,55 @@ final setlistsListProvider = FutureProvider<List<Setlist>>((ref) async {
 });
 
 /// Fetches a SINGLE setlist with full details (lyrics, etc).
-final setlistDetailProvider = FutureProvider.family<Setlist?, String>((
+final setlistDetailProvider = StreamProvider.family<Setlist?, String>((
   ref,
   id,
-) async {
+) {
   final repo = ref.watch(setlistRepositoryProvider);
-  return repo.getSetlistById(id);
+
+  final controller = StreamController<Setlist?>();
+  Future<void> fetchLatest() async {
+    try {
+      final data = await repo.getSetlistById(id);
+      if (!controller.isClosed) {
+        controller.add(data);
+      }
+    } catch (e) {
+      if (!controller.isClosed) {
+        controller.addError(e);
+      }
+    }
+  }
+
+  fetchLatest();
+
+  // 3. Setup Realtime Listener
+  // This listens for INSERT, UPDATE, or DELETE on the 'setlist_items' table
+  final channel = Supabase.instance.client
+      .channel('public:setlist_items:$id')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'setlist_items',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'setlist_id',
+          value: id,
+        ),
+        callback: (payload) {
+          // When Supabase says "Change!", we re-fetch the full data
+          fetchLatest();
+        },
+      )
+      .subscribe();
+
+  // Cleanup: Close the channel when the user leaves the screen
+  ref.onDispose(() {
+    Supabase.instance.client.removeChannel(channel);
+    controller.close();
+  });
+
+  return controller.stream;
 });
 
 final followedSetlistsProvider = FutureProvider<List<Setlist>>((ref) async {
