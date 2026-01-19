@@ -14,7 +14,7 @@ class PreferencesState {
     // Defaults
     this.vocalMode = VocalMode.original,
     this.isLoading = true,
-    this.contentMode = ContentMode.lyrics,
+    this.contentMode = ContentMode.chords,
   });
 
   PreferencesState copyWith({

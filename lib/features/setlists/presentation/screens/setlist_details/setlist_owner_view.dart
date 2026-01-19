@@ -108,9 +108,6 @@ class _SetlistOwnerViewState extends ConsumerState<SetlistOwnerView> {
       _items.removeAt(index);
     });
 
-    final controller = ref.read(setlistControllerProvider.notifier);
-    controller.removeSong(setlistId: widget.setlist.id, item: item);
-
     ScaffoldMessenger.of(context).clearSnackBars();
     final snackBarController = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
