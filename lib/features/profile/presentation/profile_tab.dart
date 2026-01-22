@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:worship_lamal/core/theme/app_colors.dart'; // Ensure you have this or use Colors.blue
+import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
 import 'package:worship_lamal/features/songs/data/repositories/auth_repository.dart';
-// 👇 Import the provider we created in Step 1
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 
 class ProfileTab extends ConsumerStatefulWidget {

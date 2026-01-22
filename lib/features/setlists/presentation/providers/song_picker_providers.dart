@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:worship_lamal/features/setlists/presentation/providers/song_filter_logic.dart';
+import 'package:worship_lamal/core/utils/apply_song_filter.dart';
+import 'package:worship_lamal/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart'; // Import songListProvider
@@ -29,6 +30,17 @@ final pickerFilteredSongsProvider = FutureProvider.autoDispose<List<Song>>((
   final query = ref.watch(pickerSearchProvider).toLowerCase();
   final filters = ref.watch(pickerFilterProvider);
 
+  Set<String> favoriteIds = {};
+  if (filters.showFavoritesOnly) {
+    final favorites = await ref.watch(favoritesListProvider.future);
+    favoriteIds = favorites.map((f) => f.songId).toSet();
+  }
+
   // 3. Use the shared helper logic
-  return applySongFilters(allSongs: allSongs, query: query, filters: filters);
+  return applyFilterAndSort(
+    allSongs: allSongs,
+    query: query,
+    filters: filters,
+    favoriteIds: favoriteIds,
+  );
 });

@@ -24,10 +24,6 @@ final favoritesListProvider = FutureProvider<List<Favorite>>((ref) async {
   return repo.getFavorites();
 });
 
-// -----------------------------------------------------------------------------
-// 3. CONTROLLER (Mutations)
-// -----------------------------------------------------------------------------
-
 class FavoriteController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {

@@ -49,6 +49,8 @@ List<Song> applySongFilters({
         return b.createdAt!.compareTo(a.createdAt!);
       });
       break;
+    case SongSortOption.recentlyViewed:
+      break;
   }
 
   return filteredList;

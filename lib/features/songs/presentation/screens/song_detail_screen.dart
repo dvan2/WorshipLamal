@@ -6,6 +6,7 @@ import 'package:worship_lamal/features/profile/presentation/providers/preference
 import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/display_key_provider.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/history_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/chord_line_renderer.dart';
 
 import '../providers/song_provider.dart';
@@ -23,6 +24,10 @@ class SongDetailScreen extends ConsumerWidget {
 
     final prefs = ref.watch(preferencesProvider);
     final isChordMode = prefs.contentMode == ContentMode.chords;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(historyControllerProvider).logView(songId);
+    });
 
     String? realtimeOverrideKey;
 

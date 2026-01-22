@@ -7,6 +7,7 @@ List<Song> applyFilterAndSort({
   required String query,
   required SongFilterState filters,
   required Set<String> favoriteIds,
+  Map<String, DateTime>? historyMap,
 }) {
   // 1. Filtering
   final cleanQuery = query.toLowerCase();
@@ -52,6 +53,30 @@ List<Song> applyFilterAndSort({
         if (b.createdAt == null) return -1;
         return b.createdAt!.compareTo(a.createdAt!);
       });
+      break;
+    case SongSortOption.recentlyViewed:
+      if (historyMap == null || historyMap.isEmpty) {
+        // Fallback: If no history, just sort A-Z
+        filteredList.sort(
+          (a, b) => a.title.compareTo(b.title),
+        ); // FIX: Use filteredList
+      } else {
+        filteredList.sort((a, b) {
+          // FIX: Use filteredList
+          final timeA = historyMap[a.id];
+          final timeB = historyMap[b.id];
+
+          if (timeA != null && timeB != null) {
+            return timeB.compareTo(timeA); // Newest first
+          } else if (timeA != null) {
+            return -1; // A floats to top
+          } else if (timeB != null) {
+            return 1; // B floats to top
+          } else {
+            return a.title.compareTo(b.title); // Secondary sort for unvisited
+          }
+        });
+      }
       break;
   }
 

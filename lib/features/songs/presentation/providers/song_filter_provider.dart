@@ -4,6 +4,7 @@ import 'package:worship_lamal/core/utils/apply_song_filter.dart';
 import 'package:worship_lamal/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/history_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 // 1. STATE OBJECT
@@ -141,11 +142,17 @@ final filteredSongsProvider = FutureProvider<List<Song>>((ref) async {
     favoriteIds = favorites.map((f) => f.songId).toSet();
   }
 
+  Map<String, DateTime>? historyMap;
+  if (filters.sortOption == SongSortOption.recentlyViewed) {
+    historyMap = await ref.watch(historyMapProvider.future);
+  }
+
   return applyFilterAndSort(
     allSongs: allSongs,
     query: query,
     filters: filters,
     favoriteIds: favoriteIds,
+    historyMap: historyMap,
   );
 });
 
@@ -161,10 +168,31 @@ final pickerFilteredSongsProvider = FutureProvider<List<Song>>((ref) async {
     favoriteIds = favorites.map((f) => f.songId).toSet();
   }
 
+  Map<String, DateTime>? historyMap;
+  if (filters.sortOption == SongSortOption.recentlyViewed) {
+    historyMap = await ref.watch(historyMapProvider.future);
+  }
+
   return applyFilterAndSort(
     allSongs: allSongs,
     query: query,
     filters: filters,
     favoriteIds: favoriteIds,
+    historyMap: historyMap,
   );
+});
+
+final historyMapProvider = FutureProvider<Map<String, DateTime>>((ref) async {
+  final recentSongs = await ref.watch(recentSongsProvider.future);
+
+  final Map<String, DateTime> historyMap = {};
+  final now = DateTime.now();
+
+  for (int i = 0; i < recentSongs.length; i++) {
+    final s = recentSongs[i];
+    // Use real timestamp if available, otherwise fake it based on order
+    historyMap[s.id] = s.lastViewedAt ?? now.subtract(Duration(minutes: i));
+  }
+
+  return historyMap;
 });

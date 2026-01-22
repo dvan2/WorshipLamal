@@ -27,17 +27,16 @@ final kTestSongs = [
     id: 'song_with_key_C',
     title: 'Transposition Test Song',
     key: 'C', // <--- CRITICAL for Female Mode test
-    originalKey: 'C',
   ),
 
   // 3. Batch/Reorder Test Songs
-  fakeSong.copyWith(id: 's1', title: 'S1', key: 'A', originalKey: 'A'),
-  fakeSong.copyWith(id: 's2', title: 'S2', key: 'A', originalKey: 'A'),
-  fakeSong.copyWith(id: 's3', title: 'S3', key: 'A', originalKey: 'A'),
+  fakeSong.copyWith(id: 's1', title: 'S1', key: 'A'),
+  fakeSong.copyWith(id: 's2', title: 'S2', key: 'A'),
+  fakeSong.copyWith(id: 's3', title: 'S3', key: 'A'),
 
   // 4. Specific songs for generic reorder tests
-  fakeSong.copyWith(id: 'song_A', title: 'A', key: 'A', originalKey: 'A'),
-  fakeSong.copyWith(id: 'song_B', title: 'B', key: 'A', originalKey: 'A'),
+  fakeSong.copyWith(id: 'song_A', title: 'A', key: 'A'),
+  fakeSong.copyWith(id: 'song_B', title: 'B', key: 'A'),
   fakeSong.copyWith(id: 'song_to_delete', title: 'Delete Me'),
 ];
 

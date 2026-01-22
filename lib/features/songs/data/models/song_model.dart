@@ -8,6 +8,7 @@ class Song {
   final String? key;
   final int? bpm;
   final DateTime? createdAt;
+  final DateTime? lastViewedAt;
 
   Song({
     required this.id,
@@ -17,6 +18,7 @@ class Song {
     this.createdAt,
     this.key,
     this.bpm,
+    this.lastViewedAt,
   });
 
   factory Song.fromMap(Map<String, dynamic> map) {
@@ -36,6 +38,28 @@ class Song {
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : null,
+    );
+  }
+
+  Song copyWith({
+    String? id,
+    String? title,
+    List<Artist>? artists,
+    List<LyricLine>? lyricLines,
+    String? key,
+    int? bpm,
+    DateTime? createdAt,
+    DateTime? lastViewedAt,
+  }) {
+    return Song(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      artists: artists ?? this.artists,
+      lyricLines: lyricLines ?? this.lyricLines,
+      key: key ?? this.key,
+      bpm: bpm ?? this.bpm,
+      createdAt: createdAt ?? this.createdAt,
+      lastViewedAt: lastViewedAt ?? this.lastViewedAt,
     );
   }
 
