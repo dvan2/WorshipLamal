@@ -24,6 +24,7 @@ class NashvilleHelper {
     '4': 5,
     '5': 7,
     '6': 9,
+    'b7': 10,
     '7': 11,
   };
 
@@ -41,7 +42,7 @@ class NashvilleHelper {
 
     // Regex to find numbers 1-7 in the string
     // This handles complex chords like "1/3" or "6m7" automatically
-    return nashvilleChord.replaceAllMapped(RegExp(r'[1-7]'), (match) {
+    return nashvilleChord.replaceAllMapped(RegExp(r'b7|[1-7]'), (match) {
       String number = match.group(0)!;
       int semitones = _intervals[number]!;
 

@@ -220,4 +220,15 @@ class SetlistsApi {
         .update({'is_public': isPublic})
         .eq('id', setlistId);
   }
+
+  Future<void> renameSetlist(String setlistId, String newTitle) async {
+    await _client
+        .from('setlists')
+        .update({'title': newTitle})
+        .eq('id', setlistId);
+  }
+
+  Future<void> deleteSetlist(String setlistId) async {
+    await _client.from('setlists').delete().eq('id', setlistId);
+  }
 }

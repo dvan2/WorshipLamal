@@ -125,4 +125,12 @@ class SetlistRepository {
   ) async {
     await _remote.updateSetlistPublicStatus(setlistId, isPublic);
   }
+
+  Future<void> renameSetlist(String setlistId, String newTitle) async {
+    await _remote.renameSetlist(setlistId, newTitle);
+  }
+
+  Future<void> deleteSetlist(String setlistId) async {
+    await _remote.deleteSetlist(setlistId);
+  }
 }

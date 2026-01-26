@@ -233,4 +233,32 @@ class SetlistController extends AsyncNotifier<void> {
       state = AsyncValue.error(e, stack);
     }
   }
+
+  Future<void> renameSetlist({
+    required String setlistId,
+    required String newTitle,
+  }) async {
+    try {
+      final repo = ref.read(setlistRepositoryProvider);
+      await repo.renameSetlist(setlistId, newTitle);
+
+      // Refresh the specific detail view AND the main list
+      ref.invalidate(setlistDetailProvider(setlistId));
+      ref.invalidate(setlistsListProvider);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> deleteSetlist(String setlistId) async {
+    try {
+      final repo = ref.read(setlistRepositoryProvider);
+      await repo.deleteSetlist(setlistId);
+
+      // Refresh the main list since this setlist is gone
+      ref.invalidate(setlistsListProvider);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
 }

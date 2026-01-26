@@ -93,7 +93,85 @@ class _SetlistDetailScreenState extends ConsumerState<SetlistDetailScreen> {
                   onPressed: () => showSetlistShareSheet(context, ref, setlist),
                 ),
               // Optional: Edit/Delete Menu
-              IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+              if (isOwner)
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'More options',
+
+                  // 1. MODERN SHAPE & SHADOW
+                  elevation: 2, // Softer shadow (M3 uses lower elevation)
+                  shadowColor: Colors.black12, // Very subtle shadow color
+                  surfaceTintColor:
+                      Colors.white, // Ensures the background stays clean
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      16,
+                    ), // Large rounded corners
+                  ),
+                  offset: const Offset(0, 48), // Pushes the menu down slightly
+
+                  onSelected: (value) {
+                    if (value == 'rename') {
+                      _showRenameDialog(context, ref, setlist);
+                    } else if (value == 'delete') {
+                      _showDeleteConfirmation(context, ref, setlist.id);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        // ITEM 1: RENAME
+                        PopupMenuItem<String>(
+                          value: 'rename',
+                          height: 48, // Standard touch target
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 20,
+                                color: Colors.grey[800],
+                              ),
+                              const SizedBox(
+                                width: 12,
+                              ), // Spacing between icon and text
+                              Text(
+                                'Rename',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[900],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // DIVIDER (Optional, adds a nice separation)
+                        const PopupMenuDivider(height: 1),
+
+                        // ITEM 2: DELETE
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          height: 48,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline_rounded,
+                                size: 20,
+                                color: Colors.red[400],
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Delete',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.red[400], // Matches the icon
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                ),
             ],
           ),
           floatingActionButton: isOwner ? _buildAddButton(context, ref) : null,
@@ -164,6 +242,84 @@ class _SetlistDetailScreenState extends ConsumerState<SetlistDetailScreen> {
               icon: const Icon(Icons.bookmark_add_outlined),
               label: const Text("Follow Setlist"),
             ),
+    );
+  }
+
+  void _showRenameDialog(BuildContext context, WidgetRef ref, Setlist setlist) {
+    final controller = TextEditingController(text: setlist.title);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Rename Setlist"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: "Enter new name",
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                ref
+                    .read(setlistControllerProvider.notifier)
+                    .renameSetlist(
+                      setlistId: setlist.id,
+                      newTitle: controller.text.trim(),
+                    );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+    String setlistId,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Setlist?"),
+        content: const Text("This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () {
+              // 1. Trigger delete
+              ref
+                  .read(setlistControllerProvider.notifier)
+                  .deleteSetlist(setlistId);
+
+              // 2. Close Dialog
+              Navigator.pop(context);
+
+              // 3. Go back to list screen
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
     );
   }
 
