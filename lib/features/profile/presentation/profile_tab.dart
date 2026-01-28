@@ -1,11 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
+import 'package:worship_lamal/features/profile/presentation/changelog_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
 import 'package:worship_lamal/features/songs/data/repositories/auth_repository.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+
+const kFallbackVersion = "1.1.0";
+const kFallbackBuild = "2";
+
+final packageInfoProvider = FutureProvider<PackageInfo>((ref) async {
+  try {
+    final info = await PackageInfo.fromPlatform();
+
+    // On Web, sometimes these come back empty if version.json fails
+    if (info.version.isEmpty || info.version == 'unknown') {
+      // Return a fake PackageInfo with your fallback values
+      return PackageInfo(
+        appName: 'Worship Lamal',
+        packageName: 'com.example.worship_lamal',
+        version: kFallbackVersion,
+        buildNumber: kFallbackBuild,
+        buildSignature: '',
+      );
+    }
+
+    return info;
+  } catch (e) {
+    // If it crashes completely, return fallback
+    return PackageInfo(
+      appName: 'Worship Lamal',
+      packageName: 'com.example.worship_lamal',
+      version: kFallbackVersion,
+      buildNumber: kFallbackBuild,
+      buildSignature: '',
+    );
+  }
+});
 
 class ProfileTab extends ConsumerStatefulWidget {
   const ProfileTab({super.key});
@@ -22,6 +56,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
     final user = _repo.currentUser;
     // 1. Watch the Preferences State
     final prefsState = ref.watch(preferencesProvider);
+    final packageInfoAsync = ref.watch(packageInfoProvider);
 
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
@@ -148,12 +183,38 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
 
           // Version Number (Good practice)
           const SizedBox(height: 40),
-          const Center(
-            child: Text(
-              "Version 1.0.0",
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+          Center(
+            child: packageInfoAsync.when(
+              data: (info) => Text(
+                "Version ${info.version} (Build ${info.buildNumber})",
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              loading: () => const SizedBox(),
+              error: (_, __) => const Text("Version Unknown"),
             ),
           ),
+
+          _buildSectionTitle("App Info"),
+
+          ListTile(
+            leading: const Icon(
+              Icons.new_releases_outlined,
+              color: Colors.orange,
+            ),
+            title: const Text("What's New"),
+            subtitle: const Text("See recent updates and changes"),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChangelogScreen(),
+                ),
+              );
+            },
+          ),
+
+          const Divider(height: 32),
         ],
       ),
     );

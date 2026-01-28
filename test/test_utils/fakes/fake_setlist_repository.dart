@@ -234,4 +234,16 @@ class FakeSetlistRepository implements SetlistRepository {
   Future<void> addSetlistItems(List<Map<String, dynamic>> items) async {
     await addSongsToSet(items);
   }
+
+  @override
+  Future<void> deleteSetlist(String setlistId) {
+    // TODO: implement deleteSetlist
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> renameSetlist(String setlistId, String newTitle) {
+    // TODO: implement renameSetlist
+    throw UnimplementedError();
+  }
 }
