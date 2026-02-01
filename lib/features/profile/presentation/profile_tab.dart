@@ -10,7 +10,7 @@ import 'package:worship_lamal/features/songs/data/repositories/auth_repository.d
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 
 const kFallbackVersion = "1.1.0";
-const kFallbackBuild = "2";
+const kFallbackBuild = "6";
 
 final packageInfoProvider = FutureProvider<PackageInfo>((ref) async {
   try {

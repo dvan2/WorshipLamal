@@ -18,6 +18,7 @@ class SetlistOwnerView extends ConsumerStatefulWidget {
 class _SetlistOwnerViewState extends ConsumerState<SetlistOwnerView> {
   // 2. Local Mutable List (The key to 0ms latency)
   late List<SetlistItem> _items;
+  final List<SetlistItem> _pendingRemovals = [];
 
   @override
   void initState() {
@@ -37,46 +38,65 @@ class _SetlistOwnerViewState extends ConsumerState<SetlistOwnerView> {
 
   @override
   Widget build(BuildContext context) {
-    return ReorderableListView.builder(
-      padding: const EdgeInsets.only(bottom: 80),
-      itemCount: _items.length, // USE LOCAL LIST
-      buildDefaultDragHandles: false,
-      onReorder: _onReorder, // Extracted logic below
-      itemBuilder: (context, index) {
-        final item = _items[index]; // USE LOCAL LIST
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) return;
 
-        return Dismissible(
-          key: ValueKey(item.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 24),
-            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.red.shade400,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.delete_outline,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          onDismissed: (_) => _handleRemove(context, ref, item, index),
-          child: SetlistItemCard(
-            item: item,
-            index: index,
-            onTap: () {
-              context.pushNamed(
-                'songDetail',
-                pathParameters: {'id': item.song.id},
-                queryParameters: {'setlistId': widget.setlist.id},
-              );
-            },
-            onKeyTap: () => _showKeyPicker(context, ref, item),
-          ),
-        );
+        // 1️⃣ Dismiss SnackBars immediately
+        ScaffoldMessenger.of(context).clearSnackBars();
+
+        // 2️⃣ Commit all pending removals
+        for (final item in _pendingRemovals) {
+          ref
+              .read(setlistControllerProvider.notifier)
+              .removeSong(setlistId: widget.setlist.id, item: item);
+        }
+
+        _pendingRemovals.clear();
       },
+
+      child: ReorderableListView.builder(
+        padding: const EdgeInsets.only(bottom: 80),
+        itemCount: _items.length,
+        buildDefaultDragHandles: false,
+        onReorder: _onReorder,
+        itemBuilder: (context, index) {
+          final item = _items[index]; // USE LOCAL LIST
+
+          return Dismissible(
+            key: ValueKey(item.id),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 24),
+              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.red.shade400,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.delete_outline,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+            onDismissed: (_) => _handleRemove(context, ref, item, index),
+            child: SetlistItemCard(
+              item: item,
+              index: index,
+              onTap: () {
+                context.pushNamed(
+                  'songDetail',
+                  pathParameters: {'id': item.song.id},
+                  queryParameters: {'setlistId': widget.setlist.id},
+                );
+              },
+              onKeyTap: () => _showKeyPicker(context, ref, item),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -106,7 +126,10 @@ class _SetlistOwnerViewState extends ConsumerState<SetlistOwnerView> {
     // Optimistic Remove
     setState(() {
       _items.removeAt(index);
+      _pendingRemovals.add(item);
     });
+
+    ScaffoldMessenger.of(context).clearSnackBars();
 
     ScaffoldMessenger.of(context).clearSnackBars();
     final snackBarController = ScaffoldMessenger.of(context).showSnackBar(
@@ -116,9 +139,9 @@ class _SetlistOwnerViewState extends ConsumerState<SetlistOwnerView> {
         action: SnackBarAction(
           label: 'UNDO',
           onPressed: () {
-            // Optimistic Undo
             setState(() {
               _items.insert(index, item);
+              _pendingRemovals.remove(item);
             });
           },
         ),
@@ -126,10 +149,15 @@ class _SetlistOwnerViewState extends ConsumerState<SetlistOwnerView> {
     );
 
     snackBarController.closed.then((reason) {
-      if (reason != SnackBarClosedReason.action) {
+      if (!mounted) return;
+
+      if (reason != SnackBarClosedReason.action &&
+          _pendingRemovals.contains(item)) {
         ref
             .read(setlistControllerProvider.notifier)
             .removeSong(setlistId: widget.setlist.id, item: item);
+
+        _pendingRemovals.remove(item);
       }
     });
   }
