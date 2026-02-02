@@ -20,8 +20,8 @@ class SongDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 1. DATA LOGIC
     final songAsync = ref.watch(songDetailProvider(songId));
-
     final prefs = ref.watch(preferencesProvider);
     final isChordMode = prefs.contentMode == ContentMode.chords;
 
@@ -30,35 +30,64 @@ class SongDetailScreen extends ConsumerWidget {
     });
 
     String? realtimeOverrideKey;
-
     if (setlistId != null) {
       final setlistAsync = ref.watch(setlistDetailProvider(setlistId!));
-
-      // If we have data, find THIS song inside that setlist
       if (setlistAsync.value != null) {
-        final setlist = setlistAsync.value!;
-        // Find the specific item for this song
-        // (We use .firstWhereOrNull in case it was deleted remotely)
         try {
-          final item = setlist.items.firstWhere((i) => i.songId == songId);
-          // Get the live key from the stream!
+          final item = setlistAsync.value!.items.firstWhere(
+            (i) => i.songId == songId,
+          );
           if (item.keyOverride != null && item.keyOverride!.isNotEmpty) {
             realtimeOverrideKey = item.keyOverride;
           }
-        } catch (_) {
-          // Song might have been removed from setlist while we are viewing it
-        }
+        } catch (_) {}
       }
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Song')),
+      // Change background based on mode (White for chords, Default/Theme for lyrics)
+      backgroundColor: isChordMode ? Colors.white : null,
+      appBar: AppBar(
+        title: const Text('Song'),
+        // Force white AppBar in Chord Mode to match paper look
+        backgroundColor: isChordMode ? Colors.white : null,
+        elevation: isChordMode ? 0 : null,
+        iconTheme: isChordMode
+            ? const IconThemeData(color: Colors.black)
+            : null,
+        titleTextStyle: isChordMode
+            ? const TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              )
+            : null,
+      ),
       body: songAsync.when(
-        data: (song) => _SongDetailContent(
-          song: song,
-          isChordMode: isChordMode,
-          overrideKey: realtimeOverrideKey,
-        ),
+        data: (song) {
+          // Calculate Display Key Once
+          final smartDefaultKey = ref.watch(
+            displayKeyProvider((originalKey: song.key, songId: song.id)),
+          );
+          final displayKey = realtimeOverrideKey ?? smartDefaultKey;
+          final isFemaleMode =
+              ref.watch(preferencesProvider).vocalMode == VocalMode.female;
+
+          // 2. SWITCH VIEW BASED ON MODE
+          if (isChordMode) {
+            return _ChordModeView(
+              song: song,
+              displayKey: displayKey,
+              isTransposed: isFemaleMode,
+            );
+          } else {
+            return _LyricModeView(
+              song: song,
+              displayKey: displayKey,
+              isTransposed: isFemaleMode,
+            );
+          }
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _ErrorState(error: err.toString()),
       ),
@@ -66,65 +95,192 @@ class SongDetailScreen extends ConsumerWidget {
   }
 }
 
-class _SongDetailContent extends ConsumerWidget {
+// ==============================================================================
+// 1. CHORD MODE VIEW (Minimalist, 2-Column, Paper Style)
+// ==============================================================================
+class _ChordModeView extends StatelessWidget {
   final Song song;
-  final bool isChordMode;
-  final String? overrideKey;
+  final String displayKey;
+  final bool isTransposed;
 
-  const _SongDetailContent({
+  const _ChordModeView({
     required this.song,
-    required this.isChordMode,
-    this.overrideKey,
+    required this.displayKey,
+    required this.isTransposed,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sections = song.sections;
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    final smartDefaultKey = ref.watch(
-      displayKeyProvider((originalKey: song.key, songId: song.id)),
-    );
-
-    final displayKey = overrideKey ?? smartDefaultKey;
-
-    final isFemaleMode =
-        ref.watch(preferencesProvider).vocalMode == VocalMode.female;
-
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: SongHeader(
             song: song,
             displayKey: displayKey,
-            isTransposed: isFemaleMode,
+            isTransposed: isTransposed,
           ),
         ),
-        SliverPadding(
-          padding: const EdgeInsets.all(AppConstants.songDetailPadding),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final section = sections[index];
+        const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Trigger 2-column mode on wider screens
+              bool useTwoColumns = constraints.maxWidth > 480;
 
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: index < sections.length - 1
-                      ? AppConstants.sectionSpacing
-                      : 0,
+              return Scrollbar(
+                thumbVisibility: true,
+                thickness: 4,
+                radius: const Radius.circular(2),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 32 + bottomPadding),
+                  child: useTwoColumns
+                      ? _buildTwoColumnLayout(context)
+                      : _buildSingleColumnLayout(context),
                 ),
-                child: _buildSection(context, section, displayKey),
               );
-            }, childCount: sections.length),
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSection(
-    BuildContext context,
-    SectionBlock section,
-    String currentKey,
-  ) {
+  Widget _buildSingleColumnLayout(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: song.sections
+          .map((s) => _buildCompactSection(context, s))
+          .toList(),
+    );
+  }
+
+  Widget _buildTwoColumnLayout(BuildContext context) {
+    final midPoint = (song.sections.length / 2).ceil();
+    final leftColumn = song.sections.take(midPoint).toList();
+    final rightColumn = song.sections.skip(midPoint).toList();
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: leftColumn
+                .map((s) => _buildCompactSection(context, s))
+                .toList(),
+          ),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: rightColumn
+                .map((s) => _buildCompactSection(context, s))
+                .toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactSection(BuildContext context, SectionBlock section) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: Text(
+              section.title.toUpperCase(),
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+          ...section.lines.map((line) {
+            final contentToRender = line.contentChordPro ?? line.content;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 2.0),
+              child: ChordLineRenderer(
+                line: contentToRender,
+                targetKey: displayKey,
+                chordStyle: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w800,
+                ),
+                lyricStyle: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  height: 1.2,
+                  fontFamily: 'RobotoMono',
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ==============================================================================
+// 2. LYRIC MODE VIEW (Colorful, Vertical, Sections)
+// ==============================================================================
+class _LyricModeView extends StatelessWidget {
+  final Song song;
+  final String displayKey;
+  final bool isTransposed;
+
+  const _LyricModeView({
+    required this.song,
+    required this.displayKey,
+    required this.isTransposed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SongHeader(
+              song: song,
+              displayKey: displayKey,
+              isTransposed: isTransposed,
+            ),
+          ),
+        ),
+
+        SliverPadding(
+          padding: const EdgeInsets.all(AppConstants.songDetailPadding),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final section = song.sections[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: index < song.sections.length - 1
+                      ? AppConstants.sectionSpacing
+                      : 0,
+                ),
+                child: _buildColoredSection(context, section),
+              );
+            }, childCount: song.sections.length),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColoredSection(BuildContext context, SectionBlock section) {
     final config = _getSectionConfig(section.sectionType);
 
     return Container(
@@ -147,7 +303,6 @@ class _SongDetailContent extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HEADER PILL
             Container(
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
               margin: const EdgeInsets.only(bottom: 6),
@@ -165,45 +320,18 @@ class _SongDetailContent extends ConsumerWidget {
                 ),
               ),
             ),
-
-            // LINES LOOP
             ...section.lines.map((line) {
-              // 3. LOGIC SIMPLIFIED: Just check the boolean passed in
-              if (isChordMode) {
-                // === CHORD MODE ===
-                final contentToRender = line.contentChordPro ?? line.content;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: ChordLineRenderer(
-                    line: contentToRender,
-                    targetKey: currentKey,
-                    chordStyle: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.deepOrange,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    lyricStyle: const TextStyle(
-                      fontSize: 17,
-                      color: AppColors.textPrimary,
-                      height: 1.4,
-                      fontFamily: 'RobotoMono',
-                    ),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6.0),
+                child: Text(
+                  line.content,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 17,
+                    height: 1.6,
+                    color: AppColors.textPrimary,
                   ),
-                );
-              } else {
-                // === LYRIC MODE ===
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6.0),
-                  child: Text(
-                    line.content,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 17,
-                      height: 1.6,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                );
-              }
+                ),
+              );
             }),
           ],
         ),
