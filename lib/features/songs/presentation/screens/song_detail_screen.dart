@@ -216,7 +216,6 @@ class _ChordModeView extends StatelessWidget {
                   fontSize: 11.5,
                   color: Colors.black87,
                   height: 1.15, // Tight line height
-                  fontFamily: 'RobotoMono',
                   letterSpacing: -0.3, // Slight squeeze to fit more text
                 ),
               ),
