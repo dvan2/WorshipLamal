@@ -28,25 +28,33 @@ class NashvilleHelper {
     '7': 11,
   };
 
-  /// Main function: "6m" in Key of "C" -> "Am"
   static String translate(String nashvilleChord, String keyRoot) {
     if (nashvilleChord.isEmpty) return "";
 
-    // Normalize Key (handle minor keys if needed, but usually we just take the root)
-    // For simplicity, we assume keyRoot is like "C", "G", "F#"
     String cleanKey = keyRoot.replaceAll('m', '');
 
-    // Find the starting index of the Key (e.g., C=0, G=7)
-    int keyIndex = _notes.indexOf(cleanKey);
-    if (keyIndex == -1) return nashvilleChord; // Fallback if key is invalid
+    // 1. Add this map to handle Enharmonics
+    // This maps the Input (Dropdown) -> To Internal format (Helper List)
+    const Map<String, String> normalize = {
+      'Cb': 'B',
+      'Db': 'C#',
+      'D#': 'Eb',
+      'Gb': 'F#',
+      'G#': 'Ab',
+      'A#': 'Bb',
+    };
 
-    // Regex to find numbers 1-7 in the string
-    // This handles complex chords like "1/3" or "6m7" automatically
+    // 2. Normalize the key if it exists in the map
+    if (normalize.containsKey(cleanKey)) {
+      cleanKey = normalize[cleanKey]!;
+    }
+
+    int keyIndex = _notes.indexOf(cleanKey);
+    if (keyIndex == -1) return nashvilleChord;
+
     return nashvilleChord.replaceAllMapped(RegExp(r'b7|[1-7]'), (match) {
       String number = match.group(0)!;
       int semitones = _intervals[number]!;
-
-      // Calculate new note index (wrapping around 12)
       int newIndex = (keyIndex + semitones) % 12;
       return _notes[newIndex];
     });

@@ -96,7 +96,7 @@ class SongDetailScreen extends ConsumerWidget {
 }
 
 // ==============================================================================
-// 1. CHORD MODE VIEW (Minimalist, 2-Column, Paper Style)
+// 1. CHORD MODE VIEW (Always 2 Columns, Compact)
 // ==============================================================================
 class _ChordModeView extends StatelessWidget {
   final Song song;
@@ -113,47 +113,38 @@ class _ChordModeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: SongHeader(
-            song: song,
-            displayKey: displayKey,
-            isTransposed: isTransposed,
-          ),
-        ),
-        const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Trigger 2-column mode on wider screens
-              bool useTwoColumns = constraints.maxWidth > 480;
-
-              return Scrollbar(
+    return Center(
+      child: ConstrainedBox(
+        // Keep the max width constraint so it doesn't look ridiculous on desktops,
+        // but it will fill 100% of mobile screens.
+        constraints: const BoxConstraints(maxWidth: 1000),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: SongHeader(
+                song: song,
+                displayKey: displayKey,
+                isTransposed: isTransposed,
+              ),
+            ),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+            Expanded(
+              child: Scrollbar(
                 thumbVisibility: true,
                 thickness: 4,
                 radius: const Radius.circular(2),
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, 32 + bottomPadding),
-                  child: useTwoColumns
-                      ? _buildTwoColumnLayout(context)
-                      : _buildSingleColumnLayout(context),
+                  // 1. REDUCED PADDING:
+                  // Changed horizontal padding from 16 to 8 to give columns more room.
+                  padding: EdgeInsets.fromLTRB(8, 16, 8, 32 + bottomPadding),
+                  child: _buildTwoColumnLayout(context),
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildSingleColumnLayout(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: song.sections
-          .map((s) => _buildCompactSection(context, s))
-          .toList(),
+      ),
     );
   }
 
@@ -173,7 +164,9 @@ class _ChordModeView extends StatelessWidget {
                 .toList(),
           ),
         ),
-        const SizedBox(width: 24),
+        // 2. REDUCED GUTTER:
+        // Changed from 24 to 12. This saves space while keeping separation visible.
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,18 +181,19 @@ class _ChordModeView extends StatelessWidget {
 
   Widget _buildCompactSection(BuildContext context, SectionBlock section) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      // Tighter vertical spacing between sections
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 4.0),
+            padding: const EdgeInsets.only(bottom: 2.0),
             child: Text(
               section.title.toUpperCase(),
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
+                fontSize: 11, // Small, crisp header
                 decoration: TextDecoration.underline,
               ),
             ),
@@ -211,16 +205,19 @@ class _ChordModeView extends StatelessWidget {
               child: ChordLineRenderer(
                 line: contentToRender,
                 targetKey: displayKey,
+                // 3. COMPACT FONTS:
+                // Reduced sizes slightly to prevent wrapping on narrow screens
                 chordStyle: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 11.5,
                   color: Colors.black,
                   fontWeight: FontWeight.w800,
                 ),
                 lyricStyle: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 11.5,
                   color: Colors.black87,
-                  height: 1.2,
+                  height: 1.15, // Tight line height
                   fontFamily: 'RobotoMono',
+                  letterSpacing: -0.3, // Slight squeeze to fit more text
                 ),
               ),
             );
