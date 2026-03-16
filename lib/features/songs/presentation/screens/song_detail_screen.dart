@@ -7,6 +7,7 @@ import 'package:worship_lamal/features/setlists/presentation/providers/setlist_p
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/display_key_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/history_provider.dart';
+import 'package:worship_lamal/features/songs/presentation/screens/chord_mode_view.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/chord_line_renderer.dart';
 
 import '../providers/song_provider.dart';
@@ -75,7 +76,7 @@ class SongDetailScreen extends ConsumerWidget {
 
           // 2. SWITCH VIEW BASED ON MODE
           if (isChordMode) {
-            return _ChordModeView(
+            return ChordModeView(
               song: song,
               displayKey: displayKey,
               isTransposed: isFemaleMode,
@@ -90,138 +91,6 @@ class SongDetailScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _ErrorState(error: err.toString()),
-      ),
-    );
-  }
-}
-
-// ==============================================================================
-// 1. CHORD MODE VIEW (Always 2 Columns, Compact)
-// ==============================================================================
-class _ChordModeView extends StatelessWidget {
-  final Song song;
-  final String displayKey;
-  final bool isTransposed;
-
-  const _ChordModeView({
-    required this.song,
-    required this.displayKey,
-    required this.isTransposed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    return Center(
-      child: ConstrainedBox(
-        // Keep the max width constraint so it doesn't look ridiculous on desktops,
-        // but it will fill 100% of mobile screens.
-        constraints: const BoxConstraints(maxWidth: 1000),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SongHeader(
-                song: song,
-                displayKey: displayKey,
-                isTransposed: isTransposed,
-              ),
-            ),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
-            Expanded(
-              child: Scrollbar(
-                thumbVisibility: true,
-                thickness: 4,
-                radius: const Radius.circular(2),
-                child: SingleChildScrollView(
-                  // 1. REDUCED PADDING:
-                  // Changed horizontal padding from 16 to 8 to give columns more room.
-                  padding: EdgeInsets.fromLTRB(8, 16, 8, 32 + bottomPadding),
-                  child: _buildTwoColumnLayout(context),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTwoColumnLayout(BuildContext context) {
-    final midPoint = (song.sections.length / 2).ceil();
-    final leftColumn = song.sections.take(midPoint).toList();
-    final rightColumn = song.sections.skip(midPoint).toList();
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: leftColumn
-                .map((s) => _buildCompactSection(context, s))
-                .toList(),
-          ),
-        ),
-        // 2. REDUCED GUTTER:
-        // Changed from 24 to 12. This saves space while keeping separation visible.
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: rightColumn
-                .map((s) => _buildCompactSection(context, s))
-                .toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCompactSection(BuildContext context, SectionBlock section) {
-    return Padding(
-      // Tighter vertical spacing between sections
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2.0),
-            child: Text(
-              section.title.toUpperCase(),
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 11, // Small, crisp header
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-          ...section.lines.map((line) {
-            final contentToRender = line.contentChordPro ?? line.content;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 2.0),
-              child: ChordLineRenderer(
-                line: contentToRender,
-                targetKey: displayKey,
-                // 3. COMPACT FONTS:
-                // Reduced sizes slightly to prevent wrapping on narrow screens
-                chordStyle: const TextStyle(
-                  fontSize: 11.5,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w800,
-                ),
-                lyricStyle: const TextStyle(
-                  fontSize: 11.5,
-                  color: Colors.black87,
-                  height: 1.15, // Tight line height
-                  letterSpacing: -0.3, // Slight squeeze to fit more text
-                ),
-              ),
-            );
-          }),
-        ],
       ),
     );
   }

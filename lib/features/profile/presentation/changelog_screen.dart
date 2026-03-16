@@ -10,9 +10,32 @@ class ChangelogScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
+          // NEW UPDATE BLOCK
+          _UpdateBlock(
+            version: "1.1.2",
+            date: "Today",
+            changes: [
+              "Completely redesigned Chord Mode for a professional sheet-music feel. 🎼",
+              "New permanent 2-column layout on mobile to view more of the song without scrolling. 📱",
+              "Improved typography with heavier chords and italicized section headers for faster reading. ✨",
+              "Added a clean metadata header for Title, Artist, Key, and BPM. 📄",
+            ],
+          ),
+          Divider(height: 32),
+          // PREVIOUS UPDATES
+          _UpdateBlock(
+            version: "1.1.1",
+            date: "Feb 4, 2026",
+            changes: [
+              "Improved Chord View: Better spacing and alignment for easier reading. 🎸",
+              "New Domain: Rebranded to worshiplamal.com! 🌐",
+              "Default View: Songs now open in Lyrics mode by default. 📝",
+            ],
+          ),
+          Divider(height: 32),
           _UpdateBlock(
             version: "1.1.0",
-            date: "Oct 24, 2025", // Use current date
+            date: "Oct 24, 2025",
             changes: [
               "Added 'Recently Viewed' sorting! 🕒",
               "You can now see key changes instantly in setlists.",

@@ -33,9 +33,26 @@ List<Song> applyFilterAndSort({
       }
     }
 
+    // D. NEW: Type Filter (Worship, Praise, Hymn)
+    if (filters.selectedTypes.isNotEmpty) {
+      if (!filters.selectedTypes.contains(song.type)) return false;
+    }
+
+    // E. NEW: Theme Filter (Cross, Blood, Joy)
+    if (filters.selectedThemes.isNotEmpty) {
+      // Check if the song has at least ONE of the selected themes
+      bool hasMatchingTheme = song.themes.any(
+        (theme) => filters.selectedThemes.contains(theme),
+      );
+
+      if (!hasMatchingTheme) return false;
+    }
+
+    // F. Favorites Filter
     if (filters.showFavoritesOnly) {
       if (!favoriteIds.contains(song.id)) return false;
     }
+
     return true;
   }).toList();
 
@@ -57,12 +74,9 @@ List<Song> applyFilterAndSort({
     case SongSortOption.recentlyViewed:
       if (historyMap == null || historyMap.isEmpty) {
         // Fallback: If no history, just sort A-Z
-        filteredList.sort(
-          (a, b) => a.title.compareTo(b.title),
-        ); // FIX: Use filteredList
+        filteredList.sort((a, b) => a.title.compareTo(b.title));
       } else {
         filteredList.sort((a, b) {
-          // FIX: Use filteredList
           final timeA = historyMap[a.id];
           final timeB = historyMap[b.id];
 

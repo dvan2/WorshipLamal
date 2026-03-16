@@ -1,5 +1,28 @@
 import 'lyric_line_model.dart';
 
+enum SongType {
+  worship('Worship'), // Slow, intimate
+  praise('Praise'), // Fast, energetic
+  hymn('Hymn'), // Traditional
+  other('Other');
+
+  final String label;
+  const SongType(this.label);
+
+  static SongType fromString(String? type) {
+    switch (type?.toLowerCase().trim()) {
+      case 'praise':
+        return SongType.praise;
+      case 'hymn':
+        return SongType.hymn;
+      case 'worship':
+        return SongType.worship;
+      default:
+        return SongType.other;
+    }
+  }
+}
+
 class Song {
   final String id;
   final String title;
@@ -7,6 +30,11 @@ class Song {
   final List<LyricLine> lyricLines;
   final String? key;
   final int? bpm;
+
+  // 2. NEW FIELDS: To power the Home Screen discovery shelves
+  final SongType type;
+  final List<String> themes;
+
   final DateTime? createdAt;
   final DateTime? lastViewedAt;
 
@@ -15,6 +43,9 @@ class Song {
     required this.title,
     required this.artists,
     required this.lyricLines,
+    // Provide safe defaults so existing data doesn't break
+    this.type = SongType.other,
+    this.themes = const [],
     this.createdAt,
     this.key,
     this.bpm,
@@ -35,6 +66,13 @@ class Song {
           .toList(),
       key: map['key'] as String?,
       bpm: map['bpm'] as int?,
+
+      // 3. PARSE NEW FIELDS safely from the database map
+      type: SongType.fromString(map['type'] as String?),
+      themes: (map['themes'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
+
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : null,
@@ -48,6 +86,8 @@ class Song {
     List<LyricLine>? lyricLines,
     String? key,
     int? bpm,
+    SongType? type,
+    List<String>? themes,
     DateTime? createdAt,
     DateTime? lastViewedAt,
   }) {
@@ -58,6 +98,8 @@ class Song {
       lyricLines: lyricLines ?? this.lyricLines,
       key: key ?? this.key,
       bpm: bpm ?? this.bpm,
+      type: type ?? this.type,
+      themes: themes ?? this.themes,
       createdAt: createdAt ?? this.createdAt,
       lastViewedAt: lastViewedAt ?? this.lastViewedAt,
     );

@@ -10,6 +10,8 @@ import 'package:worship_lamal/features/songs/presentation/providers/song_provide
 // 1. STATE OBJECT
 class SongFilterState {
   final Set<String> selectedKeys;
+  final Set<SongType> selectedTypes; // NEW: For Hymn, Praise, Worship
+  final Set<String> selectedThemes;
   final RangeValues bpmRange;
   final bool isFiltering;
   final SongSortOption sortOption;
@@ -18,6 +20,8 @@ class SongFilterState {
   const SongFilterState({
     this.selectedKeys = const {},
     this.bpmRange = const RangeValues(40, 200), // Default BPM range
+    this.selectedTypes = const {}, // NEW
+    this.selectedThemes = const {},
     this.isFiltering = false,
     this.sortOption = SongSortOption.newest, //Default
     this.showFavoritesOnly = false,
@@ -25,20 +29,32 @@ class SongFilterState {
 
   SongFilterState copyWith({
     Set<String>? selectedKeys,
+    Set<SongType>? selectedTypes,
+    Set<String>? selectedThemes,
     RangeValues? bpmRange,
     SongSortOption? sortOption,
     bool? showFavoritesOnly,
   }) {
+    final nextKeys = selectedKeys ?? this.selectedKeys;
+    final nextTypes = selectedTypes ?? this.selectedTypes;
+    final nextThemes = selectedThemes ?? this.selectedThemes;
+    final nextBpm = bpmRange ?? this.bpmRange;
+    final nextFavs = showFavoritesOnly ?? this.showFavoritesOnly;
+
     return SongFilterState(
-      selectedKeys: selectedKeys ?? this.selectedKeys,
-      bpmRange: bpmRange ?? this.bpmRange,
+      selectedKeys: nextKeys,
+      selectedTypes: nextTypes,
+      selectedThemes: nextThemes,
+      bpmRange: nextBpm,
       sortOption: sortOption ?? this.sortOption,
-      showFavoritesOnly: showFavoritesOnly ?? this.showFavoritesOnly,
-      // Logic: If range is not default OR keys are not empty, we are filtering.
+      showFavoritesOnly: nextFavs,
+      // Logic: If any filter deviates from default, we are filtering.
       isFiltering:
-          (selectedKeys ?? this.selectedKeys).isNotEmpty ||
-          (bpmRange ?? this.bpmRange) != const RangeValues(40, 200) ||
-          (showFavoritesOnly ?? this.showFavoritesOnly),
+          nextKeys.isNotEmpty ||
+          nextTypes.isNotEmpty ||
+          nextThemes.isNotEmpty ||
+          nextBpm != const RangeValues(40, 200) ||
+          nextFavs,
     );
   }
 }
@@ -71,6 +87,18 @@ class SongFilterNotifier extends Notifier<SongFilterState> {
     state = state.copyWith(selectedKeys: current);
   }
 
+  void toggleType(SongType type) {
+    final current = Set<SongType>.from(state.selectedTypes);
+    current.contains(type) ? current.remove(type) : current.add(type);
+    state = state.copyWith(selectedTypes: current);
+  }
+
+  void toggleTheme(String theme) {
+    final current = Set<String>.from(state.selectedThemes);
+    current.contains(theme) ? current.remove(theme) : current.add(theme);
+    state = state.copyWith(selectedThemes: current);
+  }
+
   void clearKeyFilter() {
     state = state.copyWith(selectedKeys: {});
   }
@@ -79,15 +107,18 @@ class SongFilterNotifier extends Notifier<SongFilterState> {
     state = const SongFilterState();
   }
 
-  // Batch update (useful for the "Show Results" button)
   void setFilters({
     required Set<String> selectedKeys,
+    required Set<SongType> selectedTypes,
+    required Set<String> selectedThemes,
     required RangeValues bpmRange,
     required SongSortOption sortOption,
     required bool showFavoritesOnly,
   }) {
     state = state.copyWith(
       selectedKeys: selectedKeys,
+      selectedTypes: selectedTypes,
+      selectedThemes: selectedThemes,
       bpmRange: bpmRange,
       sortOption: sortOption,
       showFavoritesOnly: showFavoritesOnly,

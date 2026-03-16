@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/utils/key_transposer.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
 import '../providers/song_filter_provider.dart';
 
@@ -37,6 +38,9 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
   late SongSortOption _tempSortOption;
   late bool _tempShowFavoritesOnly;
 
+  late Set<SongType> _tempSelectedTypes;
+  late Set<String> _tempSelectedThemes;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +50,9 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
     _tempBpmRange = currentState.bpmRange;
     _tempSortOption = currentState.sortOption;
     _tempShowFavoritesOnly = currentState.showFavoritesOnly;
+
+    _tempSelectedTypes = Set.from(currentState.selectedTypes);
+    _tempSelectedThemes = Set.from(currentState.selectedThemes);
   }
 
   void _toggleKey(String key) {
@@ -54,6 +61,16 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
         _tempSelectedKeys.remove(key);
       } else {
         _tempSelectedKeys.add(key);
+      }
+    });
+  }
+
+  void _toggleType(SongType type) {
+    setState(() {
+      if (_tempSelectedTypes.contains(type)) {
+        _tempSelectedTypes.remove(type);
+      } else {
+        _tempSelectedTypes.add(type);
       }
     });
   }
@@ -93,6 +110,9 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                     _tempBpmRange = const RangeValues(40, 200);
                     _tempSortOption = SongSortOption.titleAz;
                     _tempShowFavoritesOnly = false;
+
+                    _tempSelectedTypes = {};
+                    _tempSelectedThemes = {};
                   });
                 },
                 child: const Text("Reset"),
@@ -147,6 +167,38 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                     : BorderSide(color: Colors.grey.shade300),
               );
             }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+          const Text(
+            "Song Style",
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: SongType.values
+                .where((t) => t != SongType.other) // Hide 'other' if you want
+                .map((type) {
+                  final isSelected = _tempSelectedTypes.contains(type);
+                  return ChoiceChip(
+                    label: Text(type.label),
+                    selected: isSelected,
+                    onSelected: (_) => _toggleType(type),
+                    selectedColor: AppColors.primary.withOpacity(0.2),
+                    labelStyle: TextStyle(
+                      color: isSelected ? AppColors.primary : Colors.black,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                    side: isSelected
+                        ? const BorderSide(color: AppColors.primary)
+                        : BorderSide(color: Colors.grey.shade300),
+                  );
+                })
+                .toList(),
           ),
 
           // --- BPM Filter ---
@@ -250,6 +302,9 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                       bpmRange: _tempBpmRange,
                       sortOption: _tempSortOption,
                       showFavoritesOnly: _tempShowFavoritesOnly, // <--- Pass it
+
+                      selectedTypes: _tempSelectedTypes,
+                      selectedThemes: _tempSelectedThemes,
                     );
                 Navigator.pop(context);
               },

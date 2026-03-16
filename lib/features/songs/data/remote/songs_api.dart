@@ -12,6 +12,8 @@ class SongsApi {
         title,
         key,
         bpm,
+        type,
+        themes,
         created_at,
         song_artists(
           artists(
@@ -39,6 +41,8 @@ class SongsApi {
         title,
         key,
         bpm,
+        type,
+        themes,
         created_at,
         song_artists (
           artists (

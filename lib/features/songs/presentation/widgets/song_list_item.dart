@@ -118,15 +118,66 @@ class _SongListItemState extends ConsumerState<SongListItem> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppConstants.spacingXs),
-          Text(
-            subtitleText,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(height: 1.2),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          // WRAPPED IN A ROW TO ADD THE BADGE
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  subtitleText,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              // SHOW BADGE IF IT HAS A CATEGORY
+              if (widget.song.type != SongType.other)
+                _buildTypeBadge(widget.song.type),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTypeBadge(SongType type) {
+    Color bgColor;
+    Color textColor;
+
+    // Define colors based on the vibe
+    switch (type) {
+      case SongType.worship:
+        bgColor = Colors.blue.withOpacity(0.15);
+        textColor = Colors.blue.shade800;
+        break;
+      case SongType.praise:
+        bgColor = Colors.orange.withOpacity(0.15);
+        textColor = Colors.orange.shade900;
+        break;
+      case SongType.hymn:
+        bgColor = Colors.brown.withOpacity(0.15);
+        textColor = Colors.brown.shade900;
+        break;
+      default:
+        return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4), // Small, subtle radius
+      ),
+      child: Text(
+        type.label.toUpperCase(),
+        style: TextStyle(
+          color: textColor,
+          fontSize: 10, // Keep it tiny so it doesn't distract
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

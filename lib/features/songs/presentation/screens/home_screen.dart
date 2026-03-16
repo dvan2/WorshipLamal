@@ -78,19 +78,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 0:
         return Row(
           children: [
-            // Optional: Small Logo Icon
-            const Icon(Icons.menu_book, color: AppColors.primary, size: 24),
-            const SizedBox(width: 8),
+            // 1. Simplified Container (No padding, no white background)
+            Container(
+              // Removed padding: const EdgeInsets.all(4),
+              // Removed decoration: BoxDecoration(...),
+              child: Image.asset(
+                'assets/icon/app_icon.png',
+                // 2. Increased Size for better visibility
+                width: 32,
+                height: 32,
+                // 3. Ensures the image scales to fit the box perfectly
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
             Text(
               'Worship Lamal',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
-                fontSize: 22,
+                fontSize: 20,
               ),
             ),
           ],
         );
+
       case 1:
         return const Text(
           'Setlists',

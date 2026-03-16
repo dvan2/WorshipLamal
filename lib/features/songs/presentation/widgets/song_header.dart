@@ -2,6 +2,77 @@ import 'package:flutter/material.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 
+/**
+ * 
+ * // ----------------------------------------------------
+              // 1. THE NEW META-HEADER & DIVIDER
+              // ----------------------------------------------------
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Left Side: Title & Artist
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                song.title,
+                                style: const TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900, // Very bold
+                                  color: Colors.black,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              if (song.artistNames.isNotEmpty)
+                                Text(
+                                  song.artistNames,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        // Right Side: Key & BPM
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Key of ${song.key ?? '?'}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            if (song.bpm != null)
+                              Text(
+                                "${song.bpm} BPM",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // The Thick Divider Line
+                    const Divider(color: Colors.black, thickness: 2, height: 2),
+                  ],
+                ),
+              ),
+ */
 class SongHeader extends StatelessWidget {
   final Song song;
   final String displayKey;
