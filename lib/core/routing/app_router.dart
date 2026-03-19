@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/screen.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/song_picker_screen.dart';
+import 'package:worship_lamal/features/songs/presentation/screens/song_results_screen.dart';
 
 import '../../features/songs/presentation/screens/home_screen.dart';
 import '../../features/songs/presentation/screens/song_detail_screen.dart';
@@ -41,6 +42,11 @@ final appRouter = GoRouter(
           path: 'song-picker',
           name: 'songPicker',
           builder: (context, state) => const SongPickerScreen(),
+        ),
+        GoRoute(
+          path: 'results',
+          name: 'songResults',
+          builder: (context, state) => const SongResultsScreen(),
         ),
       ],
     ),

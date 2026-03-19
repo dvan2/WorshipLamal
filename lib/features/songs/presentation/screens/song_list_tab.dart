@@ -1,0 +1,83 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:worship_lamal/core/theme/app_constants.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
+import 'package:worship_lamal/features/songs/presentation/screens/home_dashboard_tab.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/add_to_setlist_sheet.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/song_list_item.dart';
+
+class SongListTab extends ConsumerWidget {
+  const SongListTab({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final songsAsync = ref.watch(filteredSongsProvider);
+    final searchQuery = ref.watch(searchQueryProvider);
+
+    return Column(
+      children: [
+        // 1. THE REAL SEARCH BAR
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppConstants.spacingLg,
+            AppConstants.spacingSm,
+            AppConstants.spacingLg,
+            AppConstants.spacingMd,
+          ),
+          child: SongSearchField(
+            searchProvider: searchQueryProvider,
+            filterProvider: songFilterProvider,
+          ),
+        ),
+
+        // 2. THE LIST RESULTS
+        Expanded(
+          child: songsAsync.when(
+            skipLoadingOnReload: true,
+            data: (songs) {
+              if (songs.isEmpty) {
+                return const Center(
+                  child: Text("No songs found matching filters."),
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.only(top: 8, bottom: 80),
+                itemCount: songs.length,
+                separatorBuilder: (context, index) =>
+                    const Divider(indent: AppConstants.dividerIndent),
+                itemBuilder: (context, index) {
+                  final song = songs[index];
+                  return SongListItem(
+                    key: ValueKey(song.id),
+                    song: song,
+                    onTap: () => context.pushNamed(
+                      'songDetail',
+                      pathParameters: {'id': song.id},
+                    ),
+                    onLongPress: () {
+                      showModalBottomSheet(
+                        context: context,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        builder: (context) => AddToSetlistSheet(
+                          songId: song.id,
+                          songTitle: song.title,
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Center(child: Text('Error: $err')),
+          ),
+        ),
+      ],
+    );
+  }
+}

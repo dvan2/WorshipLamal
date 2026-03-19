@@ -107,6 +107,21 @@ class SongFilterNotifier extends Notifier<SongFilterState> {
     state = const SongFilterState();
   }
 
+  void applyExclusiveFilter({
+    SongType? type,
+    String? keyName,
+    bool favoritesOnly = false,
+  }) {
+    // We create a brand new state (which resets everything to default)
+    // and ONLY inject the specific filter the user tapped on the Dashboard.
+    state = SongFilterState(
+      selectedTypes: type != null ? {type} : const {},
+      selectedKeys: keyName != null ? {keyName} : const {},
+      showFavoritesOnly: favoritesOnly,
+      // Keeps defaults for BPM, Sorting, etc.
+    );
+  }
+
   void setFilters({
     required Set<String> selectedKeys,
     required Set<SongType> selectedTypes,
@@ -161,56 +176,83 @@ final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(() {
   return SearchQueryNotifier();
 });
 
-final filteredSongsProvider = FutureProvider<List<Song>>((ref) async {
-  final allSongs = await ref.watch(songListProvider.future);
-
+final filteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
+  final allSongsAsync = ref.watch(songListProvider);
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final filters = ref.watch(songFilterProvider);
 
+  // 1. If the raw database is still downloading, show loading screen
+  if (allSongsAsync.isLoading) return const AsyncLoading();
+  if (allSongsAsync.hasError) {
+    return AsyncError(allSongsAsync.error!, allSongsAsync.stackTrace!);
+  }
+
+  // 2. Safe to extract the full list now
+  final allSongs = allSongsAsync.value ?? [];
+
+  // 3. Handle Favorites asynchronously if needed
   Set<String> favoriteIds = {};
   if (filters.showFavoritesOnly) {
-    final favorites = await ref.watch(favoritesListProvider.future);
-    favoriteIds = favorites.map((f) => f.songId).toSet();
+    final favAsync = ref.watch(favoritesListProvider);
+    if (favAsync.isLoading) return const AsyncLoading();
+    favoriteIds = (favAsync.value ?? []).map((f) => f.songId).toSet();
   }
 
+  // 4. Handle History asynchronously if needed
   Map<String, DateTime>? historyMap;
   if (filters.sortOption == SongSortOption.recentlyViewed) {
-    historyMap = await ref.watch(historyMapProvider.future);
+    final historyAsync = ref.watch(historyMapProvider);
+    if (historyAsync.isLoading) return const AsyncLoading();
+    historyMap = historyAsync.value;
   }
 
-  return applyFilterAndSort(
+  // 5. Apply the filter INSTANTLY (Synchronously)
+  final result = applyFilterAndSort(
     allSongs: allSongs,
     query: query,
     filters: filters,
     favoriteIds: favoriteIds,
     historyMap: historyMap,
   );
+
+  return AsyncData(result);
 });
 
-final pickerFilteredSongsProvider = FutureProvider<List<Song>>((ref) async {
-  final allSongs = await ref.watch(songListProvider.future);
+final pickerFilteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
+  final allSongsAsync = ref.watch(songListProvider);
+  final query = ref.watch(pickerSearchQueryProvider).toLowerCase();
+  final filters = ref.watch(pickerFilterProvider);
+
+  if (allSongsAsync.isLoading) return const AsyncLoading();
+  if (allSongsAsync.hasError) {
+    return AsyncError(allSongsAsync.error!, allSongsAsync.stackTrace!);
+  }
+
+  final allSongs = allSongsAsync.value ?? [];
 
   Set<String> favoriteIds = {};
-  final filters = ref.watch(pickerFilterProvider);
-  final query = ref.watch(pickerSearchQueryProvider);
-
   if (filters.showFavoritesOnly) {
-    final favorites = await ref.watch(favoritesListProvider.future);
-    favoriteIds = favorites.map((f) => f.songId).toSet();
+    final favAsync = ref.watch(favoritesListProvider);
+    if (favAsync.isLoading) return const AsyncLoading();
+    favoriteIds = (favAsync.value ?? []).map((f) => f.songId).toSet();
   }
 
   Map<String, DateTime>? historyMap;
   if (filters.sortOption == SongSortOption.recentlyViewed) {
-    historyMap = await ref.watch(historyMapProvider.future);
+    final historyAsync = ref.watch(historyMapProvider);
+    if (historyAsync.isLoading) return const AsyncLoading();
+    historyMap = historyAsync.value;
   }
 
-  return applyFilterAndSort(
+  final result = applyFilterAndSort(
     allSongs: allSongs,
     query: query,
     filters: filters,
     favoriteIds: favoriteIds,
     historyMap: historyMap,
   );
+
+  return AsyncData(result);
 });
 
 final historyMapProvider = FutureProvider<Map<String, DateTime>>((ref) async {

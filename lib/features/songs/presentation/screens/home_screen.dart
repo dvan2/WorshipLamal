@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/profile/presentation/profile_tab.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlists_tab.dart';
-import 'songs_tab.dart';
+// Note: You will create these two files in Step 2 & 3
+import 'home_dashboard_tab.dart';
+import 'song_list_tab.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -16,11 +18,22 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
-  // The list of pages to switch between
-  final List<Widget> _tabs = const [SongsTab(), SetlistsTab(), ProfileTab()];
+  void _navigateToSongsTab() {
+    setState(() {
+      _currentIndex = 1; // 1 is the index of the SongListTab
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    // We generate the tabs here so we can pass the navigation callback to the Dashboard
+    final List<Widget> tabs = [
+      HomeDashboardTab(onNavigateToSearch: _navigateToSongsTab), // Index 0
+      const SongListTab(), // Index 1
+      const SetlistsTab(), // Index 2
+      const ProfileTab(), // Index 3
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: _buildTitle(),
@@ -37,13 +50,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 size: 20,
                 color: AppColors.primary,
               ),
-              // On tap: navigate to Profile tab?
             ),
           ),
         ],
       ),
-      // Switch the body based on the index
-      body: _tabs[_currentIndex],
+      body: tabs[_currentIndex],
 
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -54,8 +65,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.music_note_outlined),
-            selectedIcon: Icon(Icons.music_note),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.search_outlined),
+            selectedIcon: Icon(Icons.search),
             label: 'Songs',
           ),
           NavigationDestination(
@@ -75,24 +91,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildTitle() {
     switch (_currentIndex) {
-      case 0:
+      case 0: // Home
         return Row(
           children: [
-            // 1. Simplified Container (No padding, no white background)
             Container(
-              // Removed padding: const EdgeInsets.all(4),
-              // Removed decoration: BoxDecoration(...),
               child: Image.asset(
                 'assets/icon/app_icon.png',
-                // 2. Increased Size for better visibility
                 width: 32,
                 height: 32,
-                // 3. Ensures the image scales to fit the box perfectly
                 fit: BoxFit.contain,
               ),
             ),
             const SizedBox(width: 12),
-            Text(
+            const Text(
               'Worship Lamal',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -102,13 +113,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         );
-
-      case 1:
+      case 1: // Songs/Search
+        return const Text(
+          'All Songs',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        );
+      case 2: // Setlists
         return const Text(
           'Setlists',
           style: TextStyle(fontWeight: FontWeight.bold),
         );
-      case 2:
+      case 3: // Profile
         return const Text(
           'Profile',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -119,30 +134,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   List<Widget> _buildActions() {
-    switch (_currentIndex) {
-      case 0: // Songs Tab
-        return [
-          // IconButton(
-          //   icon: const Icon(Icons.filter_list),
-          //   tooltip: "Filter Songs",
-          //   onPressed: () {
-          //     // TODO: Show filter bottom sheet
-          //   },
-          // ),
-        ];
-      case 1: // Setlists Tab
-        return [
-          IconButton(
-            icon: const Icon(Icons.input),
-            tooltip: "Join Setlist via ID",
-            onPressed: () {
-              _showJoinByIdDialog(context);
-            },
-          ),
-        ];
-      default:
-        return [];
+    if (_currentIndex == 2) {
+      // Setlists Tab
+      return [
+        IconButton(
+          icon: const Icon(Icons.input),
+          tooltip: "Join Setlist via ID",
+          onPressed: () {
+            _showJoinByIdDialog(context);
+          },
+        ),
+      ];
     }
+    return [];
   }
 }
 

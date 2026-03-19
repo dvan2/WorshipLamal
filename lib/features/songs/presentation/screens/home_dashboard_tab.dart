@@ -1,56 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/add_to_setlist_sheet.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/song_filter_bottom_sheet.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/song_list_item.dart';
 
-class SongsTab extends ConsumerWidget {
-  const SongsTab({super.key});
+class HomeDashboardTab extends ConsumerWidget {
+  final VoidCallback onNavigateToSearch;
+
+  const HomeDashboardTab({super.key, required this.onNavigateToSearch});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final query = ref.watch(searchQueryProvider);
-    final filterState = ref.watch(songFilterProvider);
-
-    // If the user is typing OR has any filters active, show the list.
-    // Otherwise, show the Discovery Dashboard.
-    final showListMode = query.isNotEmpty || filterState.isFiltering;
-
-    return Column(
-      children: [
-        // 1. ALWAYS VISIBLE: Search & Filter Bar
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppConstants.spacingLg,
-            AppConstants.spacingMd,
-            AppConstants.spacingLg,
-            AppConstants.spacingMd,
-          ),
-          child: SongSearchField(
-            searchProvider: searchQueryProvider,
-            filterProvider: songFilterProvider,
-          ),
-        ),
-
-        // 2. DYNAMIC BODY
-        Expanded(
-          child: showListMode
-              ? _buildSearchResults(ref)
-              : _buildDashboard(context, ref),
-        ),
-      ],
-    );
-  }
-
-  // ====================================================================
-  // THE NEW SPOTIFY-STYLE DASHBOARD
-  // ====================================================================
-  Widget _buildDashboard(BuildContext context, WidgetRef ref) {
     final hour = DateTime.now().hour;
     String greeting = 'Good Evening';
     if (hour < 12)
@@ -61,9 +23,8 @@ class SongsTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingLg),
       children: [
-        // --- Greeting ---
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.only(top: 24, bottom: 16),
           child: Text(
             greeting,
             style: const TextStyle(
@@ -74,7 +35,36 @@ class SongsTab extends ConsumerWidget {
           ),
         ),
 
-        // --- Quick Toggles (Smart Pills) ---
+        // --- DUMMY SEARCH BAR ---
+        GestureDetector(
+          onTap: () {
+            ref.read(songFilterProvider.notifier).resetAll();
+            ref.read(searchQueryProvider.notifier).clear();
+            onNavigateToSearch();
+          },
+          child: AbsorbPointer(
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search songs, artists, or keys...',
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.textSecondary,
+                ),
+                filled: true,
+                fillColor: AppColors.surfaceVariant,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                isDense: true,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // --- Quick Toggles ---
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -82,24 +72,31 @@ class SongsTab extends ConsumerWidget {
               _QuickPill(
                 label: "Favorites",
                 icon: Icons.favorite,
-                onTap: () => ref
-                    .read(songFilterProvider.notifier)
-                    .toggleFavoritesFilter(),
+                onTap: () {
+                  ref
+                      .read(songFilterProvider.notifier)
+                      .applyExclusiveFilter(favoritesOnly: true);
+                  onNavigateToSearch();
+                },
               ),
               const SizedBox(width: 8),
               _QuickPill(
                 label: "Hymns",
                 icon: Icons.auto_stories,
-                onTap: () => ref
-                    .read(songFilterProvider.notifier)
-                    .toggleType(SongType.hymn),
+                onTap: () {
+                  ref.read(songFilterProvider.notifier).resetAll();
+                  ref
+                      .read(songFilterProvider.notifier)
+                      .toggleType(SongType.hymn);
+                  onNavigateToSearch();
+                },
               ),
             ],
           ),
         ),
         const SizedBox(height: 24),
 
-        // --- Hero Cards (The "Vibe" Section) ---
+        // --- Hero Cards ---
         Row(
           children: [
             Expanded(
@@ -110,9 +107,11 @@ class SongsTab extends ConsumerWidget {
                 colorStart: Colors.indigo.shade400,
                 colorEnd: Colors.purple.shade700,
                 onTap: () {
+                  ref.read(songFilterProvider.notifier).resetAll();
                   ref
                       .read(songFilterProvider.notifier)
                       .toggleType(SongType.worship);
+                  onNavigateToSearch();
                 },
               ),
             ),
@@ -125,9 +124,11 @@ class SongsTab extends ConsumerWidget {
                 colorStart: Colors.orange.shade400,
                 colorEnd: Colors.red.shade700,
                 onTap: () {
+                  ref.read(songFilterProvider.notifier).resetAll();
                   ref
                       .read(songFilterProvider.notifier)
                       .toggleType(SongType.praise);
+                  onNavigateToSearch();
                 },
               ),
             ),
@@ -145,67 +146,43 @@ class SongsTab extends ConsumerWidget {
           height: 90,
           child: ListView(
             scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none, // Allows shadow to render
+            clipBehavior: Clip.none,
             children: [
-              _KeyCard(keyName: "C", color: Colors.red.shade400, ref: ref),
-              _KeyCard(keyName: "D", color: Colors.blue.shade400, ref: ref),
-              _KeyCard(keyName: "E", color: Colors.green.shade400, ref: ref),
-              _KeyCard(keyName: "G", color: Colors.orange.shade400, ref: ref),
-              _KeyCard(keyName: "A", color: Colors.purple.shade400, ref: ref),
+              _KeyCard(
+                keyName: "C",
+                color: Colors.red.shade400,
+                ref: ref,
+                onNav: onNavigateToSearch,
+              ),
+              _KeyCard(
+                keyName: "D",
+                color: Colors.blue.shade400,
+                ref: ref,
+                onNav: onNavigateToSearch,
+              ),
+              _KeyCard(
+                keyName: "E",
+                color: Colors.green.shade400,
+                ref: ref,
+                onNav: onNavigateToSearch,
+              ),
+              _KeyCard(
+                keyName: "G",
+                color: Colors.orange.shade400,
+                ref: ref,
+                onNav: onNavigateToSearch,
+              ),
+              _KeyCard(
+                keyName: "A",
+                color: Colors.purple.shade400,
+                ref: ref,
+                onNav: onNavigateToSearch,
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 80), // Bottom padding
+        const SizedBox(height: 80),
       ],
-    );
-  }
-
-  // ====================================================================
-  // YOUR EXISTING LIST VIEW (Unchanged, just moved to a helper)
-  // ====================================================================
-  Widget _buildSearchResults(WidgetRef ref) {
-    final songsAsync = ref.watch(filteredSongsProvider);
-    final searchQuery = ref.watch(searchQueryProvider);
-
-    return songsAsync.when(
-      skipLoadingOnReload: true,
-      data: (songs) {
-        if (songs.isEmpty && searchQuery.isNotEmpty) {
-          return const Center(child: Text("No songs found"));
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.only(top: 8, bottom: 80),
-          itemCount: songs.length,
-          separatorBuilder: (context, index) =>
-              const Divider(indent: AppConstants.dividerIndent),
-          itemBuilder: (context, index) {
-            final song = songs[index];
-            return SongListItem(
-              key: ValueKey(song.id),
-              song: song,
-              onTap: () => context.pushNamed(
-                // Remember we fixed this to pushNamed!
-                'songDetail',
-                pathParameters: {'id': song.id},
-              ),
-              onLongPress: () {
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  builder: (context) =>
-                      AddToSetlistSheet(songId: song.id, songTitle: song.title),
-                );
-              },
-            );
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
 }
@@ -312,11 +289,13 @@ class _KeyCard extends StatelessWidget {
   final String keyName;
   final Color color;
   final WidgetRef ref;
+  final VoidCallback onNav;
 
   const _KeyCard({
     required this.keyName,
     required this.color,
     required this.ref,
+    required this.onNav,
   });
 
   @override
@@ -329,7 +308,10 @@ class _KeyCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            ref.read(songFilterProvider.notifier).toggleKey(keyName);
+            ref
+                .read(songFilterProvider.notifier)
+                .applyExclusiveFilter(keyName: keyName);
+            onNav();
           },
           child: Container(
             width: 90,
