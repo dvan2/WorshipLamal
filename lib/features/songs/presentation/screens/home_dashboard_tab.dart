@@ -4,7 +4,6 @@ import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/song_filter_bottom_sheet.dart';
 
 class HomeDashboardTab extends ConsumerWidget {
   final VoidCallback onNavigateToSearch;
@@ -15,27 +14,43 @@ class HomeDashboardTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hour = DateTime.now().hour;
     String greeting = 'Good Evening';
-    if (hour < 12)
+    if (hour < 12) {
       greeting = 'Good Morning';
-    else if (hour < 17)
+    } else if (hour < 17) {
       greeting = 'Good Afternoon';
+    }
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingLg),
       children: [
+        // --- Elevated Greeting ---
         Padding(
-          padding: const EdgeInsets.only(top: 24, bottom: 16),
-          child: Text(
-            greeting,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
+          padding: const EdgeInsets.only(top: 32, bottom: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                greeting,
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1.0,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Ready to lead today?",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary.withOpacity(0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
 
-        // --- DUMMY SEARCH BAR ---
+        // --- Floating DUMMY SEARCH BAR ---
         GestureDetector(
           onTap: () {
             ref.read(songFilterProvider.notifier).resetAll();
@@ -43,35 +58,52 @@ class HomeDashboardTab extends ConsumerWidget {
             onNavigateToSearch();
           },
           child: AbsorbPointer(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search songs, artists, or keys...',
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: AppColors.textSecondary,
+            child: Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search songs, artists, or keys...',
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: AppColors.textSecondary,
+                  ),
+                  filled: true,
+                  fillColor:
+                      Colors.white, // Pop against a slightly off-white scaffold
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16), // Softer corners
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  isDense: true,
                 ),
-                filled: true,
-                fillColor: AppColors.surfaceVariant,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                isDense: true,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
 
         // --- Quick Toggles ---
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none, // Allows focus shadows to show
           child: Row(
             children: [
               _QuickPill(
                 label: "Favorites",
                 icon: Icons.favorite,
+                iconColor: const Color(0xFFF04B43), // Red from icon
                 onTap: () {
                   ref
                       .read(songFilterProvider.notifier)
@@ -79,38 +111,38 @@ class HomeDashboardTab extends ConsumerWidget {
                   onNavigateToSearch();
                 },
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               _QuickPill(
                 label: "Hymns",
                 icon: Icons.auto_stories,
+                iconColor: const Color(0xFF1354A1), // Blue from icon
                 onTap: () {
-                  ref.read(songFilterProvider.notifier).resetAll();
                   ref
                       .read(songFilterProvider.notifier)
-                      .toggleType(SongType.hymn);
+                      .applyExclusiveFilter(type: SongType.hymn);
                   onNavigateToSearch();
                 },
               ),
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
-        // --- Hero Cards ---
+        // --- Hero Cards (Icon Color Palette) ---
         Row(
           children: [
             Expanded(
               child: _HeroCard(
-                title: "Deep Worship",
+                title: "Deep\nWorship",
                 subtitle: "Slow & Intimate",
                 icon: Icons.waves,
-                colorStart: Colors.indigo.shade400,
-                colorEnd: Colors.purple.shade700,
+                // Colors extracted from the bottom/left of your icon
+                colorStart: const Color(0xFF1354A1), // Deep Blue
+                colorEnd: const Color(0xFF23C4F4), // Bright Cyan
                 onTap: () {
-                  ref.read(songFilterProvider.notifier).resetAll();
                   ref
                       .read(songFilterProvider.notifier)
-                      .toggleType(SongType.worship);
+                      .applyExclusiveFilter(type: SongType.worship);
                   onNavigateToSearch();
                 },
               ),
@@ -118,66 +150,70 @@ class HomeDashboardTab extends ConsumerWidget {
             const SizedBox(width: 16),
             Expanded(
               child: _HeroCard(
-                title: "High Praise",
+                title: "High\nPraise",
                 subtitle: "Fast & Energetic",
                 icon: Icons.local_fire_department,
-                colorStart: Colors.orange.shade400,
-                colorEnd: Colors.red.shade700,
+                // Colors extracted from the top/right of your icon
+                colorStart: const Color(0xFFF04B43), // Vivid Red
+                colorEnd: const Color(0xFFF89921), // Bright Orange/Yellow
                 onTap: () {
-                  ref.read(songFilterProvider.notifier).resetAll();
                   ref
                       .read(songFilterProvider.notifier)
-                      .toggleType(SongType.praise);
+                      .applyExclusiveFilter(type: SongType.praise);
                   onNavigateToSearch();
                 },
               ),
             ),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 36),
 
         // --- Browse by Key Shelf ---
         const Text(
           "Browse by Key",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 90,
+          height: 100, // Slightly taller for better touch targets
           child: ListView(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             children: [
               _KeyCard(
                 keyName: "C",
-                color: Colors.red.shade400,
+                color: const Color(0xFF1354A1),
                 ref: ref,
                 onNav: onNavigateToSearch,
-              ),
+              ), // Deep Blue
               _KeyCard(
                 keyName: "D",
-                color: Colors.blue.shade400,
+                color: const Color(0xFF23C4F4),
                 ref: ref,
                 onNav: onNavigateToSearch,
-              ),
+              ), // Cyan
               _KeyCard(
                 keyName: "E",
-                color: Colors.green.shade400,
+                color: const Color(0xFFF04B43),
                 ref: ref,
                 onNav: onNavigateToSearch,
-              ),
+              ), // Red
               _KeyCard(
                 keyName: "G",
-                color: Colors.orange.shade400,
+                color: const Color(0xFFF89921),
                 ref: ref,
                 onNav: onNavigateToSearch,
-              ),
+              ), // Orange
               _KeyCard(
                 keyName: "A",
-                color: Colors.purple.shade400,
+                color: const Color(0xFF7E57C2),
                 ref: ref,
                 onNav: onNavigateToSearch,
-              ),
+              ), // Purple complement
             ],
           ),
         ),
@@ -194,22 +230,30 @@ class HomeDashboardTab extends ConsumerWidget {
 class _QuickPill extends StatelessWidget {
   final String label;
   final IconData icon;
+  final Color iconColor;
   final VoidCallback onTap;
 
   const _QuickPill({
     required this.label,
     required this.icon,
+    required this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return ActionChip(
-      avatar: Icon(icon, size: 16, color: AppColors.textPrimary),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-      backgroundColor: AppColors.surfaceVariant,
-      side: BorderSide.none,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      avatar: Icon(icon, size: 18, color: iconColor),
+      label: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
+      backgroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      side: BorderSide(color: Colors.grey.shade200),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      pressElevation: 2,
       onPressed: onTap,
     );
   }
@@ -238,43 +282,53 @@ class _HeroCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24), // Match icon squircle
         child: Ink(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
               colors: [colorStart, colorEnd],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.bottomLeft,
+              end: Alignment.topRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: colorStart.withOpacity(0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: colorStart.withOpacity(0.35),
+                blurRadius: 12,
+                offset: const Offset(0, 6), // Creates a "floating" paper effect
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: Colors.white, size: 32),
-              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Colors.white, size: 28),
+              ),
+              const SizedBox(height: 24),
               Text(
                 title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  height: 1.1,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -301,12 +355,14 @@ class _KeyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: 14),
       child: Material(
         color: color,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20), // Softer corners
+        elevation: 4, // Add subtle shadow
+        shadowColor: color.withOpacity(0.4),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           onTap: () {
             ref
                 .read(songFilterProvider.notifier)
@@ -314,142 +370,28 @@ class _KeyCard extends StatelessWidget {
             onNav();
           },
           child: Container(
-            width: 90,
+            width: 85,
             alignment: Alignment.center,
+            decoration: BoxDecoration(
+              // Add a very subtle gradient to the key cards to match the app theme
+              gradient: LinearGradient(
+                colors: [color, color.withOpacity(0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Text(
               keyName,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-// NOTE: Your existing SongSearchField code remains identical,
-// so paste your `SongSearchField` and `_SongSearchFieldState` classes right below this!
-
-class SongSearchField extends ConsumerStatefulWidget {
-  final NotifierProvider<SearchQueryNotifier, String> searchProvider;
-  final NotifierProvider<SongFilterNotifier, SongFilterState> filterProvider;
-
-  const SongSearchField({
-    super.key,
-    required this.searchProvider,
-    required this.filterProvider,
-  });
-
-  @override
-  ConsumerState<SongSearchField> createState() => _SongSearchFieldState();
-}
-
-class _SongSearchFieldState extends ConsumerState<SongSearchField> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final query = ref.watch(widget.searchProvider);
-    final filterState = ref.watch(widget.filterProvider);
-    final hasFilters = filterState.isFiltering;
-
-    // Sync Controller with Provider
-    ref.listen(widget.searchProvider, (previous, next) {
-      if (next.isEmpty && _controller.text.isNotEmpty) {
-        _controller.clear();
-      }
-    });
-
-    return Row(
-      children: [
-        // 1. EXPANDED SEARCH BAR
-        Expanded(
-          child: TextField(
-            controller: _controller,
-            onChanged: (value) {
-              ref.read(widget.searchProvider.notifier).setQuery(value);
-            },
-            decoration: InputDecoration(
-              hintText: 'Search songs...',
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppColors.textSecondary,
-              ),
-              // Only the Clear Button lives here now
-              suffixIcon: query.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        color: AppColors.textSecondary,
-                      ),
-                      onPressed: () =>
-                          ref.read(widget.searchProvider.notifier).clear(),
-                    )
-                  : null,
-              filled: true,
-              fillColor: AppColors.surfaceVariant,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(
-                  12,
-                ), // Matching rounded corners
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              isDense: true, // Makes it look slightly more compact/modern
-            ),
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        // 2. DETACHED FILTER BUTTON
-        // Provides a consistent, large touch target that never moves
-        Material(
-          color: AppColors.surfaceVariant, // Match search bar color
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                builder: (context) => SongFilterBottomSheet(
-                  targetProvider: widget.filterProvider,
-                ),
-              );
-            },
-            child: Container(
-              height: 48, // Standard touch target height
-              width: 48,
-              alignment: Alignment.center,
-              child: Badge(
-                isLabelVisible: hasFilters,
-                backgroundColor: AppColors.primary,
-                smallSize: 8,
-                child: Icon(
-                  Icons.tune_rounded, // Rounded variant looks softer
-                  color: hasFilters
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

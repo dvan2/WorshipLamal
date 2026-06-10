@@ -6,6 +6,7 @@ import 'package:worship_lamal/features/songs/presentation/providers/song_filter_
 import 'package:worship_lamal/features/songs/presentation/screens/home_dashboard_tab.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/add_to_setlist_sheet.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/song_list_item.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/song_search_field.dart';
 
 class SongListTab extends ConsumerWidget {
   const SongListTab({super.key});

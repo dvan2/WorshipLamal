@@ -72,3 +72,22 @@ final preferencesProvider =
     NotifierProvider<PreferencesNotifier, PreferencesState>(() {
       return PreferencesNotifier();
     });
+
+final chordScaleProvider = NotifierProvider<ChordScaleNotifier, double>(() {
+  return ChordScaleNotifier();
+});
+
+class ChordScaleNotifier extends Notifier<double> {
+  @override
+  double build() {
+    return 1.0;
+  }
+
+  void setScale(double newScale) {
+    state = newScale.clamp(0.7, 2.5);
+  }
+
+  void increase() => setScale(state + 0.1);
+  void decrease() => setScale(state - 0.1);
+  void reset() => setScale(1.0);
+}

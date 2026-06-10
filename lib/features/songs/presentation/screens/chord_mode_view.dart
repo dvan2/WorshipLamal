@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/chord_line_renderer.dart';
-import '../widgets/song_header.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 
-class ChordModeView extends StatelessWidget {
+class ChordModeView extends ConsumerStatefulWidget {
   final Song song;
   final String displayKey;
   final bool isTransposed;
@@ -16,160 +17,225 @@ class ChordModeView extends StatelessWidget {
   });
 
   @override
+  ConsumerState<ChordModeView> createState() => _ChordModeViewState();
+}
+
+class _ChordModeViewState extends ConsumerState<ChordModeView> {
+  // Remembers the scale at the exact moment the user touches the screen
+  double _baseScale = 1.0;
+
+  @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    // Split sections down the middle for the 2 columns
-    final midPoint = (song.sections.length / 2).ceil();
-    final leftColumn = song.sections.take(midPoint).toList();
-    final rightColumn = song.sections.skip(midPoint).toList();
+    final scaleFactor = ref.watch(chordScaleProvider);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
-        child: Column(
-          children: [
-            // ----------------------------------------------------
-            // A. META-HEADER & DIVIDER
-            // ----------------------------------------------------
-            Padding(
-              // Reduced horizontal padding for mobile
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Left Side: Title & Artist
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+    // 2. WRAP EVERYTHING IN A GESTURE DETECTOR
+    return GestureDetector(
+      // Fires once when the user's two fingers touch the screen
+      onScaleStart: (details) {
+        _baseScale = scaleFactor;
+      },
+      // Fires continuously as their fingers move closer/further apart
+      onScaleUpdate: (details) {
+        ref
+            .read(chordScaleProvider.notifier)
+            .setScale(_baseScale * details.scale);
+      },
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: Column(
+            children: [
+              // ----------------------------------------------------
+              // A. META-HEADER & DIVIDER (Unchanged)
+              // ----------------------------------------------------
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.song.title,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                  letterSpacing: -0.5,
+                                  height: 1.1,
+                                ),
+                              ),
+                              if (widget.song.artistNames.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2.0),
+                                  child: Text(
+                                    widget.song.artistNames,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              song.title,
+                              "Key of ${widget.displayKey}",
                               style: const TextStyle(
-                                fontSize:
-                                    18, // Reduced from 26 to fit mobile better
-                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
                                 color: Colors.black,
-                                letterSpacing: -0.5,
-                                height: 1.1,
                               ),
                             ),
-                            if (song.artistNames.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
-                                child: Text(
-                                  song.artistNames,
-                                  style: const TextStyle(
-                                    fontSize: 13, // Reduced from 15
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.black87,
-                                  ),
+                            if (widget.song.bpm != null)
+                              Text(
+                                "${widget.song.bpm} BPM",
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black87,
                                 ),
                               ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 8), // Buffer between title and key
-                      // Right Side: Key & BPM
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Key of $displayKey",
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          if (song.bpm != null)
-                            Text(
-                              "${song.bpm} BPM",
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black87,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(
-                    color: Colors.black,
-                    thickness: 1.5,
-                    height: 1.5,
-                  ),
-                ],
-              ),
-            ),
-
-            // ----------------------------------------------------
-            // B. FORCED 2-COLUMN SHEET MUSIC BODY
-            // ----------------------------------------------------
-            Expanded(
-              child: Scrollbar(
-                thumbVisibility: true,
-                thickness: 4,
-                radius: const Radius.circular(2),
-                child: SingleChildScrollView(
-                  // Minimal padding to maximize 2-column space on mobile
-                  padding: EdgeInsets.fromLTRB(12, 12, 12, 32 + bottomPadding),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // LEFT COLUMN
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: leftColumn
-                              .map((s) => _buildCompactSection(context, s))
-                              .toList(),
-                        ),
-                      ),
-                      // THE GUTTER: Reduced from 32 to 12 for mobile screens
-                      const SizedBox(width: 12),
-                      // RIGHT COLUMN
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: rightColumn
-                              .map((s) => _buildCompactSection(context, s))
-                              .toList(),
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(
+                      color: Colors.black,
+                      thickness: 1.5,
+                      height: 1.5,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+
+              // ----------------------------------------------------
+              // B. RESPONSIVE SHEET MUSIC BODY
+              // ----------------------------------------------------
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWideScreen = constraints.maxWidth >= 600;
+                    final columnCount = isWideScreen ? 2 : 1;
+
+                    final columns = _balanceColumns(
+                      widget.song.sections,
+                      columnCount,
+                    );
+
+                    return Scrollbar(
+                      thumbVisibility: true,
+                      thickness: 4,
+                      radius: const Radius.circular(2),
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          16,
+                          16,
+                          32 + bottomPadding,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: List.generate(columnCount, (index) {
+                            return Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  right: index < columnCount - 1 ? 16.0 : 0.0,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: columns[index]
+                                      .map(
+                                        (s) => _buildCompactSection(
+                                          context,
+                                          s,
+                                          isWideScreen,
+                                          scaleFactor,
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCompactSection(BuildContext context, SectionBlock section) {
+  List<List<SectionBlock>> _balanceColumns(
+    List<SectionBlock> sections,
+    int columnCount,
+  ) {
+    if (columnCount == 1 || sections.isEmpty) return [sections];
+
+    final heights = sections
+        .map((s) => 35.0 + (s.lines.length * 24.0))
+        .toList();
+    final totalHeight = heights.fold(0.0, (a, b) => a + b);
+    final targetHeight = totalHeight / columnCount;
+
+    List<List<SectionBlock>> columns = List.generate(columnCount, (_) => []);
+    double currentColumnHeight = 0;
+    int currentColumnIndex = 0;
+
+    for (int i = 0; i < sections.length; i++) {
+      if (currentColumnIndex < columnCount - 1 &&
+          currentColumnHeight + (heights[i] / 2) > targetHeight) {
+        currentColumnIndex++;
+        currentColumnHeight = 0;
+      }
+      columns[currentColumnIndex].add(sections[i]);
+      currentColumnHeight += heights[i];
+    }
+    return columns;
+  }
+
+  // 3. APPLY THE SCALE FACTOR TO THE FONTS
+  Widget _buildCompactSection(
+    BuildContext context,
+    SectionBlock section,
+    bool isWideScreen,
+    double scaleFactor,
+  ) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 16.0,
-      ), // Slightly tighter section spacing
+      padding: EdgeInsets.only(
+        bottom: 20.0 * scaleFactor,
+      ), // Scale padding so it breathes naturally
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 4.0),
+            padding: EdgeInsets.only(bottom: 6.0 * scaleFactor),
             child: Text(
               section.title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.w900,
                 fontStyle: FontStyle.italic,
-                fontSize: 13, // Reduced from 15
+                // Multiply base sizes by the new scale factor
+                fontSize: (isWideScreen ? 15 : 14) * scaleFactor,
                 decoration: TextDecoration.underline,
               ),
             ),
@@ -177,21 +243,21 @@ class ChordModeView extends StatelessWidget {
           ...section.lines.map((line) {
             final contentToRender = line.contentChordPro ?? line.content;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
+              padding: EdgeInsets.only(bottom: 4.0 * scaleFactor),
               child: ChordLineRenderer(
                 line: contentToRender,
-                targetKey: displayKey,
-                // CRITICAL FOR MOBILE 2-COLUMN: Smaller fonts prevent wrapping
-                chordStyle: const TextStyle(
-                  fontSize: 11.5,
+                targetKey: widget.displayKey,
+                chordStyle: TextStyle(
+                  // Multiply base sizes by the new scale factor
+                  fontSize: (isWideScreen ? 14 : 13.5) * scaleFactor,
                   color: Colors.black,
                   fontWeight: FontWeight.w800,
                 ),
-                lyricStyle: const TextStyle(
-                  fontSize: 10.5,
+                lyricStyle: TextStyle(
+                  // Multiply base sizes by the new scale factor
+                  fontSize: (isWideScreen ? 13 : 12.5) * scaleFactor,
                   color: Colors.black87,
-                  height: 1.15, // Tighter line height
-                  letterSpacing: -0.2, // Very slight squeeze to fit more text
+                  height: 1.2,
                 ),
               ),
             );

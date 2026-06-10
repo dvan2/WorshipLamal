@@ -12,6 +12,20 @@ class ChangelogScreen extends StatelessWidget {
         children: const [
           // NEW UPDATE BLOCK
           _UpdateBlock(
+            version: "1.2.0",
+            date: "March 20, 2026", // Today's date!
+            changes: [
+              "Brand New Home Dashboard! A beautiful, Spotify-inspired discovery screen. 🎨",
+              "Song Categories: Easily browse by 'Deep Worship', 'High Praise', or 'Hymns' with new quick-tap hero cards. 🔥",
+              "Browse by Key: Instantly find songs in your preferred key using the new horizontal shelf. 🎹",
+              "Dedicated Search Tab: Filtering and searching now live in their own tab so you never lose your bottom navigation bar! 🔍",
+              "Smart Badges: Song lists now feature color-coded tags so you can quickly see a song's vibe at a glance. 🏷️",
+              "Redesigned Chord Mode: Professional sheet-music feel with a permanent 2-column layout on mobile. 🎼",
+              "Improved Typography: Heavier chords, italicized section headers, and a clean new metadata header. ✨",
+            ],
+          ),
+          // NEW UPDATE BLOCK
+          _UpdateBlock(
             version: "1.1.2",
             date: "Today",
             changes: [

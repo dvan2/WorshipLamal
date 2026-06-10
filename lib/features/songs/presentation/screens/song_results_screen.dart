@@ -5,7 +5,8 @@ import 'package:worship_lamal/core/theme/app_constants.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/add_to_setlist_sheet.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/song_list_item.dart';
-import 'package:worship_lamal/features/songs/presentation/screens/home_dashboard_tab.dart'; // Import to access SongSearchField
+import 'package:worship_lamal/features/songs/presentation/screens/home_dashboard_tab.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/song_search_field.dart'; // Import to access SongSearchField
 
 class SongResultsScreen extends ConsumerWidget {
   const SongResultsScreen({super.key});

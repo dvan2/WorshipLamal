@@ -7,6 +7,7 @@ import 'package:worship_lamal/features/profile/presentation/providers/preference
 import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/presentation/screens/home_dashboard_tab.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/song_search_field.dart';
 
 class SongPickerScreen extends ConsumerStatefulWidget {
   const SongPickerScreen({super.key});
