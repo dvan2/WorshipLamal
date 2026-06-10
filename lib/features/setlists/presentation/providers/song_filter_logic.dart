@@ -39,9 +39,9 @@ List<Song> applySongFilters({
     case SongSortOption.titleAz:
       filteredList.sort((a, b) => a.title.compareTo(b.title));
       break;
-    case SongSortOption.artistAz:
-      filteredList.sort((a, b) => a.artistNames.compareTo(b.artistNames));
-      break;
+    // case SongSortOption.artistAz:
+    //   filteredList.sort((a, b) => a.artistNames.compareTo(b.artistNames));
+    //   break;
     case SongSortOption.newest:
       filteredList.sort((a, b) {
         if (a.createdAt == null) return 1;

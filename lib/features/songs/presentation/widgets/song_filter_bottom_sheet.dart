@@ -108,7 +108,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                   setState(() {
                     _tempSelectedKeys = {};
                     _tempBpmRange = const RangeValues(40, 200);
-                    _tempSortOption = SongSortOption.titleAz;
+                    // _tempSortOption = SongSortOption.titleAz;
                     _tempShowFavoritesOnly = false;
 
                     _tempSelectedTypes = {};
@@ -138,36 +138,6 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
             contentPadding: EdgeInsets.zero, // Aligns with other text
           ),
           const Divider(),
-
-          //Sorting
-          const SizedBox(height: 16),
-          const Text("Sort By", style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 0, // Tighter vertical spacing
-            children: SongSortOption.values.map((option) {
-              final isSelected = _tempSortOption == option;
-              return ChoiceChip(
-                label: Text(option.label),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (selected) {
-                    setState(() => _tempSortOption = option);
-                  }
-                },
-                // Optional: Custom styling to match your AppColors
-                selectedColor: AppColors.primary.withOpacity(0.2),
-                labelStyle: TextStyle(
-                  color: isSelected ? AppColors.primary : Colors.black,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-                side: isSelected
-                    ? const BorderSide(color: AppColors.primary)
-                    : BorderSide(color: Colors.grey.shade300),
-              );
-            }).toList(),
-          ),
 
           const SizedBox(height: 16),
           const Text(
@@ -199,6 +169,36 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
                   );
                 })
                 .toList(),
+          ),
+
+          //Sorting
+          const SizedBox(height: 16),
+          const Text("Sort By", style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 0, // Tighter vertical spacing
+            children: SongSortOption.values.map((option) {
+              final isSelected = _tempSortOption == option;
+              return ChoiceChip(
+                label: Text(option.label),
+                selected: isSelected,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() => _tempSortOption = option);
+                  }
+                },
+                // Optional: Custom styling to match your AppColors
+                selectedColor: AppColors.primary.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: isSelected ? AppColors.primary : Colors.black,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                side: isSelected
+                    ? const BorderSide(color: AppColors.primary)
+                    : BorderSide(color: Colors.grey.shade300),
+              );
+            }).toList(),
           ),
 
           // --- BPM Filter ---
@@ -266,6 +266,7 @@ class _SongFilterBottomSheetState extends ConsumerState<SongFilterBottomSheet> {
               return ChoiceChip(
                 label: Text(displayLabel),
                 selected: isSelected,
+                showCheckmark: false,
                 // Update Local State
                 onSelected: (_) => _toggleKey(key),
                 selectedColor: AppColors.primary.withOpacity(0.2),
