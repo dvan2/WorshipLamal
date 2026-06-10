@@ -26,6 +26,9 @@ class SongDetailScreen extends ConsumerWidget {
     final prefs = ref.watch(preferencesProvider);
     final isChordMode = prefs.contentMode == ContentMode.chords;
 
+    final currentScale = ref.watch(chordScaleProvider);
+    final displayPercentage = (currentScale * 100).round();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(historyControllerProvider).logView(songId);
     });
@@ -62,6 +65,73 @@ class SongDetailScreen extends ConsumerWidget {
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               )
+            : null,
+        actions: isChordMode
+            ? [
+                // The Compact Zoom Pill
+                Center(
+                  child: Container(
+                    height:
+                        36, // Forces it to be shorter than a standard AppBar button
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Zoom Out (-)
+                        IconButton(
+                          icon: const Icon(Icons.remove, size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 40),
+                          tooltip: 'Zoom Out',
+                          onPressed: () =>
+                              ref.read(chordScaleProvider.notifier).decrease(),
+                        ),
+                        // Reset (100%)
+                        InkWell(
+                          onTap: () =>
+                              ref.read(chordScaleProvider.notifier).reset(),
+                          child: Container(
+                            alignment: Alignment.center,
+                            constraints: const BoxConstraints(
+                              minWidth: 44,
+                            ), // Keeps the pill from jumping in size
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              "$displayPercentage%", // Dynamically injects 90%, 100%, 110%, etc.
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Zoom In (+)
+                        IconButton(
+                          icon: const Icon(Icons.add, size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 40),
+                          tooltip: 'Zoom In',
+                          onPressed: () =>
+                              ref.read(chordScaleProvider.notifier).increase(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Guide Button
+                IconButton(
+                  icon: const Icon(Icons.help_outline),
+                  tooltip: 'Chord Guide',
+                  onPressed: () => _showChordGuide(context),
+                ),
+                const SizedBox(width: 8),
+              ]
             : null,
       ),
       body: songAsync.when(
@@ -267,4 +337,142 @@ class _ErrorState extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showChordGuide(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.auto_stories, color: Colors.black87),
+          SizedBox(width: 12),
+          Text("How to Read", style: TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _GuideRow(
+            icon: Icons.zoom_out_map,
+            title: "Pinch to Zoom",
+            description:
+                "Use two fingers anywhere on the screen to scale the text up or down for easier reading.",
+          ),
+          SizedBox(height: 16),
+          _GuideRow(
+            icon: Icons.zoom_out_map,
+            title: "Zoom Text",
+            description:
+                "Use the - and + buttons in the top menu, or use two fingers to pinch the screen to scale the text.",
+          ),
+          SizedBox(height: 16),
+          _GuideRow(
+            icon: Icons.restart_alt,
+            title: "Reset View",
+            description:
+                "Tap the zoom percentage number in the middle to return the text to its default size.",
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Got it!"),
+        ),
+      ],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+  );
+}
+
+class _GuideRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _GuideRow({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 24, color: Colors.blueGrey),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+void _showTextSettingsSheet(BuildContext context, WidgetRef ref) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Text Size",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.text_decrease, size: 28),
+                  onPressed: () =>
+                      ref.read(chordScaleProvider.notifier).decrease(),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      ref.read(chordScaleProvider.notifier).reset(),
+                  child: const Text(
+                    "RESET",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.text_increase, size: 28),
+                  onPressed: () =>
+                      ref.read(chordScaleProvider.notifier).increase(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
