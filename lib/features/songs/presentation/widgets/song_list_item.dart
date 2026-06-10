@@ -98,16 +98,11 @@ class _SongListItemState extends ConsumerState<SongListItem> {
   }
 
   Widget _buildSongInfo(BuildContext context) {
-    final String subtitleText;
-    if (widget.song.bpm != null) {
-      subtitleText = '${widget.song.artistNames} • ${widget.song.bpm} BPM';
-    } else {
-      subtitleText = widget.song.artistNames;
-    }
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. THE TITLE
           Text(
             widget.song.title,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -117,25 +112,44 @@ class _SongListItemState extends ConsumerState<SongListItem> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: AppConstants.spacingXs),
-          // WRAPPED IN A ROW TO ADD THE BADGE
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  subtitleText,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(height: 1.2),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+
+          const SizedBox(height: 4),
+
+          // 2. THE DYNAMIC SUBTITLE
+          // If a lyric snippet exists, we show THAT instead of the standard metadata.
+          if (widget.song.searchSnippet != null &&
+              widget.song.searchSnippet!.isNotEmpty)
+            Text(
+              '“…${widget.song.searchSnippet}…”',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.primary, // Make it pop slightly
+                fontStyle: FontStyle.italic,
+                height: 1.2,
               ),
-              // SHOW BADGE IF IT HAS A CATEGORY
-              if (widget.song.type != SongType.other)
-                _buildTypeBadge(widget.song.type),
-            ],
-          ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            )
+          else
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    widget.song.bpm != null
+                        ? '${widget.song.artistNames} • ${widget.song.bpm} BPM'
+                        : widget.song.artistNames,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // Only show the badge if it has a category AND we aren't showing a snippet
+                if (widget.song.type != SongType.other)
+                  _buildTypeBadge(widget.song.type),
+              ],
+            ),
         ],
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/utils/apply_song_filter.dart';
@@ -158,16 +160,33 @@ final pickerFilterProvider =
     });
 
 class SearchQueryNotifier extends Notifier<String> {
+  Timer? _debounce;
+
   @override
   String build() {
+    ref.onDispose(() {
+      _debounce?.cancel();
+    });
+
     return '';
   }
 
   void setQuery(String query) {
-    state = query;
+    // 1. Cancel the existing timer if the user is still actively typing
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
+
+    // 2. Start a new timer
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      // 3. This code only runs if 300ms pass without another keystroke!
+      state = query;
+    });
   }
 
   void clear() {
+    // If they hit the "X" button to clear the search, cancel the timer instantly
+    _debounce?.cancel();
     state = '';
   }
 }

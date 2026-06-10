@@ -66,73 +66,70 @@ class SongDetailScreen extends ConsumerWidget {
                 fontWeight: FontWeight.bold,
               )
             : null,
-        actions: isChordMode
-            ? [
-                // The Compact Zoom Pill
-                Center(
-                  child: Container(
-                    height:
-                        36, // Forces it to be shorter than a standard AppBar button
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Zoom Out (-)
-                        IconButton(
-                          icon: const Icon(Icons.remove, size: 18),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 40),
-                          tooltip: 'Zoom Out',
-                          onPressed: () =>
-                              ref.read(chordScaleProvider.notifier).decrease(),
+        actions: [
+          // The Compact Zoom Pill
+          Center(
+            child: Container(
+              height:
+                  36, // Forces it to be shorter than a standard AppBar button
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Zoom Out (-)
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 40),
+                    tooltip: 'Zoom Out',
+                    onPressed: () =>
+                        ref.read(chordScaleProvider.notifier).decrease(),
+                  ),
+                  // Reset (100%)
+                  InkWell(
+                    onTap: () => ref.read(chordScaleProvider.notifier).reset(),
+                    child: Container(
+                      alignment: Alignment.center,
+                      constraints: const BoxConstraints(
+                        minWidth: 44,
+                      ), // Keeps the pill from jumping in size
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        "$displayPercentage%", // Dynamically injects 90%, 100%, 110%, etc.
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
                         ),
-                        // Reset (100%)
-                        InkWell(
-                          onTap: () =>
-                              ref.read(chordScaleProvider.notifier).reset(),
-                          child: Container(
-                            alignment: Alignment.center,
-                            constraints: const BoxConstraints(
-                              minWidth: 44,
-                            ), // Keeps the pill from jumping in size
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              "$displayPercentage%", // Dynamically injects 90%, 100%, 110%, etc.
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Zoom In (+)
-                        IconButton(
-                          icon: const Icon(Icons.add, size: 18),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 40),
-                          tooltip: 'Zoom In',
-                          onPressed: () =>
-                              ref.read(chordScaleProvider.notifier).increase(),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                // Guide Button
-                IconButton(
-                  icon: const Icon(Icons.help_outline),
-                  tooltip: 'Chord Guide',
-                  onPressed: () => _showChordGuide(context),
-                ),
-                const SizedBox(width: 8),
-              ]
-            : null,
+
+                  // Zoom In (+)
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 40),
+                    tooltip: 'Zoom In',
+                    onPressed: () =>
+                        ref.read(chordScaleProvider.notifier).increase(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Guide Button
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Chord Guide',
+            onPressed: () => _showChordGuide(context),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: songAsync.when(
         data: (song) {
@@ -156,6 +153,7 @@ class SongDetailScreen extends ConsumerWidget {
               song: song,
               displayKey: displayKey,
               isTransposed: isFemaleMode,
+              scaleFactor: currentScale,
             );
           }
         },
@@ -173,11 +171,13 @@ class _LyricModeView extends StatelessWidget {
   final Song song;
   final String displayKey;
   final bool isTransposed;
+  final double scaleFactor;
 
   const _LyricModeView({
     required this.song,
     required this.displayKey,
     required this.isTransposed,
+    required this.scaleFactor,
   });
 
   @override
@@ -219,57 +219,62 @@ class _LyricModeView extends StatelessWidget {
     final config = _getSectionConfig(section.sectionType);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      width: double.infinity,
+      // 1. More breathing room between sections
+      margin: const EdgeInsets.only(bottom: 24.0),
+
+      // 2. The "Accent Bar" approach
       decoration: BoxDecoration(
-        color: config.backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: config.borderColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        color: config.backgroundColor, // Now highly transparent
+        border: Border(
+          left: BorderSide(
+            color: config.accentColor,
+            width: 4.0, // A bold, modern left-line indicator
           ),
-        ],
+        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-              margin: const EdgeInsets.only(bottom: 6),
-              decoration: BoxDecoration(
-                color: config.headerColor,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                section.title.toUpperCase(),
-                style: TextStyle(
-                  color: config.textColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  letterSpacing: 0.5,
-                ),
+
+      // 3. Clean padding (more on the left to push away from the accent bar)
+      padding: const EdgeInsets.only(
+        left: 16.0,
+        top: 8.0,
+        bottom: 8.0,
+        right: 12.0,
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 4. Naked, integrated headers
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              section.title.toUpperCase(),
+              style: TextStyle(
+                color: config.accentColor, // Matches the left bar
+                fontWeight: FontWeight.w800,
+                fontSize: 12 * scaleFactor,
+                letterSpacing: 1.0, // Widened letter spacing looks premium
               ),
             ),
-            ...section.lines.map((line) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6.0),
-                child: Text(
-                  line.content,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 17,
-                    height: 1.6,
-                    color: AppColors.textPrimary,
-                  ),
+          ),
+
+          // 5. The Lyrics
+          ...section.lines.map((line) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6.0),
+              child: Text(
+                line.content,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize:
+                      18 * scaleFactor, // Slightly larger for pure reading
+                  height: 1.4, // Tighter line-height to group the stanza
+                  color: Colors.black87, // Softer than pure black
+                  fontWeight: FontWeight.w500, // Just a touch of weight
                 ),
-              );
-            }),
-          ],
-        ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
@@ -277,49 +282,40 @@ class _LyricModeView extends StatelessWidget {
   _SectionConfig _getSectionConfig(String type) {
     final lowerType = type.toLowerCase().trim();
 
+    // The trick here is using highly transparent backgrounds (alpha: 0.05)
+    // and bold, solid accent colors for the text and left border.
     if (lowerType.contains('chorus') && !lowerType.contains('pre')) {
       return _SectionConfig(
-        backgroundColor: AppColors.chorusBackground,
-        borderColor: AppColors.chorusBorder.withValues(alpha: 0.3),
-        headerColor: AppColors.chorusBorder.withValues(alpha: 0.15),
-        textColor: AppColors.chorusText,
+        backgroundColor: AppColors.chorusBackground.withValues(alpha: 0.2),
+        accentColor: AppColors.chorusBorder,
       );
     } else if (lowerType.contains('bridge')) {
       return _SectionConfig(
-        backgroundColor: AppColors.bridgeBackground,
-        borderColor: AppColors.bridgeBorder.withValues(alpha: 0.3),
-        headerColor: AppColors.bridgeBorder.withValues(alpha: 0.15),
-        textColor: AppColors.bridgeText,
+        backgroundColor: AppColors.bridgeBackground.withValues(alpha: 0.2),
+        accentColor: AppColors.bridgeBorder,
       );
     } else if (lowerType.contains('pre') || lowerType.contains('tag')) {
       return _SectionConfig(
-        backgroundColor: AppColors.preChorusBackground,
-        borderColor: AppColors.preChorusBorder.withValues(alpha: 0.3),
-        headerColor: AppColors.preChorusBorder.withValues(alpha: 0.15),
-        textColor: AppColors.preChorusText,
+        backgroundColor: AppColors.preChorusBackground.withValues(alpha: 0.2),
+        accentColor: AppColors.preChorusBorder,
       );
     }
 
+    // Default (Verses) - usually best kept completely clean/transparent
     return _SectionConfig(
-      backgroundColor: AppColors.verseBackground,
-      borderColor: AppColors.primary.withValues(alpha: 0.1),
-      headerColor: AppColors.primary.withValues(alpha: 0.08),
-      textColor: AppColors.verseText,
+      backgroundColor: Colors.transparent,
+      accentColor: AppColors.primary.withValues(alpha: 0.6),
     );
   }
 }
 
 class _SectionConfig {
   final Color backgroundColor;
-  final Color borderColor;
-  final Color headerColor;
-  final Color textColor;
+  final Color accentColor;
 
   const _SectionConfig({
     required this.backgroundColor,
-    required this.borderColor,
-    required this.headerColor,
-    required this.textColor,
+    required this.accentColor,
   });
 }
 

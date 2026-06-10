@@ -30,6 +30,8 @@ class Song {
   final List<LyricLine> lyricLines;
   final String? key;
   final int? bpm;
+  final bool isTitleMatch;
+  final String? searchSnippet;
 
   // 2. NEW FIELDS: To power the Home Screen discovery shelves
   final SongType type;
@@ -43,6 +45,8 @@ class Song {
     required this.title,
     required this.artists,
     required this.lyricLines,
+    this.isTitleMatch = true,
+    this.searchSnippet,
     // Provide safe defaults so existing data doesn't break
     this.type = SongType.other,
     this.themes = const [],
@@ -90,10 +94,14 @@ class Song {
     List<String>? themes,
     DateTime? createdAt,
     DateTime? lastViewedAt,
+    bool? isTitleMatch,
+    String? searchSnippet,
   }) {
     return Song(
       id: id ?? this.id,
       title: title ?? this.title,
+      isTitleMatch: isTitleMatch ?? this.isTitleMatch,
+      searchSnippet: searchSnippet ?? this.searchSnippet,
       artists: artists ?? this.artists,
       lyricLines: lyricLines ?? this.lyricLines,
       key: key ?? this.key,

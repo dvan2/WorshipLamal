@@ -236,7 +236,6 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
                 fontStyle: FontStyle.italic,
                 // Multiply base sizes by the new scale factor
                 fontSize: (isWideScreen ? 15 : 14) * scaleFactor,
-                decoration: TextDecoration.underline,
               ),
             ),
           ),
