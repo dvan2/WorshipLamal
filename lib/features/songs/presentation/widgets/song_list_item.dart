@@ -38,7 +38,7 @@ class _SongListItemState extends ConsumerState<SongListItem> {
 
     final userKeysMap = ref.watch(userPreferredKeysMapProvider);
     final userPreferredKey = userKeysMap[widget.song.id]; // Null if not set
-    bool isUserPreferred = false;
+    bool isUserPreferred = userPreferredKey != null;
     bool isAutoTransposed = false;
 
     final favoritesAsync = ref.watch(favoritesListProvider);

@@ -10,7 +10,16 @@ class ChangelogScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          // NEW UPDATE BLOCK
+          _UpdateBlock(
+            version: "1.3.0",
+            date: "June 10, 2026",
+            changes: [
+              "Deep Lyric Search: Can't remember a song title? Just type a phrase from the chorus or bridge and the search engine will find it!",
+              "Improved UI for lyrics and chords view mode.",
+              "Zoom control increase or decrease font size",
+            ],
+          ),
+          Divider(height: 32),
           _UpdateBlock(
             version: "1.2.0",
             date: "March 20, 2026", // Today's date!
