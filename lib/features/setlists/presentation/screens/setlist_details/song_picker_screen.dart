@@ -81,10 +81,7 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
                     final song = songs[index];
                     final isSelected = _selectedIds.contains(song.id);
 
-                    final originalKey = song.key ?? '';
-                    final displayKey = isFemaleMode
-                        ? KeyTransposer.transpose(originalKey, -5)
-                        : originalKey;
+                    final displayKey = song.key ?? 'Unknown';
 
                     return CheckboxListTile(
                       value: isSelected,

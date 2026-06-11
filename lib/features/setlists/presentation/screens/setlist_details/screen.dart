@@ -9,6 +9,7 @@ import 'package:worship_lamal/features/setlists/presentation/screens/setlist_det
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_share_sheet.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/setlist_viewer_view.dart';
 import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 class SetlistDetailScreen extends ConsumerStatefulWidget {
   final String setlistId;
@@ -338,9 +339,22 @@ class _SetlistDetailScreenState extends ConsumerState<SetlistDetailScreen> {
 
         if (selectedIds != null && selectedIds.isNotEmpty) {
           // Just call the controller. Logic is hidden.
+          final personalizedSongs =
+              ref.read(personalizedSongListProvider).value ?? [];
+          final Map<String, String> songsWithKeys = {};
+          for (String id in selectedIds) {
+            // Find the song object to grab its pre-calculated key
+            final song = personalizedSongs.firstWhere((s) => s.id == id);
+            songsWithKeys[id] =
+                song.key ?? ''; // Defaults to empty string if no key
+          }
+
           await ref
               .read(setlistControllerProvider.notifier)
-              .addSongs(setlistId: widget.setlistId, songIds: selectedIds);
+              .addSongs(
+                setlistId: widget.setlistId,
+                songsWithKeys: songsWithKeys,
+              );
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

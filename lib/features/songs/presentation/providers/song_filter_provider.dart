@@ -196,7 +196,7 @@ final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(() {
 });
 
 final filteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
-  final allSongsAsync = ref.watch(songListProvider);
+  final allSongsAsync = ref.watch(personalizedSongListProvider);
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final filters = ref.watch(songFilterProvider);
 
@@ -238,7 +238,7 @@ final filteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
 });
 
 final pickerFilteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
-  final allSongsAsync = ref.watch(songListProvider);
+  final allSongsAsync = ref.watch(personalizedSongListProvider);
   final query = ref.watch(pickerSearchQueryProvider).toLowerCase();
   final filters = ref.watch(pickerFilterProvider);
 

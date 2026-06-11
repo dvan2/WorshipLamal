@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:worship_lamal/core/utils/key_transposer.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+import 'package:worship_lamal/features/userkey/presentation/providers/user_keys_provider.dart';
 
 import '../../data/models/song_model.dart';
 import '../../data/remote/songs_api.dart';
@@ -59,4 +62,30 @@ final songsGroupedByKeyProvider = FutureProvider<Map<String, List<Song>>>((
     grouped[key]!.add(song);
   }
   return grouped;
+});
+
+final personalizedSongListProvider = Provider<AsyncValue<List<Song>>>((ref) {
+  final rawSongsAsync = ref.watch(songListProvider);
+  final userKeysMap = ref.watch(userPreferredKeysMapProvider);
+  final prefs = ref.watch(preferencesProvider);
+
+  return rawSongsAsync.whenData((rawSongs) {
+    // 3. Loop through every song and inject the user's preferred key
+    return rawSongs.map((song) {
+      String effectiveKey = song.key ?? '';
+
+      // Apply the exact same priority logic we used before
+      if (userKeysMap.containsKey(song.id)) {
+        effectiveKey = userKeysMap[song.id]!;
+      } else if (prefs.vocalMode == VocalMode.female &&
+          effectiveKey.isNotEmpty) {
+        effectiveKey = KeyTransposer.transpose(effectiveKey, -5);
+      }
+
+      if (effectiveKey.isEmpty) effectiveKey = 'Unknown';
+
+      // 4. THE MAGIC: Return a cloned Song object with the new key permanently attached!
+      return song.copyWith(key: effectiveKey);
+    }).toList();
+  });
 });

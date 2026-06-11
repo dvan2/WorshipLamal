@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/setlists/presentation/providers/setlist_provider.dart';
+import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
 
 class AddToSetlistSheet extends ConsumerWidget {
   final String songId;
@@ -101,11 +102,24 @@ class AddToSetlistSheet extends ConsumerWidget {
                               context.pop();
 
                               try {
+                                final personalizedSongs =
+                                    ref
+                                        .read(personalizedSongListProvider)
+                                        .value ??
+                                    [];
+
+                                // Find the specific song we are adding
+                                final songToAdd = personalizedSongs.firstWhere(
+                                  (s) => s.id == songId,
+                                );
+
+                                // Extract its personalized key (default to empty string if null)
+                                final keyOverride = songToAdd.key ?? '';
                                 await ref
                                     .read(setlistControllerProvider.notifier)
                                     .addSongs(
                                       setlistId: setlist.id,
-                                      songIds: [songId],
+                                      songsWithKeys: {songId: keyOverride},
                                     );
 
                                 // 3. Show Success Message

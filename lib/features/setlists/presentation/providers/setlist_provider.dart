@@ -133,31 +133,20 @@ class SetlistController extends AsyncNotifier<void> {
 
   Future<void> addSongs({
     required String setlistId,
-    required List<String> songIds,
+    required Map<String, String> songsWithKeys,
   }) async {
     state = const AsyncLoading();
 
     state = await AsyncValue.guard(() async {
       final repo = ref.read(setlistRepositoryProvider);
-      final songRepo = ref.read(songRepositoryProvider);
-      final prefs = ref.read(preferencesProvider);
 
       final itemsToAdd = <Map<String, dynamic>>[];
 
-      for (final songId in songIds) {
-        String? keyToSave;
-
-        if (prefs.vocalMode == VocalMode.female) {
-          final song = await songRepo.getSongById(songId); // Fetch fresh data
-          if (song.key != null) {
-            keyToSave = KeyTransposer.transpose(song.key!, -5);
-          }
-        }
-
+      for (final entry in songsWithKeys.entries) {
         itemsToAdd.add({
           'setlist_id': setlistId,
-          'song_id': songId,
-          'key': keyToSave,
+          'song_id': entry.key,
+          'key': entry.value,
         });
       }
 

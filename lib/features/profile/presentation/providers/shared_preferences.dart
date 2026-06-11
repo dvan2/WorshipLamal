@@ -24,7 +24,7 @@ class PreferencesService {
 
   Future<int> getContentMode() async {
     final prefs = await SharedPreferences.getInstance();
-    // Default to 0 (Lyrics) if nothing saved
-    return prefs.getInt(_keyContentMode) ?? 1;
+    // Default chord or lyrics format, 0 for lyircs, 1 for chords
+    return prefs.getInt(_keyContentMode) ?? 0;
   }
 }
