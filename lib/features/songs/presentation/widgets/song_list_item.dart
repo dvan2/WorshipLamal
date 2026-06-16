@@ -226,10 +226,6 @@ class _SongListItemState extends ConsumerState<SongListItem> {
           decoration: BoxDecoration(
             color: baseColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: baseColor.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
           ),
           child: Text(
             keyText,

@@ -19,6 +19,8 @@ class SongResultsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Songs'),
+        elevation: 0,
+        scrolledUnderElevation: 0,
         // Automatically gets a back button from GoRouter
       ),
       body: Column(
@@ -43,9 +45,36 @@ class SongResultsScreen extends ConsumerWidget {
               skipLoadingOnReload: true,
               data: (songs) {
                 if (songs.isEmpty) {
-                  return const Center(child: Text("No songs found"));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 64,
+                          color: Colors.grey.shade300,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "No songs found",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Try a different keyword or clear your filters.",
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  );
                 }
                 return ListView.separated(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.only(top: 8, bottom: 80),
                   itemCount: songs.length,
                   separatorBuilder: (context, index) =>
