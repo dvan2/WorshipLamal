@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:worship_lamal/core/theme/app_colors.dart';
-import 'package:worship_lamal/core/utils/key_transposer.dart';
-import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+import 'package:worship_lamal/features/setlists/presentation/screens/widgets/song_picker_item.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
-import 'package:worship_lamal/features/songs/presentation/screens/home_dashboard_tab.dart';
 import 'package:worship_lamal/features/songs/presentation/widgets/song_search_field.dart';
 
 class SongPickerScreen extends ConsumerStatefulWidget {
-  const SongPickerScreen({super.key});
+  // 1. Receive the list of IDs already in the setlist
+  final List<String> existingSongIds;
+
+  const SongPickerScreen({
+    super.key,
+    this.existingSongIds = const [], // Default to empty
+  });
 
   @override
   ConsumerState<SongPickerScreen> createState() => _SongPickerScreenState();
 }
 
 class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
-  // Track selected IDs locally
   final Set<String> _selectedIds = {};
 
   @override
@@ -31,22 +32,17 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Relying on the personalized list provider (as we architected earlier!)
     final songsAsync = ref.watch(pickerFilteredSongsProvider);
-
-    final prefs = ref.watch(preferencesProvider);
-    final isFemaleMode = prefs.vocalMode == VocalMode.female;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Select Songs (${_selectedIds.length})'),
+        title: Text('Add Songs (${_selectedIds.length})'),
         actions: [
           TextButton(
             onPressed: _selectedIds.isEmpty
                 ? null
-                : () {
-                    // Return the list of IDs back to the previous screen
-                    context.pop(_selectedIds.toList());
-                  },
+                : () => context.pop(_selectedIds.toList()),
             child: const Text(
               'Done',
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -56,7 +52,6 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SongSearchField(
@@ -64,7 +59,6 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
               filterProvider: pickerFilterProvider,
             ),
           ),
-          // List
           Expanded(
             child: songsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -74,36 +68,30 @@ class _SongPickerScreenState extends ConsumerState<SongPickerScreen> {
                   return const Center(child: Text("No songs found"));
                 }
 
-                return ListView.separated(
+                return ListView.builder(
+                  // We can remove the separator builder since SongPickerItem has good padding
                   itemCount: songs.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final song = songs[index];
+
+                    // 2. Check the lock state
+                    final isAlreadyAdded = widget.existingSongIds.contains(
+                      song.id,
+                    );
                     final isSelected = _selectedIds.contains(song.id);
 
-                    final displayKey = song.key ?? 'Unknown';
-
-                    return CheckboxListTile(
-                      value: isSelected,
-                      activeColor: AppColors.primary,
-                      title: Text(
-                        song.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        '${song.artistNames} • $displayKey',
-                        style: TextStyle(
-                          color: isFemaleMode
-                              ? AppColors.keyBadgeTransposedText
-                              : null,
-                        ),
-                      ),
-                      onChanged: (bool? value) {
+                    // 3. Render the new dedicated Picker Item
+                    return SongPickerItem(
+                      song: song,
+                      isSelected: isSelected,
+                      isAlreadyInSetlist: isAlreadyAdded,
+                      onTap: () {
+                        // Toggle logic handled cleanly here
                         setState(() {
-                          if (value == true) {
-                            _selectedIds.add(song.id);
-                          } else {
+                          if (isSelected) {
                             _selectedIds.remove(song.id);
+                          } else {
+                            _selectedIds.add(song.id);
                           }
                         });
                       },

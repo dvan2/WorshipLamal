@@ -175,7 +175,9 @@ class _SetlistDetailScreenState extends ConsumerState<SetlistDetailScreen> {
                 ),
             ],
           ),
-          floatingActionButton: isOwner ? _buildAddButton(context, ref) : null,
+          floatingActionButton: isOwner
+              ? _buildAddButton(context, ref, setlist)
+              : null,
           body: hasSongs
               ? Column(
                   children: [
@@ -330,12 +332,16 @@ class _SetlistDetailScreenState extends ConsumerState<SetlistDetailScreen> {
         .toggleFollow(setlistId: setlistId, isCurrentlyFollowing: isFollowing);
   }
 
-  Widget _buildAddButton(BuildContext context, WidgetRef ref) {
+  Widget _buildAddButton(BuildContext context, WidgetRef ref, Setlist setlist) {
     return FloatingActionButton.extended(
       label: const Text('Add Songs'),
       icon: const Icon(Icons.add),
       onPressed: () async {
-        final List<String>? selectedIds = await context.pushNamed('songPicker');
+        final existingIds = setlist.items.map((item) => item.songId).toList();
+        final List<String>? selectedIds = await context.pushNamed(
+          'songPicker',
+          extra: existingIds,
+        );
 
         if (selectedIds != null && selectedIds.isNotEmpty) {
           // Just call the controller. Logic is hidden.

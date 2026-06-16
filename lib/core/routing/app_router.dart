@@ -41,7 +41,11 @@ final appRouter = GoRouter(
         GoRoute(
           path: 'song-picker',
           name: 'songPicker',
-          builder: (context, state) => const SongPickerScreen(),
+          builder: (context, state) {
+            final passedIds = state.extra as List<String>?;
+
+            return SongPickerScreen(existingSongIds: passedIds ?? []);
+          },
         ),
         GoRoute(
           path: 'results',
