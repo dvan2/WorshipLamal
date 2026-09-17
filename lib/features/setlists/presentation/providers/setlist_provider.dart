@@ -9,7 +9,7 @@ import 'package:worship_lamal/features/profile/presentation/providers/preference
 import 'package:worship_lamal/features/setlists/data/models/setlist_model.dart';
 import 'package:worship_lamal/features/setlists/data/remote/setlists_api.dart';
 import 'package:worship_lamal/features/setlists/data/repositories/setlist_repository.dart';
-import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 // 1. DATA LAYER (The Piping)
 //Using Providers for read-only state that won't change

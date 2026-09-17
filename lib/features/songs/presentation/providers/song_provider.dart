@@ -5,7 +5,7 @@ import 'package:worship_lamal/features/userkey/presentation/providers/user_keys_
 
 import '../../data/models/song_model.dart';
 import '../../data/remote/songs_api.dart';
-import '../../data/song_repository.dart';
+import '../../data/repositories/songs_repository.dart';
 import '../../../../core/config/supabase_config.dart';
 
 // --- DATA LAYER ---
@@ -13,8 +13,8 @@ final songsApiProvider = Provider<SongsApi>((ref) {
   return SongsApi(ref.read(supabaseClientProvider));
 });
 
-final songRepositoryProvider = Provider<SongRepository>((ref) {
-  return SongRepository(ref.read(songsApiProvider));
+final songRepositoryProvider = Provider<SongsRepository>((ref) {
+  return SongsRepository(ref.read(songsApiProvider));
 });
 
 // --- RAW DATA PROVIDER ---

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 void main() {
   test('Song.fromMap parses artists and lyric lines correctly', () {

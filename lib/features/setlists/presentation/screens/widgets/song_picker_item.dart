@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 import 'package:worship_lamal/features/userkey/presentation/providers/user_keys_provider.dart';
 
 class SongPickerItem extends ConsumerWidget {

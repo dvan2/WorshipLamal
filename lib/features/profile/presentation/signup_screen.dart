@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:worship_lamal/features/songs/data/repositories/auth_repository.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

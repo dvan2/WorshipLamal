@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:worship_lamal/features/songs/data/remote/songs_api.dart';
-import 'package:worship_lamal/features/songs/data/song_repository.dart';
+import 'package:worship_lamal/features/songs/data/repositories/songs_repository.dart';
 
 import '../test_utils/fakes/fixtures.dart'; // Import your fixtures
 
@@ -9,12 +9,12 @@ import '../test_utils/fakes/fixtures.dart'; // Import your fixtures
 class MockSongsApi extends Mock implements SongsApi {}
 
 void main() {
-  late SongRepository repository;
+  late SongsRepository repository;
   late MockSongsApi mockApi;
 
   setUp(() {
     mockApi = MockSongsApi();
-    repository = SongRepository(mockApi);
+    repository = SongsRepository(mockApi);
   });
 
   group('SongRepository', () {

@@ -6,7 +6,7 @@ import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/profile/presentation/changelog_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
-import 'package:worship_lamal/features/songs/data/repositories/auth_repository.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 
 const kFallbackVersion = "1.3.0";

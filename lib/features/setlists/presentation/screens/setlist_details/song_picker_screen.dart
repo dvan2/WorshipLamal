@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/features/setlists/presentation/screens/widgets/song_picker_item.dart';
-import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
-import 'package:worship_lamal/features/songs/presentation/widgets/song_search_field.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 class SongPickerScreen extends ConsumerStatefulWidget {
   // 1. Receive the list of IDs already in the setlist

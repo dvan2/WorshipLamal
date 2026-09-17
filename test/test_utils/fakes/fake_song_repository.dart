@@ -1,10 +1,9 @@
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
-import 'package:worship_lamal/features/songs/data/song_repository.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 import 'fixtures.dart';
 
-class FakeSongRepository implements SongRepository {
+class FakeSongRepository implements SongsRepository {
   final List<Song> _songs;
   FakeSongRepository({List<Song>? songs}) : _songs = songs ?? kTestSongs;
 
@@ -22,7 +21,7 @@ class FakeSongRepository implements SongRepository {
   }
 }
 
-class FakeFailingSongRepository implements SongRepository {
+class FakeFailingSongRepository implements SongsRepository {
   @override
   Future<List<Song>> getSongs() async {
     throw Exception('Failed to load songs');

@@ -1,4 +1,4 @@
-import 'package:worship_lamal/features/songs/data/models/song_model.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 // --- SHARED CONSTANTS ---
 

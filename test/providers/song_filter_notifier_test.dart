@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
-import 'package:worship_lamal/features/songs/presentation/providers/song_filter_provider.dart';
+import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 void main() {
   late ProviderContainer container;
