@@ -1,3 +1,5 @@
+import 'package:worship_lamal/features/songs/data/models/rhythm_chart_model.dart';
+
 import 'lyric_line_model.dart';
 
 enum SongType {
@@ -28,6 +30,7 @@ class Song {
   final String title;
   final List<Artist> artists;
   final List<LyricLine> lyricLines;
+  final List<RhythmChart> rhythmCharts;
   final String? key;
   final int? bpm;
   final bool isTitleMatch;
@@ -45,6 +48,7 @@ class Song {
     required this.title,
     required this.artists,
     required this.lyricLines,
+    this.rhythmCharts = const [],
     this.isTitleMatch = true,
     this.searchSnippet,
     // Provide safe defaults so existing data doesn't break
@@ -67,6 +71,9 @@ class Song {
           [],
       lyricLines: (map['lyric_lines'] as List<dynamic>? ?? [])
           .map((line) => LyricLine.fromMap(line))
+          .toList(),
+      rhythmCharts: (map['rhythm_charts'] as List<dynamic>? ?? [])
+          .map((chart) => RhythmChart.fromJson(chart))
           .toList(),
       key: map['key'] as String?,
       bpm: map['bpm'] as int?,
@@ -104,6 +111,7 @@ class Song {
       searchSnippet: searchSnippet ?? this.searchSnippet,
       artists: artists ?? this.artists,
       lyricLines: lyricLines ?? this.lyricLines,
+      rhythmCharts: rhythmCharts ?? this.rhythmCharts,
       key: key ?? this.key,
       bpm: bpm ?? this.bpm,
       type: type ?? this.type,

@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
+import 'package:worship_lamal/features/songs/data/models/rhythm_chart_model.dart'; // Ensure this matches your path
 import 'package:worship_lamal/features/songs/presentation/widgets/chord_line_renderer.dart';
+import 'package:worship_lamal/features/songs/presentation/widgets/rhythm_bar_renderer.dart'; // Ensure this matches your path
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+
+// 1. Helper class to group Rhythm Charts by section (like Verse, Chorus)
+class RhythmSectionBlock {
+  final String title;
+  final List<RhythmChart> charts;
+
+  RhythmSectionBlock({required this.title, required this.charts});
+}
 
 class ChordModeView extends ConsumerStatefulWidget {
   final Song song;
@@ -21,22 +31,20 @@ class ChordModeView extends ConsumerStatefulWidget {
 }
 
 class _ChordModeViewState extends ConsumerState<ChordModeView> {
-  // Remembers the scale at the exact moment the user touches the screen
   double _baseScale = 1.0;
 
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-
     final scaleFactor = ref.watch(chordScaleProvider);
 
-    // 2. WRAP EVERYTHING IN A GESTURE DETECTOR
+    // Check which workflow we are using
+    final hasRhythmCharts = widget.song.rhythmCharts.isNotEmpty;
+
     return GestureDetector(
-      // Fires once when the user's two fingers touch the screen
       onScaleStart: (details) {
         _baseScale = scaleFactor;
       },
-      // Fires continuously as their fingers move closer/further apart
       onScaleUpdate: (details) {
         ref
             .read(chordScaleProvider.notifier)
@@ -48,7 +56,7 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
           child: Column(
             children: [
               // ----------------------------------------------------
-              // A. META-HEADER & DIVIDER (Unchanged)
+              // A. META-HEADER & DIVIDER
               // ----------------------------------------------------
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -131,11 +139,6 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
                     final isWideScreen = constraints.maxWidth >= 600;
                     final columnCount = isWideScreen ? 2 : 1;
 
-                    final columns = _balanceColumns(
-                      widget.song.sections,
-                      columnCount,
-                    );
-
                     return Scrollbar(
                       thumbVisibility: true,
                       thickness: 4,
@@ -157,16 +160,20 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: columns[index]
-                                      .map(
-                                        (s) => _buildCompactSection(
-                                          context,
-                                          s,
+                                  // THE FORK: Rhythm Charts vs Lyric Charts
+                                  children: hasRhythmCharts
+                                      ? _buildRhythmGridColumns(
+                                          columnCount,
+                                          index,
+                                          isWideScreen,
+                                          scaleFactor,
+                                        )
+                                      : _buildLegacyLyricColumns(
+                                          columnCount,
+                                          index,
                                           isWideScreen,
                                           scaleFactor,
                                         ),
-                                      )
-                                      .toList(),
                                 ),
                               ),
                             );
@@ -182,6 +189,140 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
         ),
       ),
     );
+  }
+
+  // =========================================================================
+  // NEW WORKFLOW: Rhythm Grid Builders
+  // =========================================================================
+  List<Widget> _buildRhythmGridColumns(
+    int columnCount,
+    int index,
+    bool isWideScreen,
+    double scaleFactor,
+  ) {
+    final sections = _getRhythmSections();
+    final columns = _balanceRhythmColumns(sections, columnCount);
+
+    return columns[index]
+        .map(
+          (s) =>
+              _buildRhythmCompactSection(context, s, isWideScreen, scaleFactor),
+        )
+        .toList();
+  }
+
+  List<RhythmSectionBlock> _getRhythmSections() {
+    final Map<String, List<RhythmChart>> map = {};
+    for (final chart in widget.song.rhythmCharts) {
+      final key = chart.sectionType;
+      map.putIfAbsent(key, () => []);
+      map[key]!.add(chart);
+    }
+
+    final sections = map.entries.map((entry) {
+      final items = entry.value
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      return RhythmSectionBlock(title: entry.key, charts: items);
+    }).toList();
+
+    // Sort the sections themselves based on the first line's sortOrder
+    sections.sort(
+      (a, b) => a.charts.first.sortOrder.compareTo(b.charts.first.sortOrder),
+    );
+    return sections;
+  }
+
+  List<List<RhythmSectionBlock>> _balanceRhythmColumns(
+    List<RhythmSectionBlock> sections,
+    int columnCount,
+  ) {
+    if (columnCount == 1 || sections.isEmpty) return [sections];
+
+    final heights = sections
+        .map((s) => 40.0 + (s.charts.length * 30.0))
+        .toList();
+    final totalHeight = heights.fold(0.0, (a, b) => a + b);
+    final targetHeight = totalHeight / columnCount;
+
+    List<List<RhythmSectionBlock>> columns = List.generate(
+      columnCount,
+      (_) => [],
+    );
+    double currentColumnHeight = 0;
+    int currentColumnIndex = 0;
+
+    for (int i = 0; i < sections.length; i++) {
+      if (currentColumnIndex < columnCount - 1 &&
+          currentColumnHeight + (heights[i] / 2) > targetHeight) {
+        currentColumnIndex++;
+        currentColumnHeight = 0;
+      }
+      columns[currentColumnIndex].add(sections[i]);
+      currentColumnHeight += heights[i];
+    }
+    return columns;
+  }
+
+  Widget _buildRhythmCompactSection(
+    BuildContext context,
+    RhythmSectionBlock section,
+    bool isWideScreen,
+    double scaleFactor,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.0 * scaleFactor),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // The Boxed Section Header (To match your image reference)
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 6 * scaleFactor,
+              vertical: 2 * scaleFactor,
+            ),
+            margin: EdgeInsets.only(bottom: 8.0 * scaleFactor),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black, width: 1.5),
+            ),
+            child: Text(
+              _capitalize(section.title),
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: (isWideScreen ? 15 : 14) * scaleFactor,
+              ),
+            ),
+          ),
+          // The Rhythm Bars
+          ...section.charts.map((chart) {
+            return RhythmBarRenderer(
+              barLine: chart.content, // Translates Nashville numbers internally
+              targetKey: widget.displayKey,
+              textStyle: TextStyle(
+                fontSize:
+                    (isWideScreen ? 18 : 16) * scaleFactor, // Big, bold chords!
+                color: Colors.black,
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // LEGACY WORKFLOW: Lyric + Chord Builders (Unchanged)
+  // =========================================================================
+  List<Widget> _buildLegacyLyricColumns(
+    int columnCount,
+    int index,
+    bool isWideScreen,
+    double scaleFactor,
+  ) {
+    final columns = _balanceColumns(widget.song.sections, columnCount);
+    return columns[index]
+        .map((s) => _buildCompactSection(context, s, isWideScreen, scaleFactor))
+        .toList();
   }
 
   List<List<SectionBlock>> _balanceColumns(
@@ -212,7 +353,6 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
     return columns;
   }
 
-  // 3. APPLY THE SCALE FACTOR TO THE FONTS
   Widget _buildCompactSection(
     BuildContext context,
     SectionBlock section,
@@ -220,9 +360,7 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
     double scaleFactor,
   ) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: 20.0 * scaleFactor,
-      ), // Scale padding so it breathes naturally
+      padding: EdgeInsets.only(bottom: 20.0 * scaleFactor),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -234,7 +372,6 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
                 color: Colors.black,
                 fontWeight: FontWeight.w900,
                 fontStyle: FontStyle.italic,
-                // Multiply base sizes by the new scale factor
                 fontSize: (isWideScreen ? 15 : 14) * scaleFactor,
               ),
             ),
@@ -247,13 +384,11 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
                 line: contentToRender,
                 targetKey: widget.displayKey,
                 chordStyle: TextStyle(
-                  // Multiply base sizes by the new scale factor
                   fontSize: (isWideScreen ? 14 : 13.5) * scaleFactor,
                   color: Colors.black,
                   fontWeight: FontWeight.w800,
                 ),
                 lyricStyle: TextStyle(
-                  // Multiply base sizes by the new scale factor
                   fontSize: (isWideScreen ? 13 : 12.5) * scaleFactor,
                   color: Colors.black87,
                   height: 1.2,
@@ -264,5 +399,10 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
         ],
       ),
     );
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
   }
 }
