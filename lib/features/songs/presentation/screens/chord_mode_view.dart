@@ -236,31 +236,11 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
     List<RhythmSectionBlock> sections,
     int columnCount,
   ) {
-    if (columnCount == 1 || sections.isEmpty) return [sections];
-
-    final heights = sections
-        .map((s) => 40.0 + (s.charts.length * 30.0))
-        .toList();
-    final totalHeight = heights.fold(0.0, (a, b) => a + b);
-    final targetHeight = totalHeight / columnCount;
-
-    List<List<RhythmSectionBlock>> columns = List.generate(
+    return balanceColumns<RhythmSectionBlock>(
+      sections,
       columnCount,
-      (_) => [],
+      (s) => 40.0 + (s.charts.length * 30.0),
     );
-    double currentColumnHeight = 0;
-    int currentColumnIndex = 0;
-
-    for (int i = 0; i < sections.length; i++) {
-      if (currentColumnIndex < columnCount - 1 &&
-          currentColumnHeight + (heights[i] / 2) > targetHeight) {
-        currentColumnIndex++;
-        currentColumnHeight = 0;
-      }
-      columns[currentColumnIndex].add(sections[i]);
-      currentColumnHeight += heights[i];
-    }
-    return columns;
   }
 
   Widget _buildRhythmCompactSection(
@@ -329,28 +309,11 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
     List<SectionBlock> sections,
     int columnCount,
   ) {
-    if (columnCount == 1 || sections.isEmpty) return [sections];
-
-    final heights = sections
-        .map((s) => 35.0 + (s.lines.length * 24.0))
-        .toList();
-    final totalHeight = heights.fold(0.0, (a, b) => a + b);
-    final targetHeight = totalHeight / columnCount;
-
-    List<List<SectionBlock>> columns = List.generate(columnCount, (_) => []);
-    double currentColumnHeight = 0;
-    int currentColumnIndex = 0;
-
-    for (int i = 0; i < sections.length; i++) {
-      if (currentColumnIndex < columnCount - 1 &&
-          currentColumnHeight + (heights[i] / 2) > targetHeight) {
-        currentColumnIndex++;
-        currentColumnHeight = 0;
-      }
-      columns[currentColumnIndex].add(sections[i]);
-      currentColumnHeight += heights[i];
-    }
-    return columns;
+    return balanceColumns<SectionBlock>(
+      sections,
+      columnCount,
+      (s) => 35.0 + (s.lines.length * 24.0),
+    );
   }
 
   Widget _buildCompactSection(
@@ -405,4 +368,35 @@ class _ChordModeViewState extends ConsumerState<ChordModeView> {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1);
   }
+}
+
+/// Distributes section items across [columnCount] columns based on estimated height.
+List<List<T>> balanceColumns<T>(
+  List<T> sections,
+  int columnCount,
+  double Function(T section) estimateHeight,
+) {
+  if (columnCount == 1 || sections.isEmpty) return [sections];
+
+  final heights = sections.map(estimateHeight).toList();
+  final totalHeight = heights.fold(0.0, (a, b) => a + b);
+  final targetHeight = totalHeight / columnCount;
+
+  List<List<T>> columns = List.generate(
+    columnCount,
+    (_) => [],
+  );
+  double currentColumnHeight = 0;
+  int currentColumnIndex = 0;
+
+  for (int i = 0; i < sections.length; i++) {
+    if (currentColumnIndex < columnCount - 1 &&
+        currentColumnHeight + (heights[i] / 2) > targetHeight) {
+      currentColumnIndex++;
+      currentColumnHeight = 0;
+    }
+    columns[currentColumnIndex].add(sections[i]);
+    currentColumnHeight += heights[i];
+  }
+  return columns;
 }

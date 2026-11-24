@@ -545,11 +545,11 @@ docs: update architecture reference
 
 - [ ] Create `*_feature.dart` barrel exports for setlists, profile, favorites, userkey
 - [ ] Move `auth_repository.dart` from `features/songs/` to `features/profile/` (or `core/services/`)
-- [ ] Extract shared chromatic scale from KeyTransposer + NashvilleHelper into `core/utils/music_theory.dart`
-- [ ] Extract generic `balanceColumns<T>()` from ChordModeView
+- [x] Extract shared chromatic scale from KeyTransposer + NashvilleHelper into `core/utils/music_theory.dart`
+- [x] Extract generic `balanceColumns<T>()` from ChordModeView
 - [ ] Load Supabase credentials from `.env` via `flutter_dotenv`
-- [ ] Remove orphaned `_showTextSettingsSheet` from song_detail_screen.dart
-- [ ] Audit and remove or implement `songs_dao.dart`
+- [x] Remove orphaned `_showTextSettingsSheet` from song_detail_screen.dart
+- [x] Audit and remove or implement `songs_dao.dart`
 - [ ] Break cross-feature provider import (filteredSongsProvider → favoritesListProvider)
 - [ ] Add namespace collision guard for realtime channel names
 - [ ] Standardize DI: all repositories should accept `SupabaseClient` via constructor
