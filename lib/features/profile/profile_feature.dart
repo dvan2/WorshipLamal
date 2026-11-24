@@ -1,3 +1,6 @@
+// Repositories
+export 'data/repositories/auth_repository.dart';
+
 // Providers (for state consumption)
 export 'presentation/providers/auth_provider.dart';
 export 'presentation/providers/preferences_provider.dart';

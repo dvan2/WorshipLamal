@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:worship_lamal/features/songs/songs_feature.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 
-class SignUpScreen extends StatefulWidget {
+class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
-  final _repo = AuthRepository();
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -18,7 +18,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     // Check if we are currently a Guest
-    final isGuest = _repo.currentUser?.isAnonymous ?? false;
+    final repo = ref.watch(authRepositoryProvider);
+    final isGuest = repo.currentUser?.isAnonymous ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -109,11 +110,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
+      final repo = ref.read(authRepositoryProvider);
 
       if (isGuest) {
         // SCENARIO A: Upgrade the existing Guest user
         // This keeps the same User ID, so data is preserved!
-        await _repo.upgradeGuestAccount(email, password);
+        await repo.upgradeGuestAccount(email, password);
 
         if (mounted) {
           Navigator.pop(context); // Return to Profile Tab
@@ -123,7 +125,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       } else {
         // SCENARIO B: Brand new user
-        await _repo.signUp(email, password);
+        await repo.signUp(email, password);
 
         if (mounted) {
           Navigator.pop(context); // Return to Login

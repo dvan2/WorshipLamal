@@ -6,7 +6,7 @@ import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/profile/presentation/changelog_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
-import 'package:worship_lamal/features/songs/songs_feature.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
 
 const kFallbackVersion = "1.3.0";
@@ -49,11 +49,9 @@ class ProfileTab extends ConsumerStatefulWidget {
 }
 
 class _ProfileTabState extends ConsumerState<ProfileTab> {
-  final _repo = AuthRepository();
-
   @override
   Widget build(BuildContext context) {
-    final user = _repo.currentUser;
+    final user = ref.watch(authRepositoryProvider).currentUser;
     // 1. Watch the Preferences State
     final prefsState = ref.watch(preferencesProvider);
     final packageInfoAsync = ref.watch(packageInfoProvider);
@@ -290,7 +288,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
   }
 
   Future<void> _handleSignOut() async {
-    await _repo.signOut();
+    await ref.read(authRepositoryProvider).signOut();
     try {
       await Supabase.instance.client.auth.signInAnonymously();
     } catch (e) {

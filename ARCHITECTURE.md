@@ -57,7 +57,6 @@ lib/
     │   │   │   └── songs_api.dart         # SongsApi – fetchSongs(), fetchSongById()
     │   │   └── repositories/
     │   │       ├── songs_repository.dart   # Thin pass-through to SongsApi
-    │   │       ├── auth_repository.dart    # signIn/Up/Out, upgradeGuestAccount
     │   │       └── history_repository.dart # addToHistory, getRecentSongs (user_song_history)
     │   └── presentation/
     │       ├── providers/
@@ -131,6 +130,9 @@ lib/
     │   └── presentation/providers/user_keys_provider.dart  # userPreferredKeysMapProvider, UserKeyController
     │
     └── profile/      ← barrel: profile_feature.dart
+        ├── data/
+        │   └── repositories/
+        │       └── auth_repository.dart        # signIn/Up/Out, upgradeGuestAccount
         └── presentation/
             ├── providers/
             │   ├── auth_provider.dart           # authStateProvider (StreamProvider<AuthState>)
@@ -431,7 +433,7 @@ SongDetailScreen
 │                                                               │     Groups LyricLine by sectionType → SectionBlock
 │                                                               │
 │                                                               ├── _balanceColumns()
-│                                                               │     Same algorithm as rhythm (duplicated — §8 smell #5)
+│                                                               │     Uses shared balanceColumns<T>() helper
 │                                                               │
 │                                                               └── ChordLineRenderer (per line)
 │                                                                     ChordParser.parse(line) → ChordChunk[]
@@ -458,20 +460,8 @@ SongDetailScreen
 ## 8. Architectural Smells & Tight Coupling
 
 ### Smell 1 — Hardcoded Supabase Credentials
-**File:** [`main.dart`](file:///d:/Programming/Projects/worship_lamal/lib/main.dart#L12-L14)
+**File:** [`main.dart`](file:///d:/Programming/Projects/worship_lamal/lib/main.dart)
 The Supabase URL and anon key are inline string constants. The `.env` file is registered as a Flutter asset but never loaded via `flutter_dotenv`.
-
-### Smell 3 — AuthRepository Bypasses DI
-**File:** [`auth_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/data/repositories/auth_repository.dart#L4)
-Hard-codes `Supabase.instance.client` instead of accepting an injected `SupabaseClient`. Also lives under `features/songs/` despite being a cross-cutting auth concern.
-
-### Smell 4 — HistoryRepository and UserKeysRepository Inconsistent DI
-**Files:** [`history_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/data/repositories/history_repository.dart), [`user_keys_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/userkey/data/repositories/user_keys_repository.dart#L10-L16), [`favorites_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/favorites/data/repositories/favorites_repository.dart#L11-L17)
-`HistoryRepository` takes `SupabaseClient` via constructor (good), but `UserKeysRepository` and `FavoritesRepository` access `Supabase.instance.client.auth.currentUser` directly for the user ID.
-
-### Smell 6 — Cross-Feature Provider Imports
-**File:** [`song_filter_provider.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/presentation/providers/song_filter_provider.dart#L6)
-`filteredSongsProvider` directly watches `favoritesListProvider` (from `features/favorites/`) and `historyMapProvider` (same feature, but tightly coupled). This violates the stated rule that features should not cross-import providers.
 
 ---
 
@@ -528,12 +518,12 @@ docs: update architecture reference
 ## 10. Migration Checklist
 
 - [x] Create `*_feature.dart` barrel exports for setlists, profile, favorites, userkey
-- [ ] Move `auth_repository.dart` from `features/songs/` to `features/profile/` (or `core/services/`)
+- [x] Move `auth_repository.dart` from `features/songs/` to `features/profile/` (or `core/services/`)
 - [x] Extract shared chromatic scale from KeyTransposer + NashvilleHelper into `core/utils/music_theory.dart`
 - [x] Extract generic `balanceColumns<T>()` from ChordModeView
 - [ ] Load Supabase credentials from `.env` via `flutter_dotenv`
 - [x] Remove orphaned `_showTextSettingsSheet` from song_detail_screen.dart
 - [x] Audit and remove or implement `songs_dao.dart`
-- [ ] Break cross-feature provider import (filteredSongsProvider → favoritesListProvider)
+- [x] Break cross-feature provider import (filteredSongsProvider → favoritesListProvider)
 - [x] Add namespace collision guard for realtime channel names
-- [ ] Standardize DI: all repositories should accept `SupabaseClient` via constructor
+- [x] Standardize DI: all repositories should accept `SupabaseClient` via constructor

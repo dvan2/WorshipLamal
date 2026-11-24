@@ -1,16 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/core/config/supabase_config.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/repositories/history_repository.dart';
 
 // 1. Repository Provider
 final historyRepositoryProvider = Provider<HistoryRepository>((ref) {
-  return HistoryRepository(Supabase.instance.client);
+  final client = ref.watch(supabaseClientProvider);
+  return HistoryRepository(client);
 });
 
 // 2. Data Provider (The List of Songs)
 final recentSongsProvider = FutureProvider<List<Song>>((ref) async {
-  final userId = Supabase.instance.client.auth.currentUser?.id;
+  final client = ref.watch(supabaseClientProvider);
+  final userId = client.auth.currentUser?.id;
   if (userId == null) return [];
 
   final repo = ref.watch(historyRepositoryProvider);
@@ -27,20 +29,33 @@ class HistoryController {
   HistoryController(this._ref);
 
   Future<void> logView(String songId) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null)
-      return; // Don't log for guests (or handle locally if you want)
+    final client = _ref.read(supabaseClientProvider);
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) {
+      return; // Don't log for guests
+    }
 
     try {
       final repo = _ref.read(historyRepositoryProvider);
       await repo.addToHistory(userId, songId);
       _ref.invalidate(recentSongsProvider);
-
-      // Optional: Invalidate list so "Recently Viewed" tab updates instantly
-      // _ref.invalidate(recentSongsProvider);
     } catch (e) {
       // Fail silently (logging shouldn't block the user)
-      print('History log failed: $e');
     }
   }
 }
+
+// 4. Map Provider for fast O(1) timestamp lookups when sorting
+final historyMapProvider = FutureProvider<Map<String, DateTime>>((ref) async {
+  final recentSongs = await ref.watch(recentSongsProvider.future);
+
+  final Map<String, DateTime> historyMap = {};
+  final now = DateTime.now();
+
+  for (int i = 0; i < recentSongs.length; i++) {
+    final s = recentSongs[i];
+    historyMap[s.id] = s.lastViewedAt ?? now.subtract(Duration(minutes: i));
+  }
+
+  return historyMap;
+});

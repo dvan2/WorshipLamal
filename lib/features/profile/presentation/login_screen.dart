@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:worship_lamal/features/songs/songs_feature.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final _repo = AuthRepository();
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -67,7 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     setState(() => _isLoading = true);
     try {
-      await _repo.signIn(
+      final repo = ref.read(authRepositoryProvider);
+      await repo.signIn(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );

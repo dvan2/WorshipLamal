@@ -30,3 +30,8 @@ Providers: `${feature}Provider`. Repositories: `${Feature}Repository`. Screens: 
 
 ## Key Domain Concepts
 Nashville Number System chords stored in DB, translated to letter chords at render time via `NashvilleHelper`. Key transposition via `KeyTransposer`. Two rendering paths: `RhythmBarRenderer` (rhythm charts) and `ChordLineRenderer` (legacy ChordPro lyrics).
+
+## Documentation Sync
+Whenever code structure changes, update `ARCHITECTURE.md` (folder tree, resolved §8 smells, and §10 checklist).
+Never include brittle line numbers in documentation references.
+

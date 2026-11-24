@@ -1,7 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepository {
-  final SupabaseClient _client = Supabase.instance.client;
+  final SupabaseClient _client;
+
+  AuthRepository(this._client);
 
   User? get currentUser => _client.auth.currentUser;
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
@@ -19,10 +21,8 @@ class AuthRepository {
   }
 
   Future<void> upgradeGuestAccount(String email, String password) async {
-    final client = Supabase.instance.client;
-
     // This converts the anonymous user to a permanent one
-    await client.auth.updateUser(
+    await _client.auth.updateUser(
       UserAttributes(email: email, password: password),
     );
   }

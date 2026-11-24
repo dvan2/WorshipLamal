@@ -6,7 +6,6 @@ export 'data/models/song_sort_option.dart';
 // Repository (for testing, dependency injection)
 export 'data/repositories/songs_repository.dart';
 export 'data/repositories/history_repository.dart';
-export 'data/repositories/auth_repository.dart';
 
 // Providers (for state consumption)
 export 'presentation/providers/song_provider.dart';

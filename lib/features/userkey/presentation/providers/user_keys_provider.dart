@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/core/config/supabase_config.dart';
 import 'package:worship_lamal/features/userkey/data/model/user_key_model.dart';
 import '../../data/remote/user_keys_api.dart';
 import '../../data/repositories/user_keys_repository.dart';
@@ -10,13 +10,15 @@ import '../../../profile/presentation/providers/auth_provider.dart';
 // -----------------------------------------------------------------------------
 
 final userKeysApiProvider = Provider<UserKeysApi>((ref) {
-  return UserKeysApi(Supabase.instance.client);
+  final client = ref.watch(supabaseClientProvider);
+  return UserKeysApi(client);
 });
 
 final userKeysRepositoryProvider = Provider<UserKeysRepository>((ref) {
   ref.watch(authStateProvider); // Re-build if auth changes
   final api = ref.watch(userKeysApiProvider);
-  return UserKeysRepository(api);
+  final client = ref.watch(supabaseClientProvider);
+  return UserKeysRepository(api, client);
 });
 
 // -----------------------------------------------------------------------------

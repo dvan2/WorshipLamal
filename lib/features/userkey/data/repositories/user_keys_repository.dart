@@ -4,11 +4,12 @@ import '../remote/user_keys_api.dart';
 
 class UserKeysRepository {
   final UserKeysApi _api;
+  final SupabaseClient _client;
 
-  UserKeysRepository(this._api);
+  UserKeysRepository(this._api, this._client);
 
   String get _currentUserId {
-    final id = Supabase.instance.client.auth.currentUser?.id;
+    final id = _client.auth.currentUser?.id;
     if (id == null) {
       throw Exception('User must be logged in to manage keys');
     }
@@ -16,7 +17,7 @@ class UserKeysRepository {
   }
 
   Future<List<UserKey>> getAllKeys() async {
-    final id = Supabase.instance.client.auth.currentUser?.id;
+    final id = _client.auth.currentUser?.id;
     if (id == null) return [];
     return _api.fetchUserKeys(id);
   }

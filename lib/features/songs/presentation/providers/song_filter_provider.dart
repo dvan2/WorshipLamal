@@ -3,11 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/features/songs/presentation/utils/apply_song_filter.dart';
-import 'package:worship_lamal/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/models/song_sort_option.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/history_provider.dart';
 import 'package:worship_lamal/features/songs/presentation/providers/song_provider.dart';
+
+/// Decoupled provider for favorite song IDs.
+/// Breaks the cross-feature import of favorites_provider into the songs feature.
+final favoriteSongIdsProvider = Provider<AsyncValue<Set<String>>>((ref) {
+  return const AsyncData({});
+});
 
 // 1. STATE OBJECT
 class SongFilterState {
@@ -212,9 +217,9 @@ final filteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
   // 3. Handle Favorites asynchronously if needed
   Set<String> favoriteIds = {};
   if (filters.showFavoritesOnly) {
-    final favAsync = ref.watch(favoritesListProvider);
+    final favAsync = ref.watch(favoriteSongIdsProvider);
     if (favAsync.isLoading) return const AsyncLoading();
-    favoriteIds = (favAsync.value ?? []).map((f) => f.songId).toSet();
+    favoriteIds = favAsync.value ?? {};
   }
 
   // 4. Handle History asynchronously if needed
@@ -251,9 +256,9 @@ final pickerFilteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
 
   Set<String> favoriteIds = {};
   if (filters.showFavoritesOnly) {
-    final favAsync = ref.watch(favoritesListProvider);
+    final favAsync = ref.watch(favoriteSongIdsProvider);
     if (favAsync.isLoading) return const AsyncLoading();
-    favoriteIds = (favAsync.value ?? []).map((f) => f.songId).toSet();
+    favoriteIds = favAsync.value ?? {};
   }
 
   Map<String, DateTime>? historyMap;
@@ -272,19 +277,4 @@ final pickerFilteredSongsProvider = Provider<AsyncValue<List<Song>>>((ref) {
   );
 
   return AsyncData(result);
-});
-
-final historyMapProvider = FutureProvider<Map<String, DateTime>>((ref) async {
-  final recentSongs = await ref.watch(recentSongsProvider.future);
-
-  final Map<String, DateTime> historyMap = {};
-  final now = DateTime.now();
-
-  for (int i = 0; i < recentSongs.length; i++) {
-    final s = recentSongs[i];
-    // Use real timestamp if available, otherwise fake it based on order
-    historyMap[s.id] = s.lastViewedAt ?? now.subtract(Duration(minutes: i));
-  }
-
-  return historyMap;
 });
