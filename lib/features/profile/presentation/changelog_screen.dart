@@ -11,6 +11,16 @@ class ChangelogScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: const [
           _UpdateBlock(
+            version: "1.4.0",
+            date: "Today",
+            changes: [
+              "Nashville Number Rhythm Charts: A clean, bar-chart view designed specifically for instrumentalists! 🎸",
+              "Smart Measure Spacing: Single chords are neatly indented, and multi-chord measures are evenly distributed across the bar.",
+              "Dynamic Transposition: Rhythm charts instantly translate to your preferred key or vocal mode on the fly. 🎹",
+            ],
+          ),
+          Divider(height: 32),
+          _UpdateBlock(
             version: "1.3.0",
             date: "June 10, 2026",
             changes: [
