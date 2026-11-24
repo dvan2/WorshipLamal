@@ -38,6 +38,7 @@ lib/
 │   └── utils/
 │       ├── chord_parser.dart           # ChordParser.parse(line) → List<ChordChunk>
 │       ├── key_transposer.dart         # KeyTransposer.transpose(key, semitones)
+│       ├── music_theory.dart           # MusicTheory (chromaticScale, enharmonicAliases, normalizeNote)
 │       └── nashville_helper.dart       # NashvilleHelper.translate(nashvilleChord, keyRoot)
 │
 ├── shared/widgets/
@@ -54,12 +55,10 @@ lib/
     │   │   │   └── song_sort_option.dart  # SongSortOption enum (titleAz, newest, recentlyViewed)
     │   │   ├── remote/
     │   │   │   └── songs_api.dart         # SongsApi – fetchSongs(), fetchSongById()
-    │   │   ├── repositories/
-    │   │   │   ├── songs_repository.dart   # Thin pass-through to SongsApi
-    │   │   │   ├── auth_repository.dart    # signIn/Up/Out, upgradeGuestAccount
-    │   │   │   └── history_repository.dart # addToHistory, getRecentSongs (user_song_history)
-    │   │   └── local/
-    │   │       └── songs_dao.dart          # (exists in tree; unused/empty)
+    │   │   └── repositories/
+    │   │       ├── songs_repository.dart   # Thin pass-through to SongsApi
+    │   │       ├── auth_repository.dart    # signIn/Up/Out, upgradeGuestAccount
+    │   │       └── history_repository.dart # addToHistory, getRecentSongs (user_song_history)
     │   └── presentation/
     │       ├── providers/
     │       │   ├── song_provider.dart       # songsApi → songRepository → songList → personalized → type shelves
@@ -85,7 +84,7 @@ lib/
     │       └── utils/
     │           └── apply_song_filter.dart       # applyFilterAndSort() pure function
     │
-    ├── setlists/
+    ├── setlists/     ← barrel: setlists_feature.dart
     │   ├── data/
     │   │   ├── models/
     │   │   │   └── setlist_model.dart      # Setlist, SetlistItem (nests Song)
@@ -117,21 +116,21 @@ lib/
     │               ├── empty_setlist_state.dart
     │               └── song_picker_item.dart
     │
-    ├── favorites/                    ⚠️ DO NOT REFACTOR — treat as passive filter only
+    ├── favorites/    ← barrel: favorites_feature.dart  ⚠️ DO NOT REFACTOR — treat as passive filter only
     │   ├── data/
     │   │   ├── model/favorite_model.dart
     │   │   ├── remote/favorites_api.dart
     │   │   └── repositories/favorites_repository.dart
     │   └── presentation/providers/favorites_provider.dart
     │
-    ├── userkey/
+    ├── userkey/      ← barrel: userkey_feature.dart
     │   ├── data/
     │   │   ├── model/user_key_model.dart       # UserKey (userId, songId, preferredKey)
     │   │   ├── remote/user_keys_api.dart       # fetch, set (upsert), delete
     │   │   └── repositories/user_keys_repository.dart
     │   └── presentation/providers/user_keys_provider.dart  # userPreferredKeysMapProvider, UserKeyController
     │
-    └── profile/
+    └── profile/      ← barrel: profile_feature.dart
         └── presentation/
             ├── providers/
             │   ├── auth_provider.dart           # authStateProvider (StreamProvider<AuthState>)
@@ -365,13 +364,21 @@ Clones every `Song` with the resolved effective key baked in, so downstream cons
 
 ## 6. Core Utilities — Chord & Key System
 
+### MusicTheory
+
+**Location:** `core/utils/music_theory.dart`
+**Purpose:** Single source of truth for the 12-tone chromatic scale and enharmonic alias normalization.
+
+- 12-note chromatic scale using worship-common enharmonics (C, C#, D, Eb, E, F, F#, G, Ab, A, Bb, B)
+- Normalizes enharmonic inputs (Cb→B, Db→C#, D#→Eb, Gb→F#, G#→Ab, A#→Bb)
+- Static helper: `normalizeNote(String note) → String`
+
 ### KeyTransposer
 
 **Location:** `core/utils/key_transposer.dart`
 **Purpose:** Transpose a note name by N semitones around the chromatic scale.
 
-- 12-note chromatic scale using worship-common enharmonics (C, C#, D, Eb, E, F, F#, G, Ab, A, Bb, B)
-- Alias map normalizes inputs (Db→C#, D#→Eb, Gb→F#, G#→Ab, A#→Bb)
+- Uses `MusicTheory.chromaticScale` and `MusicTheory.normalizeNote`
 - Pure static method: `transpose(String key, int semitones) → String`
 
 ### NashvilleHelper
@@ -379,7 +386,7 @@ Clones every `Song` with the resolved effective key baked in, so downstream cons
 **Location:** `core/utils/nashville_helper.dart`
 **Purpose:** Convert Nashville Number System chords (1, 4m, 5, b7) into letter chords relative to a key root.
 
-- Same 12-note scale as KeyTransposer (duplicated — see §8 smell #2)
+- Uses `MusicTheory.chromaticScale` and `MusicTheory.normalizeNote`
 - Major-scale intervals map: `{1:0, 2:2, 3:4, 4:5, 5:7, 6:9, b7:10, 7:11}`
 - Regex replaces all `b7` and `[1-7]` tokens with the computed note
 - Strips `m` from key root before resolving (supports minor keys)
@@ -454,10 +461,6 @@ SongDetailScreen
 **File:** [`main.dart`](file:///d:/Programming/Projects/worship_lamal/lib/main.dart#L12-L14)
 The Supabase URL and anon key are inline string constants. The `.env` file is registered as a Flutter asset but never loaded via `flutter_dotenv`.
 
-### Smell 2 — Duplicated Chromatic Scale
-**Files:** [`key_transposer.dart`](file:///d:/Programming/Projects/worship_lamal/lib/core/utils/key_transposer.dart#L3-L16) and [`nashville_helper.dart`](file:///d:/Programming/Projects/worship_lamal/lib/core/utils/nashville_helper.dart#L3-L16)
-Both define identical 12-note lists and near-identical enharmonic alias maps. Should be extracted into a shared `MusicTheory` or `ChromaticScale` class.
-
 ### Smell 3 — AuthRepository Bypasses DI
 **File:** [`auth_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/data/repositories/auth_repository.dart#L4)
 Hard-codes `Supabase.instance.client` instead of accepting an injected `SupabaseClient`. Also lives under `features/songs/` despite being a cross-cutting auth concern.
@@ -466,28 +469,9 @@ Hard-codes `Supabase.instance.client` instead of accepting an injected `Supabase
 **Files:** [`history_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/data/repositories/history_repository.dart), [`user_keys_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/userkey/data/repositories/user_keys_repository.dart#L10-L16), [`favorites_repository.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/favorites/data/repositories/favorites_repository.dart#L11-L17)
 `HistoryRepository` takes `SupabaseClient` via constructor (good), but `UserKeysRepository` and `FavoritesRepository` access `Supabase.instance.client.auth.currentUser` directly for the user ID.
 
-### Smell 5 — Duplicated Column-Balancing Algorithm
-**File:** [`chord_mode_view.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/presentation/screens/chord_mode_view.dart#L235-L264)
-`_balanceColumns()` and `_balanceRhythmColumns()` are structurally identical, differing only in the generic type (`SectionBlock` vs `RhythmSectionBlock`). Could be a single generic function.
-
 ### Smell 6 — Cross-Feature Provider Imports
 **File:** [`song_filter_provider.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/presentation/providers/song_filter_provider.dart#L6)
 `filteredSongsProvider` directly watches `favoritesListProvider` (from `features/favorites/`) and `historyMapProvider` (same feature, but tightly coupled). This violates the stated rule that features should not cross-import providers.
-
-### Smell 7 — Orphaned Function
-**File:** [`song_detail_screen.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/songs/presentation/screens/song_detail_screen.dart#L428-L474)
-`_showTextSettingsSheet()` is defined but never invoked from any widget.
-
-### Smell 8 — Missing Barrel Exports
-Only `songs_feature.dart` exists. `setlists`, `profile`, `favorites`, and `userkey` have no `*_feature.dart` barrel file, so external consumers import deep paths.
-
-### Smell 9 — Unused `songs_dao.dart`
-**File:** `lib/features/songs/data/local/songs_dao.dart`
-Present in tree but appears unused. Likely a placeholder for future offline support.
-
-### Smell 10 — Realtime Channel Naming
-**File:** [`setlist_provider.dart`](file:///d:/Programming/Projects/worship_lamal/lib/features/setlists/presentation/providers/setlist_provider.dart#L66-L67)
-Channel name `'public:setlist_items:$id'` uses string interpolation. If two widgets watch the same setlist ID simultaneously, Supabase may throw a duplicate-channel error.
 
 ---
 
@@ -543,7 +527,7 @@ docs: update architecture reference
 
 ## 10. Migration Checklist
 
-- [ ] Create `*_feature.dart` barrel exports for setlists, profile, favorites, userkey
+- [x] Create `*_feature.dart` barrel exports for setlists, profile, favorites, userkey
 - [ ] Move `auth_repository.dart` from `features/songs/` to `features/profile/` (or `core/services/`)
 - [x] Extract shared chromatic scale from KeyTransposer + NashvilleHelper into `core/utils/music_theory.dart`
 - [x] Extract generic `balanceColumns<T>()` from ChordModeView
@@ -551,5 +535,5 @@ docs: update architecture reference
 - [x] Remove orphaned `_showTextSettingsSheet` from song_detail_screen.dart
 - [x] Audit and remove or implement `songs_dao.dart`
 - [ ] Break cross-feature provider import (filteredSongsProvider → favoritesListProvider)
-- [ ] Add namespace collision guard for realtime channel names
+- [x] Add namespace collision guard for realtime channel names
 - [ ] Standardize DI: all repositories should accept `SupabaseClient` via constructor

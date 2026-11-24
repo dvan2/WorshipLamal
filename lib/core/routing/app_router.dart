@@ -1,6 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/screen.dart';
-import 'package:worship_lamal/features/setlists/presentation/screens/setlist_details/song_picker_screen.dart';
+import 'package:worship_lamal/features/setlists/setlists_feature.dart';
 import 'package:worship_lamal/features/songs/songs_feature.dart';
 
 final appRouter = GoRouter(

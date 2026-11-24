@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
-import 'package:worship_lamal/features/profile/presentation/profile_tab.dart';
-import 'package:worship_lamal/features/setlists/presentation/screens/setlists_tab.dart';
+import 'package:worship_lamal/features/profile/profile_feature.dart';
+import 'package:worship_lamal/features/setlists/setlists_feature.dart';
 // Note: You will create these two files in Step 2 & 3
 import 'home_dashboard_tab.dart';
 import 'song_list_tab.dart';

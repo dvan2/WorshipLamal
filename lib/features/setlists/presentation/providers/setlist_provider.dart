@@ -63,8 +63,10 @@ final setlistDetailProvider = StreamProvider.family<Setlist?, String>((
 
   // 3. Setup Realtime Listener
   // This listens for INSERT, UPDATE, or DELETE on the 'setlist_items' table
+  final channelName =
+      'public:setlist_items:${id}_${DateTime.now().microsecondsSinceEpoch}';
   final channel = Supabase.instance.client
-      .channel('public:setlist_items:$id')
+      .channel(channelName)
       .onPostgresChanges(
         event: PostgresChangeEvent.all,
         schema: 'public',
