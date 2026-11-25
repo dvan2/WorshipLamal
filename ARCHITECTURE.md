@@ -143,6 +143,50 @@ lib/
                 ├── login_screen.dart
                 ├── signup_screen.dart
                 └── changelog_screen.dart
+
+test/
+├── helpers/
+│   ├── fixtures.dart                         # Shared test factories (tSong, tLine, tSetlist, etc.)
+│   └── mocks.dart                            # Shared Mocktail mocks
+│
+├── core/
+│   └── utils/
+│       ├── chord_parser_test.dart            # ChordParser unit tests
+│       ├── key_transposer_test.dart          # KeyTransposer unit tests
+│       ├── music_theory_test.dart            # MusicTheory unit tests
+│       └── nashville_helper_test.dart        # NashvilleHelper unit tests
+│
+└── features/
+    ├── profile/
+    │   └── data/repositories/
+    │       └── auth_repository_test.dart     # AuthRepository unit tests
+    ├── setlists/
+    │   ├── data/
+    │   │   ├── models/
+    │   │   │   └── setlist_model_test.dart   # Setlist / SetlistItem model tests
+    │   │   └── repositories/
+    │   │       └── setlist_repository_test.dart
+    │   └── presentation/providers/
+    │       └── setlist_controller_test.dart  # SetlistController provider tests
+    ├── songs/
+    │   ├── data/
+    │   │   ├── models/
+    │   │   │   └── song_model_test.dart      # Song / LyricLine / RhythmChart model tests
+    │   │   └── repositories/
+    │   │       └── songs_repository_test.dart
+    │   └── presentation/
+    │       ├── providers/
+    │       │   ├── display_key_provider_test.dart
+    │       │   └── song_filter_provider_test.dart
+    │       ├── utils/
+    │       │   └── apply_song_filter_test.dart
+    │       └── widgets/
+    │           ├── chord_line_renderer_test.dart
+    │           ├── rhythm_bar_renderer_test.dart
+    │           └── song_list_item_test.dart
+    └── userkey/
+        └── data/repositories/
+            └── user_keys_repository_test.dart
 ```
 
 ---
@@ -527,3 +571,4 @@ docs: update architecture reference
 - [x] Break cross-feature provider import (filteredSongsProvider → favoritesListProvider)
 - [x] Add namespace collision guard for realtime channel names
 - [x] Standardize DI: all repositories should accept `SupabaseClient` via constructor
+- [x] Rewrite unit, provider, and widget test suite mirroring `lib/`
