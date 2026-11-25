@@ -311,6 +311,7 @@ void main() {
       bpm: 72,
       type: SongType.hymn,
       themes: ['Grace', 'Salvation'],
+      lyricLines: const [],
       createdAt: DateTime(2024, 6, 1),
     );
 
@@ -321,6 +322,7 @@ void main() {
       bpm: 95,
       type: SongType.worship,
       themes: ['Devotion'],
+      lyricLines: const [],
       createdAt: DateTime(2024, 7, 1),
     );
 
@@ -331,6 +333,7 @@ void main() {
       bpm: 120,
       type: SongType.praise,
       themes: ['Grace', 'Strength'],
+      lyricLines: const [],
       createdAt: DateTime(2024, 8, 1),
     );
 
