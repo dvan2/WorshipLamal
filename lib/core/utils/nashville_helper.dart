@@ -25,11 +25,16 @@ class NashvilleHelper {
     int keyIndex = MusicTheory.chromaticScale.indexOf(cleanKey);
     if (keyIndex == -1) return nashvilleChord;
 
-    return nashvilleChord.replaceAllMapped(RegExp(r'b7|[1-7]'), (match) {
-      String number = match.group(0)!;
-      int semitones = _intervals[number]!;
-      int newIndex = (keyIndex + semitones) % 12;
-      return MusicTheory.chromaticScale[newIndex];
-    });
+    return nashvilleChord.replaceAllMapped(
+      RegExp(r'(^|\s|/)(b7|[1-7])'),
+      (match) {
+        final prefix = match.group(1)!;
+        final number = match.group(2)!;
+        final semitones = _intervals[number]!;
+        final newIndex = (keyIndex + semitones) % 12;
+        final note = MusicTheory.chromaticScale[newIndex];
+        return '$prefix$note';
+      },
+    );
   }
 }
