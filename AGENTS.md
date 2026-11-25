@@ -50,3 +50,4 @@ Never include brittle line numbers in documentation references.
 - **Prefer Dart MCP:** Use the `dart` MCP server tools for running tests and analyzing files whenever available.
 - **Wrap CLI commands in `cmd /c`:** On Windows, always prefix terminal commands with `cmd /c` and pass `--no-pub` for Flutter test runs so child processes terminate cleanly with an EOF signal instead of hanging (e.g., `cmd /c flutter test --no-pub test/core/utils/music_theory_test.dart` or `cmd /c dart analyze lib`).
 - **Never run bare `flutter test` or `dart analyze`:** Without `cmd /c`, Windows PowerShell subshells stall on VS Code's active Dart SDK lock.
+- \*\*Never run flutter pub get in the agent terminal: Use the Dart MCP pub tool instead, or let VS Code run it automatically when pubspec.yaml is saved.

@@ -23,11 +23,12 @@
 
 ```
 lib/
-├── main.dart                           # Supabase.initialize, anonymous sign-in, ProviderScope
+├── main.dart                           # EnvConfig.validate(), Supabase.initialize, anonymous sign-in, ProviderScope
 ├── app.dart                            # MaterialApp.router (lightTheme only)
 │
 ├── core/
 │   ├── config/
+│   │   ├── env_config.dart             # EnvConfig (compile-time --dart-define-from-file=.env)
 │   │   └── supabase_config.dart        # supabaseClientProvider (Provider<SupabaseClient>)
 │   ├── routing/
 │   │   └── app_router.dart             # GoRouter – 5 routes (see §4)
@@ -503,9 +504,9 @@ SongDetailScreen
 
 ## 8. Architectural Smells & Tight Coupling
 
-### Smell 1 — Hardcoded Supabase Credentials
-**File:** [`main.dart`](file:///d:/Programming/Projects/worship_lamal/lib/main.dart)
-The Supabase URL and anon key are inline string constants. The `.env` file is registered as a Flutter asset but never loaded via `flutter_dotenv`.
+### ~~Smell 1 — Hardcoded Supabase Credentials~~ (Resolved)
+**Files:** [`main.dart`](file:///d:/Programming/Projects/worship_lamal/lib/main.dart), [`env_config.dart`](file:///d:/Programming/Projects/worship_lamal/lib/core/config/env_config.dart)
+Resolved by migrating to compile-time `--dart-define-from-file=.env` via `EnvConfig`, removing `flutter_dotenv` and the `.env` asset entry from `pubspec.yaml`.
 
 ---
 
@@ -565,7 +566,7 @@ docs: update architecture reference
 - [x] Move `auth_repository.dart` from `features/songs/` to `features/profile/` (or `core/services/`)
 - [x] Extract shared chromatic scale from KeyTransposer + NashvilleHelper into `core/utils/music_theory.dart`
 - [x] Extract generic `balanceColumns<T>()` from ChordModeView
-- [ ] Load Supabase credentials from `.env` via `flutter_dotenv`
+- [x] Load Supabase credentials from `.env` via compile-time `--dart-define-from-file=.env` (`EnvConfig`)
 - [x] Remove orphaned `_showTextSettingsSheet` from song_detail_screen.dart
 - [x] Audit and remove or implement `songs_dao.dart`
 - [x] Break cross-feature provider import (filteredSongsProvider → favoritesListProvider)
