@@ -11,8 +11,17 @@ class ChangelogScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: const [
           _UpdateBlock(
+            version: "1.5.0",
+            date: "Nov 26, 2026",
+            changes: [
+              "Installable App (PWA): Add Worship Lamal directly to your iPhone, Android, or desktop Home Screen for full-screen rehearsal access. 📲",
+              "Setlist Push Notifications: Enable notifications in Profile to get instant alerts when songs are added to a setlist you follow, and tap to jump straight into the setlist. 🔔",
+            ],
+          ),
+          Divider(height: 32),
+          _UpdateBlock(
             version: "1.4.0",
-            date: "Today",
+            date: "Nov 25, 2026",
             changes: [
               "Nashville Number Rhythm Charts: A clean, bar-chart view designed specifically for instrumentalists! 🎸",
               "Smart Measure Spacing: Single chords are neatly indented, and multi-chord measures are evenly distributed across the bar.",
@@ -43,10 +52,11 @@ class ChangelogScreen extends StatelessWidget {
               "Improved Typography: Heavier chords, italicized section headers, and a clean new metadata header. ✨",
             ],
           ),
+          Divider(height: 32),
           // NEW UPDATE BLOCK
           _UpdateBlock(
             version: "1.1.2",
-            date: "Today",
+            date: "Mar 20, 2026",
             changes: [
               "Completely redesigned Chord Mode for a professional sheet-music feel. 🎼",
               "New permanent 2-column layout on mobile to view more of the song without scrolling. 📱",
