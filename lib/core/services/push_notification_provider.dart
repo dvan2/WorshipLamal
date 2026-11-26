@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/config/env_config.dart';
 import 'package:worship_lamal/core/config/supabase_config.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 
 import 'push_notification_service.dart';
 import 'push_subscription_repository.dart';
@@ -30,6 +31,9 @@ final pushPermissionProvider =
 class PushPermissionNotifier extends AsyncNotifier<bool?> {
   @override
   Future<bool?> build() async {
+    final authUserId = ref.watch(
+      authStateProvider.select((s) => s.asData?.value.session?.user.id),
+    );
     final service = ref.watch(pushNotificationServiceProvider);
     if (!service.isSupported) return null;
 
@@ -37,7 +41,21 @@ class PushPermissionNotifier extends AsyncNotifier<bool?> {
     // can run as the very first await inside the user-gesture handler.
     await service.prepare();
 
-    return switch (service.permissionState) {
+    final permission = service.permissionState;
+    if (permission == 'granted' && authUserId != null) {
+      try {
+        final sub = await service.getCurrentSubscription();
+        if (sub != null) {
+          await ref
+              .read(pushSubscriptionRepositoryProvider)
+              .saveSubscription(sub);
+        }
+      } catch (_) {
+        // Keep displaying granted state even if background sync fails.
+      }
+    }
+
+    return switch (permission) {
       'granted' => true,
       'denied' => false,
       _ => null,

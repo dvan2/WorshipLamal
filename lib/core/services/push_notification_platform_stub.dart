@@ -19,6 +19,9 @@ class StubPushNotificationPlatform implements PushNotificationPlatform {
 
   @override
   Future<PushSubscriptionData?> subscribe(String vapidPublicKey) async => null;
+
+  @override
+  Future<PushSubscriptionData?> getSubscription() async => null;
 }
 
 PushNotificationPlatform createPushNotificationPlatform() =>

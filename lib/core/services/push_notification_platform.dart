@@ -51,4 +51,7 @@ abstract class PushNotificationPlatform {
   /// Subscribes to Web Push using [vapidPublicKey] against the `/push-scope/`
   /// service worker registration.
   Future<PushSubscriptionData?> subscribe(String vapidPublicKey);
+
+  /// Returns the existing browser `PushSubscription`, if any, without prompting.
+  Future<PushSubscriptionData?> getSubscription();
 }

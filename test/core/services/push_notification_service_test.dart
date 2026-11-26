@@ -23,6 +23,7 @@ void main() {
     when(() => mockPlatform.permissionState).thenReturn('default');
     when(() => mockPlatform.prepare()).thenAnswer((_) async {});
     when(() => mockPlatform.subscribe(any())).thenAnswer((_) async => testSub);
+    when(() => mockPlatform.getSubscription()).thenAnswer((_) async => testSub);
 
     service = PushNotificationService(
       vapidPublicKey: testVapidKey,
@@ -110,6 +111,20 @@ void main() {
       final result = await service.requestAndSubscribe();
       expect(result, isNull);
       verifyNever(() => mockPlatform.subscribe(any()));
+    });
+
+    test('getCurrentSubscription delegates to platform.getSubscription',
+        () async {
+      final result = await service.getCurrentSubscription();
+      expect(result, testSub);
+      verify(() => mockPlatform.getSubscription()).called(1);
+    });
+
+    test('getCurrentSubscription returns null when unsupported', () async {
+      when(() => mockPlatform.isSupported).thenReturn(false);
+      final result = await service.getCurrentSubscription();
+      expect(result, isNull);
+      verifyNever(() => mockPlatform.getSubscription());
     });
   });
 }

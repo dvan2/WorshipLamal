@@ -1,6 +1,6 @@
 # Worship Lamal — Architecture Reference
 
-> **Version 1.5.0+12** · Flutter 3.9.2+ · Last updated 2026-11-26
+> **Version 1.6.0+13** · Flutter 3.9.2+ · Last updated 2026-11-26
 
 ---
 
@@ -149,16 +149,16 @@ lib/
         │   └── repositories/
         │       └── auth_repository.dart        # signIn/Up/Out, upgradeGuestAccount
         └── presentation/
+            ├── profile_tab.dart
+            ├── login_screen.dart
+            ├── signup_screen.dart
+            ├── changelog_screen.dart
             ├── providers/
             │   ├── auth_provider.dart           # authStateProvider (StreamProvider<AuthState>)
             │   ├── preferences_provider.dart    # PreferencesNotifier (VocalMode, ContentMode), ChordScaleNotifier
             │   └── shared_preferences.dart      # PreferencesService (read/write to SharedPreferences)
-            ├── screens/
-            │   ├── profile_tab.dart
-            │   ├── login_screen.dart
-            │   ├── signup_screen.dart
-            │   └── changelog_screen.dart
             └── widgets/
+                ├── google_sign_in_button.dart # Shared Google OAuth button
                 └── push_notification_tile.dart  # Web Push opt-in & iOS Add-to-Home-Screen guide
 
 test/
@@ -168,6 +168,7 @@ test/
 │
 ├── core/
 │   ├── services/
+│   │   ├── push_notification_provider_test.dart
 │   │   ├── push_notification_service_test.dart
 │   │   └── push_subscription_repository_test.dart
 │   └── utils/
@@ -178,8 +179,12 @@ test/
 │
 └── features/
     ├── profile/
-    │   └── data/repositories/
-    │       └── auth_repository_test.dart     # AuthRepository unit tests
+    │   ├── data/repositories/
+    │   │   └── auth_repository_test.dart     # AuthRepository unit tests
+    │   └── presentation/
+    │       ├── login_screen_test.dart
+    │       ├── profile_tab_test.dart
+    │       └── signup_screen_test.dart
     ├── setlists/
     │   ├── data/
     │   │   ├── models/
@@ -197,6 +202,7 @@ test/
     │   └── presentation/
     │       ├── providers/
     │       │   ├── display_key_provider_test.dart
+    │       │   ├── history_provider_test.dart
     │       │   └── song_filter_provider_test.dart
     │       ├── utils/
     │       │   └── apply_song_filter_test.dart
@@ -427,6 +433,8 @@ flowchart TD
     ASP -.->|"rebuilds on auth"| UKR
     ASP -.->|"rebuilds on auth"| FR
     ASP -.->|"rebuilds on auth"| SLR
+    ASP -.->|"rebuilds on auth"| PPP
+    ASP -.->|"rebuilds on auth"| RS
     FL -.->|"overridden in app.dart"| FI
 ```
 
@@ -628,6 +636,7 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 
 | Branch | Merged | Summary |
 |---|---|---|
+| `feat/auth-hardening` | 2026-11-26 | Startup anonymous auth resilience, controller disposal, reactive `ProfileTab`/`recentSongsProvider`/`pushPermissionProvider` re-binding, guest-data login protection, and Google Sign-In with guest identity linking |
 | `feat/pwa-web-push` | 2026-11-26 | PWA installability (`manifest.json`, `index.html`) + Web Push notifications (`/push-scope/push-sw.js`, `PushNotificationService`, `push_subscriptions`, `notify-setlist` Edge Function) |
 | `docs-architecture` | 2026-11-25 | Added §9 Feature-Driven Architecture Blueprint and §10 Migration Checklist |
 | `refactor` | 2026-11-25 | Full feature-first restructure: barrel exports, EnvConfig, test suite rewrite |

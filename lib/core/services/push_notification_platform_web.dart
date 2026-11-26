@@ -32,6 +32,7 @@ extension type _JSServiceWorkerRegistration(JSObject _) implements JSObject {
 
 extension type _JSPushManager(JSObject _) implements JSObject {
   external JSPromise<_JSPushSubscription> subscribe(JSObject options);
+  external JSPromise<_JSPushSubscription?> getSubscription();
 }
 
 extension type _JSPushSubscription(JSObject _) implements JSObject {
@@ -126,18 +127,44 @@ class WebPushNotificationPlatform implements PushNotificationPlatform {
       // Very first await inside the user-gesture handler when prepare() ran
       // beforehand, preserving iOS Safari transient user activation.
       final sub = await pushManager.subscribe(options).toDart;
-      final p256dhBuf = sub.getKey('p256dh');
-      final authBuf = sub.getKey('auth');
-      if (p256dhBuf == null || authBuf == null) return null;
-
-      return PushSubscriptionData(
-        endpoint: sub.endpoint,
-        p256dh: _encodeBase64Url(p256dhBuf.toDart.asUint8List()),
-        auth: _encodeBase64Url(authBuf.toDart.asUint8List()),
-      );
+      return _extractSubscriptionData(sub);
     } catch (_) {
       return null;
     }
+  }
+
+  @override
+  Future<PushSubscriptionData?> getSubscription() async {
+    if (!isSupported) return null;
+
+    if (_cachedRegistration == null) {
+      await prepare();
+    }
+    final activeReg = _cachedRegistration;
+    if (activeReg == null) return null;
+
+    final pushManager = activeReg.pushManager;
+    if (pushManager == null) return null;
+
+    try {
+      final sub = await pushManager.getSubscription().toDart;
+      if (sub == null) return null;
+      return _extractSubscriptionData(sub);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  PushSubscriptionData? _extractSubscriptionData(_JSPushSubscription sub) {
+    final p256dhBuf = sub.getKey('p256dh');
+    final authBuf = sub.getKey('auth');
+    if (p256dhBuf == null || authBuf == null) return null;
+
+    return PushSubscriptionData(
+      endpoint: sub.endpoint,
+      p256dh: _encodeBase64Url(p256dhBuf.toDart.asUint8List()),
+      auth: _encodeBase64Url(authBuf.toDart.asUint8List()),
+    );
   }
 
   Uint8List _decodeBase64Url(String input) {

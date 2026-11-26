@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:worship_lamal/core/services/push_notification_provider.dart';
+import 'package:worship_lamal/features/profile/data/repositories/auth_repository.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
+import 'package:worship_lamal/features/profile/presentation/widgets/google_sign_in_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +17,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +69,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     : const Text('Sign In'),
               ),
             ),
+            const SizedBox(height: 20),
+            const Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('or', style: TextStyle(color: Colors.grey)),
+                ),
+                Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 20),
+            GoogleSignInButton(enabled: !_isLoading),
           ],
         ),
       ),
@@ -65,13 +89,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email and password.')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final repo = ref.read(authRepositoryProvider);
-      await repo.signIn(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
+      final isGuest = repo.currentUser?.isAnonymous ?? false;
+
+      if (isGuest) {
+        GuestDataSummary summary = const GuestDataSummary();
+        try {
+          summary = await repo.getGuestDataSummary();
+        } catch (_) {
+          // Do not block legitimate login on transient check failures.
+        }
+
+        if (summary.hasAny) {
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          final confirmed = await _confirmLeaveGuestData(summary);
+          if (confirmed != true) return;
+          if (!mounted) return;
+          setState(() => _isLoading = true);
+        }
+
+        if (kIsWeb) {
+          try {
+            final sub = await ref
+                .read(pushNotificationServiceProvider)
+                .getCurrentSubscription();
+            if (sub != null) {
+              await ref
+                  .read(pushSubscriptionRepositoryProvider)
+                  .deleteSubscription(sub.endpoint);
+            }
+          } catch (_) {
+            // Do not block login if push cleanup fails.
+          }
+        }
+      }
+
+      await repo.signIn(email, password);
 
       if (mounted) {
         // Success! Pop back to ProfileTab (which will auto-refresh to show Logged In view)
@@ -91,5 +156,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<bool?> _confirmLeaveGuestData(GuestDataSummary summary) {
+    final items = <String>[
+      if (summary.hasSetlists) 'setlists',
+      if (summary.hasUserKeys) 'custom song keys',
+      if (summary.hasFavorites) 'favorites',
+    ];
+
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Switch Away From Guest Session?'),
+        content: Text(
+          'Your guest session has unsaved ${items.join(', ')}. '
+          'Signing into an existing account will leave this guest data behind.\n\n'
+          'To keep your guest data, cancel and use "Create Account / Sync Data" instead.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Continue Sign In'),
+          ),
+        ],
+      ),
+    );
   }
 }
