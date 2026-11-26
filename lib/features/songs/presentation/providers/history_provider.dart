@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/config/supabase_config.dart';
+import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 import 'package:worship_lamal/features/songs/data/models/song_model.dart';
 import 'package:worship_lamal/features/songs/data/repositories/history_repository.dart';
 
@@ -11,8 +12,11 @@ final historyRepositoryProvider = Provider<HistoryRepository>((ref) {
 
 // 2. Data Provider (The List of Songs)
 final recentSongsProvider = FutureProvider<List<Song>>((ref) async {
+  final authUserId = ref.watch(
+    authStateProvider.select((s) => s.asData?.value.session?.user.id),
+  );
   final client = ref.watch(supabaseClientProvider);
-  final userId = client.auth.currentUser?.id;
+  final userId = authUserId ?? client.auth.currentUser?.id;
   if (userId == null) return [];
 
   final repo = ref.watch(historyRepositoryProvider);

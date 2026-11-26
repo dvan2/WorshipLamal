@@ -21,7 +21,11 @@ Future<void> main() async {
 
   // 2. If no session exists, create a Guest Account immediately
   if (session == null) {
-    await Supabase.instance.client.auth.signInAnonymously();
+    try {
+      await Supabase.instance.client.auth.signInAnonymously();
+    } catch (e) {
+      debugPrint('Anonymous sign-in failed during startup: $e');
+    }
   }
 
   runApp(const ProviderScope(child: WorshipLamal()));

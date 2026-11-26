@@ -47,4 +47,10 @@ class PushNotificationService {
     if (needsIosHomeScreenInstall) return null;
     return _platform.subscribe(vapidPublicKey);
   }
+
+  /// Returns the existing browser Web Push subscription, if any, without prompting.
+  Future<PushSubscriptionData?> getCurrentSubscription() async {
+    if (!isSupported) return null;
+    return _platform.getSubscription();
+  }
 }

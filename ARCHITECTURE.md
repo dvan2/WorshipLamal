@@ -619,8 +619,8 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 | `feat/auth-hardening` | Auth Hardening & Google Sign-In (Phases 1–4) | In Progress | `main.dart`, `app.dart`, `features/profile/`, `core/services/push_notification_*`, `history_provider.dart` |
 
 #### Auth Hardening & Google Sign-In (`feat/auth-hardening`)
-- [ ] **Phase 1 — Startup Resilience & Controller Cleanup:** Wrap `signInAnonymously()` in `lib/main.dart` with `try/catch`; add `dispose()` to `LoginScreen` and `SignUpScreen`.
-- [ ] **Phase 2 — Reactive Auth State & Push Subscription Re-binding:** Watch `authStateProvider` in `ProfileTab` (with offline/signed-out fallback card when `user == null`) and `recentSongsProvider`; add `getSubscription()` to `PushNotificationPlatform` / `PushNotificationService` and re-bind `push_subscriptions` on sign-out (delete before `signOut()`) and sign-in when browser permission is `'granted'`.
+- [x] **Phase 1 — Startup Resilience & Controller Cleanup:** Wrap `signInAnonymously()` in `lib/main.dart` with `try/catch`; add `dispose()` to `LoginScreen` and `SignUpScreen`.
+- [x] **Phase 2 — Reactive Auth State & Push Subscription Re-binding:** Watch `authStateProvider` in `ProfileTab` (with offline/signed-out fallback card when `user == null`) and `recentSongsProvider`; add `getSubscription()` to `PushNotificationPlatform` / `PushNotificationService` and re-bind `push_subscriptions` on sign-out (delete before `signOut()`) and sign-in when browser permission is `'granted'`.
 - [ ] **Phase 3 — Guest Data Protection on Email Login:** Add `getGuestDataSummary()` to `AuthRepository` checking `setlists`, `user_keys`, and `favorites`; warn guest users in `LoginScreen` with a confirmation dialog before switching away from their guest session.
 - [ ] **Phase 4 — Google Sign-In & Anonymous Account Linking:** Add `signInWithGoogle()` to `AuthRepository` (`linkIdentity` for guests with `identity_already_exists` fallback to `signInWithOAuth`), handle post-redirect `identity_already_exists` confirmation prompt on Web, and add `GoogleSignInButton` to `LoginScreen`, `SignUpScreen`, and `ProfileTab`.
 

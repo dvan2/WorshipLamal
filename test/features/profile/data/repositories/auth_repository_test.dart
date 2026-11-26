@@ -146,6 +146,25 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
+  group('AuthRepository.signInAnonymously', () {
+    test('delegates to auth.signInAnonymously', () async {
+      when(() => mockAuth.signInAnonymously())
+          .thenAnswer((_) async => FakeAuthResponse());
+
+      await repository.signInAnonymously();
+
+      verify(() => mockAuth.signInAnonymously()).called(1);
+    });
+
+    test('propagates exception from auth.signInAnonymously', () {
+      when(() => mockAuth.signInAnonymously())
+          .thenThrow(Exception('anon failed'));
+
+      expect(() => repository.signInAnonymously(), throwsA(isA<Exception>()));
+    });
+  });
+
+  // -------------------------------------------------------------------------
   group('AuthRepository.upgradeGuestAccount', () {
     test('calls auth.updateUser and was called exactly once', () async {
       when(() => mockAuth.updateUser(any()))

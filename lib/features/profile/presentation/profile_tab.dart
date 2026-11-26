@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/core/services/push_notification_provider.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
 import 'package:worship_lamal/features/profile/presentation/changelog_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
@@ -51,15 +52,21 @@ class ProfileTab extends ConsumerStatefulWidget {
 }
 
 class _ProfileTabState extends ConsumerState<ProfileTab> {
+  bool _isSigningOut = false;
+  bool _isRetryingGuest = false;
+
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authRepositoryProvider).currentUser;
+    final authStateAsync = ref.watch(authStateProvider);
+    final user =
+        authStateAsync.asData?.value.session?.user ??
+        ref.watch(authRepositoryProvider).currentUser;
     // 1. Watch the Preferences State
     final prefsState = ref.watch(preferencesProvider);
     final packageInfoAsync = ref.watch(packageInfoProvider);
 
     if (user == null) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildSignedOutFallback(context);
     }
 
     final isGuest = user.isAnonymous;
@@ -301,12 +308,118 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
   }
 
   Future<void> _handleSignOut() async {
-    await ref.read(authRepositoryProvider).signOut();
+    if (_isSigningOut) return;
+    setState(() => _isSigningOut = true);
+
     try {
-      await Supabase.instance.client.auth.signInAnonymously();
-    } catch (e) {
-      debugPrint("Error signing in anonymously: $e");
+      // Delete the outgoing user's push subscription while auth.uid() is still
+      // valid under RLS before signing out.
+      try {
+        final sub = await ref
+            .read(pushNotificationServiceProvider)
+            .getCurrentSubscription();
+        if (sub != null) {
+          await ref
+              .read(pushSubscriptionRepositoryProvider)
+              .deleteSubscription(sub.endpoint);
+        }
+      } catch (e) {
+        debugPrint("Error deleting push subscription on sign-out: $e");
+      }
+
+      final repo = ref.read(authRepositoryProvider);
+      await repo.signOut();
+
+      try {
+        await repo.signInAnonymously();
+      } catch (e) {
+        debugPrint("Error signing in anonymously: $e");
+      }
+    } finally {
+      if (mounted) setState(() => _isSigningOut = false);
     }
-    if (mounted) setState(() {});
+  }
+
+  Widget _buildSignedOutFallback(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Profile & Settings"),
+        centerTitle: false,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.cloud_off_outlined,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Not Signed In',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'You appear to be offline or signed out. Retry creating a guest session or sign in with your account.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _isRetryingGuest ? null : _retryGuestSession,
+                      icon: _isRetryingGuest
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh),
+                      label: const Text('Retry Guest Session'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _navigateTo(const LoginScreen()),
+                      icon: const Icon(Icons.login),
+                      label: const Text('Log In'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _retryGuestSession() async {
+    if (_isRetryingGuest) return;
+    setState(() => _isRetryingGuest = true);
+    try {
+      await ref.read(authRepositoryProvider).signInAnonymously();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not start guest session: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRetryingGuest = false);
+    }
   }
 }

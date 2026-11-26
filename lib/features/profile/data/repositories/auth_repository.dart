@@ -20,6 +20,10 @@ class AuthRepository {
     await _client.auth.signOut();
   }
 
+  Future<void> signInAnonymously() async {
+    await _client.auth.signInAnonymously();
+  }
+
   Future<void> upgradeGuestAccount(String email, String password) async {
     // This converts the anonymous user to a permanent one
     await _client.auth.updateUser(
