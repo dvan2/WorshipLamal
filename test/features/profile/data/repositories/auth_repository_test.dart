@@ -165,6 +165,68 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
+  group('AuthRepository.getGuestDataSummary', () {
+    test('returns empty summary when currentUser is null', () async {
+      var checkerCalled = false;
+      final repoWithChecker = AuthRepository(
+        mockClient,
+        guestDataChecker: (_) async {
+          checkerCalled = true;
+          return const GuestDataSummary(hasSetlists: true);
+        },
+      );
+      when(() => mockAuth.currentUser).thenReturn(null);
+
+      final summary = await repoWithChecker.getGuestDataSummary();
+
+      expect(summary.hasAny, isFalse);
+      expect(checkerCalled, isFalse);
+    });
+
+    test('returns empty summary when currentUser is not anonymous', () async {
+      var checkerCalled = false;
+      final repoWithChecker = AuthRepository(
+        mockClient,
+        guestDataChecker: (_) async {
+          checkerCalled = true;
+          return const GuestDataSummary(hasSetlists: true);
+        },
+      );
+      when(() => mockUser.isAnonymous).thenReturn(false);
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+
+      final summary = await repoWithChecker.getGuestDataSummary();
+
+      expect(summary.hasAny, isFalse);
+      expect(checkerCalled, isFalse);
+    });
+
+    test('returns populated summary for anonymous guest with data', () async {
+      final repoWithChecker = AuthRepository(
+        mockClient,
+        guestDataChecker: (userId) async {
+          expect(userId, 'guest-1');
+          return const GuestDataSummary(
+            hasSetlists: true,
+            hasUserKeys: false,
+            hasFavorites: true,
+          );
+        },
+      );
+      when(() => mockUser.id).thenReturn('guest-1');
+      when(() => mockUser.isAnonymous).thenReturn(true);
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+
+      final summary = await repoWithChecker.getGuestDataSummary();
+
+      expect(summary.hasSetlists, isTrue);
+      expect(summary.hasUserKeys, isFalse);
+      expect(summary.hasFavorites, isTrue);
+      expect(summary.hasAny, isTrue);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   group('AuthRepository.upgradeGuestAccount', () {
     test('calls auth.updateUser and was called exactly once', () async {
       when(() => mockAuth.updateUser(any()))
