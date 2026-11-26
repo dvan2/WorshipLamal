@@ -10,6 +10,7 @@ import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+import 'package:worship_lamal/features/profile/presentation/widgets/google_sign_in_button.dart';
 import 'package:worship_lamal/features/profile/presentation/widgets/push_notification_tile.dart';
 
 const kFallbackVersion = "1.3.0";
@@ -173,6 +174,10 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
 
           if (isGuest) ...[
             // Guest Specific Actions
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: GoogleSignInButton(),
+            ),
             ListTile(
               leading: const Icon(
                 Icons.cloud_upload_outlined,

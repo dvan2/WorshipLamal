@@ -1,6 +1,6 @@
 # Worship Lamal — Architecture Reference
 
-> **Version 1.5.0+12** · Flutter 3.9.2+ · Last updated 2026-11-26
+> **Version 1.6.0+13** · Flutter 3.9.2+ · Last updated 2026-11-26
 
 ---
 
@@ -158,6 +158,7 @@ lib/
             │   ├── preferences_provider.dart    # PreferencesNotifier (VocalMode, ContentMode), ChordScaleNotifier
             │   └── shared_preferences.dart      # PreferencesService (read/write to SharedPreferences)
             └── widgets/
+                ├── google_sign_in_button.dart # Shared Google OAuth button
                 └── push_notification_tile.dart  # Web Push opt-in & iOS Add-to-Home-Screen guide
 
 test/
@@ -167,6 +168,7 @@ test/
 │
 ├── core/
 │   ├── services/
+│   │   ├── push_notification_provider_test.dart
 │   │   ├── push_notification_service_test.dart
 │   │   └── push_subscription_repository_test.dart
 │   └── utils/
@@ -177,8 +179,12 @@ test/
 │
 └── features/
     ├── profile/
-    │   └── data/repositories/
-    │       └── auth_repository_test.dart     # AuthRepository unit tests
+    │   ├── data/repositories/
+    │   │   └── auth_repository_test.dart     # AuthRepository unit tests
+    │   └── presentation/
+    │       ├── login_screen_test.dart
+    │       ├── profile_tab_test.dart
+    │       └── signup_screen_test.dart
     ├── setlists/
     │   ├── data/
     │   │   ├── models/
@@ -196,6 +202,7 @@ test/
     │   └── presentation/
     │       ├── providers/
     │       │   ├── display_key_provider_test.dart
+    │       │   ├── history_provider_test.dart
     │       │   └── song_filter_provider_test.dart
     │       ├── utils/
     │       │   └── apply_song_filter_test.dart
@@ -426,6 +433,8 @@ flowchart TD
     ASP -.->|"rebuilds on auth"| UKR
     ASP -.->|"rebuilds on auth"| FR
     ASP -.->|"rebuilds on auth"| SLR
+    ASP -.->|"rebuilds on auth"| PPP
+    ASP -.->|"rebuilds on auth"| RS
     FL -.->|"overridden in app.dart"| FI
 ```
 
@@ -616,13 +625,7 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 
 | Branch | Scope | Status | Key Files / Tables |
 |---|---|---|---|
-| `feat/auth-hardening` | Auth Hardening & Google Sign-In (Phases 1–4) | In Progress | `main.dart`, `app.dart`, `features/profile/`, `core/services/push_notification_*`, `history_provider.dart` |
-
-#### Auth Hardening & Google Sign-In (`feat/auth-hardening`)
-- [x] **Phase 1 — Startup Resilience & Controller Cleanup:** Wrap `signInAnonymously()` in `lib/main.dart` with `try/catch`; add `dispose()` to `LoginScreen` and `SignUpScreen`.
-- [x] **Phase 2 — Reactive Auth State & Push Subscription Re-binding:** Watch `authStateProvider` in `ProfileTab` (with offline/signed-out fallback card when `user == null`) and `recentSongsProvider`; add `getSubscription()` to `PushNotificationPlatform` / `PushNotificationService` and re-bind `push_subscriptions` on sign-out (delete before `signOut()`) and sign-in when browser permission is `'granted'`.
-- [x] **Phase 3 — Guest Data Protection on Email Login:** Add `getGuestDataSummary()` to `AuthRepository` checking `setlists`, `user_keys`, and `favorites`; warn guest users in `LoginScreen` with a confirmation dialog before switching away from their guest session.
-- [ ] **Phase 4 — Google Sign-In & Anonymous Account Linking:** Add `signInWithGoogle()` to `AuthRepository` (`linkIdentity` for guests with `identity_already_exists` fallback to `signInWithOAuth`), handle post-redirect `identity_already_exists` confirmation prompt on Web, and add `GoogleSignInButton` to `LoginScreen`, `SignUpScreen`, and `ProfileTab`.
+| *(none)* | — | — | — |
 
 ### Roadmap Rules
 - When starting a new feature branch, **add a row here** on `master` before cutting the branch.
@@ -633,6 +636,7 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 
 | Branch | Merged | Summary |
 |---|---|---|
+| `feat/auth-hardening` | 2026-11-26 | Startup anonymous auth resilience, controller disposal, reactive `ProfileTab`/`recentSongsProvider`/`pushPermissionProvider` re-binding, guest-data login protection, and Google Sign-In with guest identity linking |
 | `feat/pwa-web-push` | 2026-11-26 | PWA installability (`manifest.json`, `index.html`) + Web Push notifications (`/push-scope/push-sw.js`, `PushNotificationService`, `push_subscriptions`, `notify-setlist` Edge Function) |
 | `docs-architecture` | 2026-11-25 | Added §9 Feature-Driven Architecture Blueprint and §10 Migration Checklist |
 | `refactor` | 2026-11-25 | Full feature-first restructure: barrel exports, EnvConfig, test suite rewrite |

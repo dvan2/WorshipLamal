@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:worship_lamal/core/services/push_notification_provider.dart';
 import 'package:worship_lamal/features/profile/data/repositories/auth_repository.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
+import 'package:worship_lamal/features/profile/presentation/widgets/google_sign_in_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -68,6 +69,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     : const Text('Sign In'),
               ),
             ),
+            const SizedBox(height: 20),
+            const Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('or', style: TextStyle(color: Colors.grey)),
+                ),
+                Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 20),
+            GoogleSignInButton(enabled: !_isLoading),
           ],
         ),
       ),

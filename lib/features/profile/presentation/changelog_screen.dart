@@ -11,6 +11,16 @@ class ChangelogScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: const [
           _UpdateBlock(
+            version: "1.6.0",
+            date: "Nov 26, 2026",
+            changes: [
+              "Google Sign-In: Sign in or link your existing guest setlists, favorites, and custom keys with one tap using Google. 🔐",
+              "Guest Data Protection: Signing into an existing account warns you first if you have unsaved guest data.",
+              "Reliable Notifications & Offline Startup: Push subscriptions automatically follow account sign-in/sign-out, and offline startups stay responsive. 🔔",
+            ],
+          ),
+          Divider(height: 32),
+          _UpdateBlock(
             version: "1.5.0",
             date: "Nov 26, 2026",
             changes: [

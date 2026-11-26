@@ -260,5 +260,18 @@ void main() {
       verify(() => mockRepo.signIn('user@example.com', 'secret123')).called(1);
       expect(find.byType(LoginScreen), findsNothing);
     });
+
+    testWidgets('renders Continue with Google button and calls signInWithGoogle',
+        (tester) async {
+      when(() => mockRepo.signInWithGoogle()).thenAnswer((_) async {});
+
+      await _pumpLoginScreen(tester, mockRepo: mockRepo);
+
+      expect(find.text('Continue with Google'), findsOneWidget);
+      await tester.tap(find.text('Continue with Google'));
+      await tester.pumpAndSettle();
+
+      verify(() => mockRepo.signInWithGoogle()).called(1);
+    });
   });
 }

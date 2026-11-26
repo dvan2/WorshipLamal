@@ -14,3 +14,4 @@ export 'presentation/changelog_screen.dart';
 
 // Widgets
 export 'presentation/widgets/push_notification_tile.dart';
+export 'presentation/widgets/google_sign_in_button.dart';

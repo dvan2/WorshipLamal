@@ -158,5 +158,32 @@ void main() {
       verify(() => mockPushSubRepo.deleteSubscription(testSub.endpoint))
           .called(1);
     });
+
+    testWidgets(
+        'renders Continue with Google for guests only and calls signInWithGoogle',
+        (tester) async {
+      final guestUser = MockUser();
+      when(() => guestUser.isAnonymous).thenReturn(true);
+      when(() => mockAuthRepo.currentUser).thenReturn(guestUser);
+      when(() => mockAuthRepo.signInWithGoogle()).thenAnswer((_) async {});
+
+      await pumpProfileTab(tester);
+
+      expect(find.text('Continue with Google'), findsOneWidget);
+      await tester.tap(find.text('Continue with Google'));
+      await tester.pumpAndSettle();
+
+      verify(() => mockAuthRepo.signInWithGoogle()).called(1);
+
+      final signedInUser = MockUser();
+      when(() => signedInUser.isAnonymous).thenReturn(false);
+      when(() => signedInUser.email).thenReturn('leader@church.org');
+      authController.add(
+        AuthState(AuthChangeEvent.signedIn, _FakeSession(signedInUser)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Continue with Google'), findsNothing);
+    });
   });
 }
