@@ -23,8 +23,9 @@
 
 ```
 web/
-├── index.html                            # PWA viewport, iOS meta tags, apple-touch-icon, theme-color
+├── index.html                            # PWA viewport, iOS meta tags, apple-touch-icon, theme-color, /push-scope/ SW registration
 ├── manifest.json                         # Web App Manifest (Worship Lamal, standalone, #6366F1 theme, maskable/any icons)
+├── push-sw.js                            # Push-only service worker (push & notificationclick handlers)
 ├── favicon.png
 └── icons/                                # 192/512 standard & maskable PNG icons
 
@@ -38,6 +39,13 @@ lib/
 │   │   └── supabase_config.dart        # supabaseClientProvider (Provider<SupabaseClient>)
 │   ├── routing/
 │   │   └── app_router.dart             # GoRouter – 5 routes (see §4)
+│   ├── services/
+│   │   ├── push_notification_platform.dart       # PushSubscriptionData & platform interface
+│   │   ├── push_notification_platform_stub.dart  # Non-web stub
+│   │   ├── push_notification_platform_web.dart   # dart:js_interop Web Push & standalone detection
+│   │   ├── push_notification_service.dart        # PushNotificationService
+│   │   ├── push_subscription_repository.dart     # PushSubscriptionRepository (push_subscriptions)
+│   │   └── push_notification_provider.dart       # pushPermissionProvider (AsyncNotifier)
 │   ├── theme/
 │   │   ├── app_colors.dart             # AppColors (Material 3 palette, section accent colors)
 │   │   ├── app_constants.dart          # Font sizes, radii, spacing tokens
@@ -145,11 +153,13 @@ lib/
             │   ├── auth_provider.dart           # authStateProvider (StreamProvider<AuthState>)
             │   ├── preferences_provider.dart    # PreferencesNotifier (VocalMode, ContentMode), ChordScaleNotifier
             │   └── shared_preferences.dart      # PreferencesService (read/write to SharedPreferences)
-            └── screens/
-                ├── profile_tab.dart
-                ├── login_screen.dart
-                ├── signup_screen.dart
-                └── changelog_screen.dart
+            ├── screens/
+            │   ├── profile_tab.dart
+            │   ├── login_screen.dart
+            │   ├── signup_screen.dart
+            │   └── changelog_screen.dart
+            └── widgets/
+                └── push_notification_tile.dart  # Web Push opt-in & iOS Add-to-Home-Screen guide
 
 test/
 ├── helpers/
@@ -157,6 +167,9 @@ test/
 │   └── mocks.dart                            # Shared Mocktail mocks
 │
 ├── core/
+│   ├── services/
+│   │   ├── push_notification_service_test.dart
+│   │   └── push_subscription_repository_test.dart
 │   └── utils/
 │       ├── chord_parser_test.dart            # ChordParser unit tests
 │       ├── key_transposer_test.dart          # KeyTransposer unit tests
@@ -270,6 +283,15 @@ erDiagram
         uuid song_id FK
         timestamptz viewed_at
     }
+    push_subscriptions {
+        uuid id PK
+        uuid user_id FK
+        text endpoint
+        text p256dh
+        text auth
+        timestamptz created_at
+        timestamptz updated_at
+    }
 
     songs ||--o{ song_artists : ""
     artists ||--o{ song_artists : ""
@@ -330,6 +352,12 @@ All routes are flat children of `/`. No nested navigation or shell routes. `Home
 flowchart TD
     subgraph Core
         SBC["supabaseClientProvider"]
+        PNS["pushNotificationServiceProvider"]
+        PSR["pushSubscriptionRepositoryProvider"]
+        PPP["pushPermissionProvider (AsyncNotifier)"]
+        SBC --> PSR
+        PNS --> PPP
+        PSR --> PPP
     end
 
     subgraph Songs Data
@@ -589,7 +617,7 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 
 | Branch | Scope | Status | Key Files / Tables |
 |---|---|---|---|
-| `feat/pwa-web-push` | [x] PWA installability (Batch 1) · [ ] Web Push notifications (Batch 2) | 🟡 In Progress | `web/manifest.json`, `web/index.html`, `web/push-sw.js`, `lib/core/services/push_*`, `lib/features/profile/presentation/widgets/push_notification_tile.dart`, `supabase/functions/notify-setlist/`, `supabase/migrations/*_push_subscriptions.sql` |
+| `feat/pwa-web-push` | [x] PWA installability (Batch 1) · [x] Web Push notifications (Batch 2) | 🟢 Ready for Merge | `web/manifest.json`, `web/index.html`, `web/push-sw.js`, `lib/core/services/push_*`, `lib/features/profile/presentation/widgets/push_notification_tile.dart`, `supabase/functions/notify-setlist/`, `supabase/migrations/20261126000000_create_push_subscriptions.sql` |
 
 ### Roadmap Rules
 - When starting a new feature branch, **add a row here** on `master` before cutting the branch.

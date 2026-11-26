@@ -50,5 +50,12 @@
   </head>
   <body>
     <script src="flutter_bootstrap.js" async></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/push-sw.js', {
+          scope: '/push-scope/',
+        });
+      }
+    </script>
   </body>
 </html>

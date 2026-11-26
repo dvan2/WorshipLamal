@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -8,6 +9,7 @@ import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/auth_provider.dart';
 import 'package:worship_lamal/features/profile/presentation/providers/preferences_provider.dart';
+import 'package:worship_lamal/features/profile/presentation/widgets/push_notification_tile.dart';
 
 const kFallbackVersion = "1.3.0";
 const kFallbackBuild = "10";
@@ -145,6 +147,12 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
               ),
             ),
           ),
+
+          if (kIsWeb) ...[
+            const Divider(height: 32),
+            _buildSectionTitle("Notifications"),
+            const PushNotificationTile(),
+          ],
 
           const Divider(height: 32),
 

@@ -32,3 +32,4 @@ jobs:
           flutter test
           --dart-define=SUPABASE_URL=https://example.supabase.co
           --dart-define=SUPABASE_ANON_KEY=dummy-key
+          --dart-define=VAPID_PUBLIC_KEY=dummy-vapid-key

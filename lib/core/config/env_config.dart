@@ -9,6 +9,12 @@ abstract final class EnvConfig {
     'SUPABASE_ANON_KEY',
   );
 
+  /// Web Push VAPID public key (`VAPID_PUBLIC_KEY`).
+  static const String vapidPublicKey = String.fromEnvironment(
+    'VAPID_PUBLIC_KEY',
+    defaultValue: '',
+  );
+
   /// Validates that all required compile-time environment variables are set.
   ///
   /// Throws a [StateError] if any required key is empty.

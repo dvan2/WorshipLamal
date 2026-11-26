@@ -11,3 +11,6 @@ export 'presentation/profile_tab.dart';
 export 'presentation/login_screen.dart';
 export 'presentation/signup_screen.dart';
 export 'presentation/changelog_screen.dart';
+
+// Widgets
+export 'presentation/widgets/push_notification_tile.dart';

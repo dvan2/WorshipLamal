@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/setlist_model.dart';
 
@@ -95,7 +97,9 @@ class SetlistsApi {
         .select('id')
         .single();
 
-    return response['id'];
+    final setlistId = response['id'] as String;
+    unawaited(_notifySetlistFollowers(setlistId, 'created', title: title));
+    return setlistId;
   }
 
   /// Add a song to a setlist
@@ -111,6 +115,26 @@ class SetlistsApi {
       'sort_order': order,
       'key_override': key_override,
     });
+    unawaited(_notifySetlistFollowers(setlistId, 'updated'));
+  }
+
+  Future<void> _notifySetlistFollowers(
+    String setlistId,
+    String eventType, {
+    String? title,
+  }) async {
+    try {
+      await _client.functions.invoke(
+        'notify-setlist',
+        body: {
+          'setlistId': setlistId,
+          'eventType': eventType,
+          if (title != null) 'setlistTitle': title,
+        },
+      );
+    } catch (_) {
+      // Fire-and-forget — push failures must never block setlist CRUD.
+    }
   }
 
   Future<void> addSetlistItems(List<Map<String, dynamic>> items) async {
