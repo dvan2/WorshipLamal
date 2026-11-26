@@ -617,7 +617,7 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 
 | Branch | Scope | Status | Key Files / Tables |
 |---|---|---|---|
-| `feat/pwa-web-push` | [x] PWA installability (Batch 1) · [x] Web Push notifications (Batch 2) | 🟢 Ready for Merge | `web/manifest.json`, `web/index.html`, `web/push-sw.js`, `lib/core/services/push_*`, `lib/features/profile/presentation/widgets/push_notification_tile.dart`, `supabase/functions/notify-setlist/`, `supabase/migrations/20261126000000_create_push_subscriptions.sql` |
+| *(none)* | — | — | — |
 
 ### Roadmap Rules
 - When starting a new feature branch, **add a row here** on `master` before cutting the branch.
@@ -628,5 +628,6 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 
 | Branch | Merged | Summary |
 |---|---|---|
+| `feat/pwa-web-push` | 2026-11-26 | PWA installability (`manifest.json`, `index.html`) + Web Push notifications (`/push-scope/push-sw.js`, `PushNotificationService`, `push_subscriptions`, `notify-setlist` Edge Function) |
 | `docs-architecture` | 2026-11-25 | Added §9 Feature-Driven Architecture Blueprint and §10 Migration Checklist |
 | `refactor` | 2026-11-25 | Full feature-first restructure: barrel exports, EnvConfig, test suite rewrite |
