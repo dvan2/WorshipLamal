@@ -1,6 +1,6 @@
 # Worship Lamal — Architecture Reference
 
-> **Version 1.4.0+11** · Flutter 3.9.2+ · Last updated 2026-11-23
+> **Version 1.4.0+11** · Flutter 3.9.2+ · Last updated 2026-11-25
 
 ---
 
@@ -354,7 +354,7 @@ flowchart TD
         PSL --> FS["filteredSongsProvider"]
         SQ["searchQueryProvider (Notifier)"] --> FS
         SF["songFilterProvider (Notifier)"] --> FS
-        FL["favoritesListProvider"] -.->|"if showFavoritesOnly"| FS
+        FI["favoriteSongIdsProvider"] -.->|"if showFavoritesOnly"| FS
         HM["historyMapProvider"] -.->|"if sortByRecent"| FS
     end
 
@@ -366,7 +366,7 @@ flowchart TD
 
     subgraph Favorites
         FA["favoritesApiProvider"] --> FR["favoritesRepositoryProvider"]
-        FR --> FL
+        FR --> FL["favoritesListProvider"]
     end
 
     subgraph Setlists
@@ -393,6 +393,7 @@ flowchart TD
     ASP -.->|"rebuilds on auth"| UKR
     ASP -.->|"rebuilds on auth"| FR
     ASP -.->|"rebuilds on auth"| SLR
+    FL -.->|"overridden in app.dart"| FI
 ```
 
 ### Key Priority (displayKeyProvider)
