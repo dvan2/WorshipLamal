@@ -22,6 +22,12 @@
 ## 2. Folder Tree
 
 ```
+web/
+├── index.html                            # PWA viewport, iOS meta tags, apple-touch-icon, theme-color
+├── manifest.json                         # Web App Manifest (Worship Lamal, standalone, #6366F1 theme, maskable/any icons)
+├── favicon.png
+└── icons/                                # 192/512 standard & maskable PNG icons
+
 lib/
 ├── main.dart                           # EnvConfig.validate(), Supabase.initialize, anonymous sign-in, ProviderScope
 ├── app.dart                            # MaterialApp.router (lightTheme only)
@@ -583,7 +589,7 @@ Tracks in-flight feature branches so agents and the team know what is being buil
 
 | Branch | Scope | Status | Key Files / Tables |
 |---|---|---|---|
-| `feat/pwa-web-push` | PWA installability (Batch 1) + Web Push notifications (Batch 2) | 🟡 In Progress | `web/manifest.json`, `web/index.html`, `web/push-sw.js`, `lib/core/services/push_*`, `lib/features/profile/presentation/widgets/push_notification_tile.dart`, `supabase/functions/notify-setlist/`, `supabase/migrations/*_push_subscriptions.sql` |
+| `feat/pwa-web-push` | [x] PWA installability (Batch 1) · [ ] Web Push notifications (Batch 2) | 🟡 In Progress | `web/manifest.json`, `web/index.html`, `web/push-sw.js`, `lib/core/services/push_*`, `lib/features/profile/presentation/widgets/push_notification_tile.dart`, `supabase/functions/notify-setlist/`, `supabase/migrations/*_push_subscriptions.sql` |
 
 ### Roadmap Rules
 - When starting a new feature branch, **add a row here** on `master` before cutting the branch.
