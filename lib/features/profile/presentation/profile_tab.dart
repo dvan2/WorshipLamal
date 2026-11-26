@@ -148,11 +148,16 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
             ),
           ),
 
-          if (kIsWeb) ...[
-            const Divider(height: 32),
-            _buildSectionTitle("Notifications"),
-            const PushNotificationTile(),
-          ],
+          if (kIsWeb)
+            PushNotificationTile(
+              header: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 32),
+                  _buildSectionTitle("Notifications"),
+                ],
+              ),
+            ),
 
           const Divider(height: 32),
 

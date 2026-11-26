@@ -15,8 +15,11 @@ class PushNotificationService {
     PushNotificationPlatform? platform,
   }) : _platform = platform ?? createPushNotificationPlatform();
 
+  /// Whether a VAPID public key is configured.
+  bool get hasVapidKey => vapidPublicKey.isNotEmpty;
+
   /// Whether Web Push is supported in the current environment.
-  bool get isSupported => _platform.isSupported && vapidPublicKey.isNotEmpty;
+  bool get isSupported => _platform.isSupported && hasVapidKey;
 
   /// Whether the app is running in PWA `standalone` display mode.
   bool get isStandalone => _platform.isStandalone;
@@ -25,7 +28,10 @@ class PushNotificationService {
   bool get isIosSafari => _platform.isIosSafari;
 
   /// Whether iOS requires installing the PWA before push can be enabled.
-  bool get needsIosHomeScreenInstall => isIosSafari && !isStandalone;
+  ///
+  /// Checked independently of [isSupported] because real iOS Safari omits
+  /// `window.PushManager` and `window.Notification` until installed to Home Screen.
+  bool get needsIosHomeScreenInstall => hasVapidKey && isIosSafari && !isStandalone;
 
   /// Current `Notification.permission` state: `'granted'`, `'denied'`, or `'default'`.
   String get permissionState => _platform.permissionState;

@@ -54,6 +54,25 @@ void main() {
       expect(service.needsIosHomeScreenInstall, isTrue);
     });
 
+    test(
+        'needsIosHomeScreenInstall is true even when platform.isSupported is false',
+        () {
+      when(() => mockPlatform.isSupported).thenReturn(false);
+      when(() => mockPlatform.isIosSafari).thenReturn(true);
+      when(() => mockPlatform.isStandalone).thenReturn(false);
+      expect(service.needsIosHomeScreenInstall, isTrue);
+    });
+
+    test('needsIosHomeScreenInstall is false when vapidPublicKey is empty', () {
+      when(() => mockPlatform.isIosSafari).thenReturn(true);
+      when(() => mockPlatform.isStandalone).thenReturn(false);
+      final noKeyService = PushNotificationService(
+        vapidPublicKey: '',
+        platform: mockPlatform,
+      );
+      expect(noKeyService.needsIosHomeScreenInstall, isFalse);
+    });
+
     test('needsIosHomeScreenInstall is false on iOS Safari standalone', () {
       when(() => mockPlatform.isIosSafari).thenReturn(true);
       when(() => mockPlatform.isStandalone).thenReturn(true);
