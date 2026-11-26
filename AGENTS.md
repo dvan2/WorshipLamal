@@ -57,6 +57,7 @@ Nashville Number System chords are stored in the DB and translated to letter cho
 ## Documentation & Roadmap Sync
 
 - Whenever files, Supabase tables/functions, routes, or Riverpod providers change, update `ARCHITECTURE.md` (header `Last updated` date, Folder Tree, Data Model, Routing, and Provider Graph) without brittle line numbers.
+- **Changelog Sync (`lib/features/profile/presentation/changelog_screen.dart`):** Whenever a `feat:` or user-facing `fix:` task is completed, prepend a concise, user-friendly bullet (or a new `_UpdateBlock` when bumping minor/major versions) to `lib/features/profile/presentation/changelog_screen.dart` using concrete dates (`MMM D, YYYY`, never `"Today"`).
 - **Active Roadmap rules (`ARCHITECTURE.md`):**
   - Check off `[x]` an active roadmap item when its implementation passes tests.
   - Once all items in a milestone are checked off, remove the completed items so the roadmap only tracks active and upcoming work.
@@ -65,7 +66,7 @@ Nashville Number System chords are stored in the DB and translated to letter cho
 ## Definition of Done (Before Finishing Any Task)
 
 1. **Verify (when `lib/`, `test/`, or `pubspec.yaml` changed):** Run Dart MCP `analyze_files` (0 new errors) and `run_tests` (100% passing). Skip Dart test runs on `web/`-, `supabase/`-, or docs-only batches.
-2. **Sync Docs:** Apply all `## Documentation & Roadmap Sync` rules above.
+2. **Sync Docs & Changelog:** Apply all `## Documentation & Roadmap Sync` rules above, including updating `lib/features/profile/presentation/changelog_screen.dart` for `feat:` and user-facing `fix:` tasks.
 3. **Commit:** Verify `.env` is untracked via `cmd /c git status` and commit the batch on the active feature branch.
 4. **Hand Off:** Summarize changes, test counts, and the exact merge/push commands for the user.
 

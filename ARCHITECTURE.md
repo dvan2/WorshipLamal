@@ -1,6 +1,6 @@
 # Worship Lamal — Architecture Reference
 
-> **Version 1.4.0+11** · Flutter 3.9.2+ · Last updated 2026-11-26
+> **Version 1.5.0+12** · Flutter 3.9.2+ · Last updated 2026-11-26
 
 ---
 
