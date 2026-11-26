@@ -1,6 +1,6 @@
 # Worship Lamal — Architecture Reference
 
-> **Version 1.4.0+11** · Flutter 3.9.2+ · Last updated 2026-11-25
+> **Version 1.4.0+11** · Flutter 3.9.2+ · Last updated 2026-11-26
 
 ---
 
@@ -574,3 +574,25 @@ docs: update architecture reference
 - [x] Add namespace collision guard for realtime channel names
 - [x] Standardize DI: all repositories should accept `SupabaseClient` via constructor
 - [x] Rewrite unit, provider, and widget test suite mirroring `lib/`
+
+---
+
+## 11. Active Roadmap
+
+Tracks in-flight feature branches so agents and the team know what is being built and what files are off-limits for unrelated changes.
+
+| Branch | Scope | Status | Key Files / Tables |
+|---|---|---|---|
+| `feat/pwa-web-push` | PWA installability (Batch 1) + Web Push notifications (Batch 2) | 🟡 In Progress | `web/manifest.json`, `web/index.html`, `web/push-sw.js`, `lib/core/services/push_*`, `lib/features/profile/presentation/widgets/push_notification_tile.dart`, `supabase/functions/notify-setlist/`, `supabase/migrations/*_push_subscriptions.sql` |
+
+### Roadmap Rules
+- When starting a new feature branch, **add a row here** on `master` before cutting the branch.
+- When a branch is merged, move it to the **Completed** table below and tick its checklist items.
+- Agents must **never touch files listed in another branch's "Key Files"** unless explicitly instructed.
+
+### Completed Branches
+
+| Branch | Merged | Summary |
+|---|---|---|
+| `docs-architecture` | 2026-11-25 | Added §9 Feature-Driven Architecture Blueprint and §10 Migration Checklist |
+| `refactor` | 2026-11-25 | Full feature-first restructure: barrel exports, EnvConfig, test suite rewrite |
