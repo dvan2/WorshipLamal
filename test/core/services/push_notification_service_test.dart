@@ -99,5 +99,17 @@ void main() {
       await service.prepare();
       verify(() => mockPlatform.prepare()).called(1);
     });
+
+    test('permissionState delegates to platform.permissionState', () {
+      when(() => mockPlatform.permissionState).thenReturn('granted');
+      expect(service.permissionState, 'granted');
+    });
+
+    test('requestAndSubscribe returns null when unsupported', () async {
+      when(() => mockPlatform.isSupported).thenReturn(false);
+      final result = await service.requestAndSubscribe();
+      expect(result, isNull);
+      verifyNever(() => mockPlatform.subscribe(any()));
+    });
   });
 }

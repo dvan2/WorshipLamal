@@ -17,6 +17,7 @@ extension type _JSMediaQueryList(JSObject _) implements JSObject {
   external bool get matches;
 }
 
+@JS('Notification')
 extension type _JSNotification(JSObject _) implements JSObject {
   external static String get permission;
 }
@@ -44,10 +45,13 @@ class WebPushNotificationPlatform implements PushNotificationPlatform {
 
   @override
   bool get isSupported {
+    final isSecure =
+        _window.getProperty<JSBoolean?>('isSecureContext'.toJS)?.toDart ??
+            false;
     final hasSw = _navigator.has('serviceWorker');
-    final hasPush = globalContext.has('PushManager');
-    final hasNotif = globalContext.has('Notification');
-    return hasSw && hasPush && hasNotif;
+    final hasPush = _window.has('PushManager');
+    final hasNotif = _window.has('Notification');
+    return isSecure && hasSw && hasPush && hasNotif;
   }
 
   @override
@@ -79,7 +83,7 @@ class WebPushNotificationPlatform implements PushNotificationPlatform {
 
   @override
   String get permissionState {
-    if (!globalContext.has('Notification')) return 'denied';
+    if (!_window.has('Notification')) return 'denied';
     return _JSNotification.permission;
   }
 

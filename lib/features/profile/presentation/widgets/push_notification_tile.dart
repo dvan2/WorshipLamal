@@ -55,7 +55,21 @@ class PushNotificationTile extends ConsumerWidget {
           subtitle: Text('Checking notification status...'),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, __) => _withHeader(
+        ListTile(
+          leading: const Icon(Icons.error_outline, color: AppColors.error),
+          title: const Text('Setlist Notifications'),
+          subtitle: const Text(
+            'Could not enable notifications. Make sure the page is served over HTTPS or localhost and try again.',
+          ),
+          trailing: TextButton(
+            onPressed: () {
+              ref.invalidate(pushPermissionProvider);
+            },
+            child: const Text('Retry'),
+          ),
+        ),
+      ),
       data: (granted) {
         if (granted == true) {
           return _withHeader(

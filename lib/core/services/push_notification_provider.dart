@@ -52,13 +52,24 @@ class PushPermissionNotifier extends AsyncNotifier<bool?> {
     final repo = ref.read(pushSubscriptionRepositoryProvider);
 
     state = const AsyncLoading();
-    final sub = await service.requestAndSubscribe();
-    if (sub != null) {
-      await repo.saveSubscription(sub);
-      state = const AsyncData(true);
-    } else {
-      final current = service.permissionState;
-      state = AsyncData(current == 'denied' ? false : null);
+    try {
+      final sub = await service.requestAndSubscribe();
+      if (sub != null) {
+        await repo.saveSubscription(sub);
+        state = const AsyncData(true);
+      } else {
+        final current = service.permissionState;
+        if (current == 'denied') {
+          state = const AsyncData(false);
+        } else {
+          state = AsyncError(
+            StateError('Could not subscribe to push notifications.'),
+            StackTrace.current,
+          );
+        }
+      }
+    } catch (e, st) {
+      state = AsyncError(e, st);
     }
   }
 }
