@@ -379,5 +379,67 @@ void main() {
       );
       expect(signInCalled, isFalse);
     });
+
+    test('forceSignIn: true skips linkIdentity and calls signInWithOAuth',
+        () async {
+      var linkCalled = false;
+      var signInCalled = false;
+
+      final repo = AuthRepository(
+        mockClient,
+        redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        linkOAuthFn: (_, {redirectTo}) async {
+          linkCalled = true;
+          return true;
+        },
+        signInOAuthFn: (provider, {redirectTo}) async {
+          signInCalled = true;
+          expect(provider, OAuthProvider.google);
+          return true;
+        },
+      );
+      when(() => mockUser.isAnonymous).thenReturn(true);
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+
+      await repo.signInWithGoogle(forceSignIn: true);
+
+      expect(linkCalled, isFalse);
+      expect(signInCalled, isTrue);
+    });
+
+    test('throws AuthException when signInWithOAuth returns false', () async {
+      final repo = AuthRepository(
+        mockClient,
+        redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        signInOAuthFn: (_, {redirectTo}) async => false,
+      );
+      when(() => mockAuth.currentUser).thenReturn(null);
+
+      await expectLater(
+        () => repo.signInWithGoogle(),
+        throwsA(isA<AuthException>()),
+      );
+    });
+
+    test('throws AuthException when linkIdentity returns false', () async {
+      var signInCalled = false;
+      final repo = AuthRepository(
+        mockClient,
+        redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        linkOAuthFn: (_, {redirectTo}) async => false,
+        signInOAuthFn: (_, {redirectTo}) async {
+          signInCalled = true;
+          return true;
+        },
+      );
+      when(() => mockUser.isAnonymous).thenReturn(true);
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+
+      await expectLater(
+        () => repo.signInWithGoogle(),
+        throwsA(isA<AuthException>()),
+      );
+      expect(signInCalled, isFalse);
+    });
   });
 }

@@ -117,12 +117,24 @@ class AuthRepository {
     final resolvedRedirect = redirectTo ?? _redirectUriFn();
     final isGuest = currentUser?.isAnonymous ?? false;
 
+    final launchMode =
+        kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication;
+
     if (isGuest && !forceSignIn) {
       try {
         final linkFn = _linkOAuthFn ??
-            (provider, {redirectTo}) =>
-                _client.auth.linkIdentity(provider, redirectTo: redirectTo);
-        await linkFn(OAuthProvider.google, redirectTo: resolvedRedirect);
+            (provider, {redirectTo}) => _client.auth.linkIdentity(
+                  provider,
+                  redirectTo: redirectTo,
+                  authScreenLaunchMode: launchMode,
+                );
+        final linked =
+            await linkFn(OAuthProvider.google, redirectTo: resolvedRedirect);
+        if (!linked) {
+          throw const AuthException(
+            'Could not open Google sign-in. Please try again.',
+          );
+        }
         return;
       } on AuthException catch (e) {
         final isAlreadyLinked =
@@ -133,8 +145,17 @@ class AuthRepository {
     }
 
     final signInFn = _signInOAuthFn ??
-        (provider, {redirectTo}) =>
-            _client.auth.signInWithOAuth(provider, redirectTo: redirectTo);
-    await signInFn(OAuthProvider.google, redirectTo: resolvedRedirect);
+        (provider, {redirectTo}) => _client.auth.signInWithOAuth(
+              provider,
+              redirectTo: redirectTo,
+              authScreenLaunchMode: launchMode,
+            );
+    final launched =
+        await signInFn(OAuthProvider.google, redirectTo: resolvedRedirect);
+    if (!launched) {
+      throw const AuthException(
+        'Could not open Google sign-in. Please try again.',
+      );
+    }
   }
 }

@@ -11,6 +11,14 @@ class ChangelogScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: const [
           _UpdateBlock(
+            version: "1.6.1",
+            date: "Nov 28, 2026",
+            changes: [
+              "Google Account Switch Fix: Fixed an issue where tapping Switch Account or Cancel on the \"Account Already Linked\" prompt could stall or re-trigger the dialog on mobile web. 🔐",
+            ],
+          ),
+          Divider(height: 32),
+          _UpdateBlock(
             version: "1.6.0",
             date: "Nov 26, 2026",
             changes: [
