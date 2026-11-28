@@ -119,6 +119,7 @@ class AuthRepository {
 
     final launchMode =
         kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication;
+    const oauthQueryParams = {'prompt': 'select_account'};
 
     if (isGuest && !forceSignIn) {
       try {
@@ -127,6 +128,7 @@ class AuthRepository {
                   provider,
                   redirectTo: redirectTo,
                   authScreenLaunchMode: launchMode,
+                  queryParams: oauthQueryParams,
                 );
         final linked =
             await linkFn(OAuthProvider.google, redirectTo: resolvedRedirect);
@@ -149,6 +151,7 @@ class AuthRepository {
               provider,
               redirectTo: redirectTo,
               authScreenLaunchMode: launchMode,
+              queryParams: oauthQueryParams,
             );
     final launched =
         await signInFn(OAuthProvider.google, redirectTo: resolvedRedirect);

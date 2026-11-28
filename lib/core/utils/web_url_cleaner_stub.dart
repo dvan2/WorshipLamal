@@ -1,2 +1,2 @@
-/// Non-web stub for scrubbing OAuth error parameters from the browser URL.
-void scrubOAuthErrorFromBrowserUrlImpl() {}
+/// Non-web stub for scrubbing OAuth callback/error parameters from the URL.
+void scrubOAuthParamsFromBrowserUrlImpl() {}

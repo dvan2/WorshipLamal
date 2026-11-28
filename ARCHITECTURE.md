@@ -55,7 +55,7 @@ lib/
 │       ├── key_transposer.dart         # KeyTransposer.transpose(key, semitones)
 │       ├── music_theory.dart           # MusicTheory (chromaticScale, enharmonicAliases, normalizeNote)
 │       ├── nashville_helper.dart       # NashvilleHelper.translate(nashvilleChord, keyRoot)
-│       └── web_url_cleaner.dart        # stripOAuthErrorParams() & browser URL scrubber (+ stub/web)
+│       └── web_url_cleaner.dart        # stripOAuthParams() & browser URL scrubber (+ stub/web)
 │
 ├── shared/widgets/
 │   ├── app_scaffold.dart               # Shared layout scaffold

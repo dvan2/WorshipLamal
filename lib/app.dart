@@ -64,6 +64,7 @@ class AuthCallbackHost extends ConsumerStatefulWidget {
   final Widget? child;
   final Uri? initialUri;
   final VoidCallback? onScrubUrl;
+  final void Function(String location)? onSyncRoute;
   final bool? isWebOverride;
   final GlobalKey<NavigatorState>? navigatorKey;
 
@@ -72,6 +73,7 @@ class AuthCallbackHost extends ConsumerStatefulWidget {
     this.child,
     this.initialUri,
     this.onScrubUrl,
+    this.onSyncRoute,
     this.isWebOverride,
     this.navigatorKey,
   });
@@ -86,6 +88,25 @@ class _AuthCallbackHostState extends ConsumerState<AuthCallbackHost> {
   bool _dismissedOAuthError = false;
 
   bool get _isWeb => widget.isWebOverride ?? kIsWeb;
+
+  void _scrubOAuthUrlSafely() {
+    if (!_isWeb) return;
+    try {
+      (widget.onScrubUrl ?? scrubOAuthParamsFromBrowserUrl)();
+      final cleaned = cleanedOAuthRelativeLocation(
+        widget.initialUri ?? Uri.base,
+      );
+      if (cleaned != null) {
+        if (widget.onSyncRoute != null) {
+          widget.onSyncRoute!(cleaned);
+        } else if (widget.child == null) {
+          appRouter.go(cleaned);
+        }
+      }
+    } catch (_) {
+      // Never let URL scrubbing abort Cancel, Switch Account, or sign-in.
+    }
+  }
 
   @override
   void initState() {
@@ -148,9 +169,7 @@ class _AuthCallbackHostState extends ConsumerState<AuthCallbackHost> {
         ),
       );
 
-      if (_isWeb) {
-        (widget.onScrubUrl ?? scrubOAuthErrorFromBrowserUrl)();
-      }
+      _scrubOAuthUrlSafely();
 
       if (shouldSwitch != true) {
         _dismissedOAuthError = true;
@@ -190,6 +209,7 @@ class _AuthCallbackHostState extends ConsumerState<AuthCallbackHost> {
       if (next is AsyncData<AuthState> &&
           next.value.event == AuthChangeEvent.signedIn) {
         _dismissedOAuthError = false;
+        _scrubOAuthUrlSafely();
         return;
       }
       if (next is AsyncError && next.error is AuthException) {

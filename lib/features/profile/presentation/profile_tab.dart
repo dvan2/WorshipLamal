@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:worship_lamal/core/routing/app_router.dart';
 import 'package:worship_lamal/core/services/push_notification_provider.dart';
 import 'package:worship_lamal/core/theme/app_colors.dart';
+import 'package:worship_lamal/core/utils/web_url_cleaner.dart';
 import 'package:worship_lamal/features/profile/presentation/changelog_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/login_screen.dart';
 import 'package:worship_lamal/features/profile/presentation/signup_screen.dart';
@@ -339,6 +341,18 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
         await repo.signInAnonymously();
       } catch (e) {
         debugPrint("Error signing in anonymously: $e");
+      }
+
+      if (kIsWeb) {
+        try {
+          scrubOAuthParamsFromBrowserUrl();
+          final cleaned = cleanedOAuthRelativeLocation(Uri.base);
+          if (cleaned != null) {
+            appRouter.go(cleaned);
+          }
+        } catch (_) {
+          // Best-effort URL cleanup after sign-out.
+        }
       }
     } finally {
       if (mounted) setState(() => _isSigningOut = false);
