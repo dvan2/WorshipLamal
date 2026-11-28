@@ -292,7 +292,9 @@ void main() {
       expect(capturedRedirect, 'https://worship-lamal-f1b1c.web.app');
     });
 
-    test('anonymous guest calls linkIdentity first', () async {
+    test(
+        'anonymous guest with default linkGuestIdentity: false uses single-hop signInWithOAuth',
+        () async {
       var linkCalled = false;
       var signInCalled = false;
       String? capturedRedirect;
@@ -300,6 +302,71 @@ void main() {
       final repo = AuthRepository(
         mockClient,
         redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        guestDataChecker: (_) async => const GuestDataSummary(hasSetlists: true),
+        linkOAuthFn: (_, {redirectTo}) async {
+          linkCalled = true;
+          return true;
+        },
+        signInOAuthFn: (provider, {redirectTo}) async {
+          signInCalled = true;
+          capturedRedirect = redirectTo;
+          expect(provider, OAuthProvider.google);
+          return true;
+        },
+      );
+      when(() => mockUser.id).thenReturn('guest-1');
+      when(() => mockUser.isAnonymous).thenReturn(true);
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+
+      await repo.signInWithGoogle();
+
+      expect(linkCalled, isFalse);
+      expect(signInCalled, isTrue);
+      expect(capturedRedirect, 'https://worship-lamal-f1b1c.web.app');
+    });
+
+    test(
+        'anonymous guest with linkGuestIdentity: true and no guest data skips linkIdentity',
+        () async {
+      var linkCalled = false;
+      var signInCalled = false;
+
+      final repo = AuthRepository(
+        mockClient,
+        redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        guestDataChecker: (_) async => const GuestDataSummary(),
+        linkOAuthFn: (_, {redirectTo}) async {
+          linkCalled = true;
+          return true;
+        },
+        signInOAuthFn: (provider, {redirectTo}) async {
+          signInCalled = true;
+          expect(provider, OAuthProvider.google);
+          return true;
+        },
+      );
+      when(() => mockUser.id).thenReturn('guest-1');
+      when(() => mockUser.isAnonymous).thenReturn(true);
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+
+      await repo.signInWithGoogle(linkGuestIdentity: true);
+
+      expect(linkCalled, isFalse);
+      expect(signInCalled, isTrue);
+    });
+
+    test(
+        'anonymous guest with linkGuestIdentity: true and guest data calls linkIdentity first',
+        () async {
+      var linkCalled = false;
+      var signInCalled = false;
+      String? capturedRedirect;
+
+      final repo = AuthRepository(
+        mockClient,
+        redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        guestDataChecker: (_) async =>
+            const GuestDataSummary(hasSetlists: true),
         linkOAuthFn: (provider, {redirectTo}) async {
           linkCalled = true;
           capturedRedirect = redirectTo;
@@ -311,10 +378,11 @@ void main() {
           return true;
         },
       );
+      when(() => mockUser.id).thenReturn('guest-1');
       when(() => mockUser.isAnonymous).thenReturn(true);
       when(() => mockAuth.currentUser).thenReturn(mockUser);
 
-      await repo.signInWithGoogle();
+      await repo.signInWithGoogle(linkGuestIdentity: true);
 
       expect(linkCalled, isTrue);
       expect(signInCalled, isFalse);
@@ -322,7 +390,7 @@ void main() {
     });
 
     test(
-        'anonymous guest falls back to signInWithOAuth on identity_already_exists',
+        'anonymous guest with linkGuestIdentity: true falls back to signInWithOAuth on identity_already_exists',
         () async {
       var linkCalled = false;
       var signInCalled = false;
@@ -330,6 +398,8 @@ void main() {
       final repo = AuthRepository(
         mockClient,
         redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        guestDataChecker: (_) async =>
+            const GuestDataSummary(hasFavorites: true),
         linkOAuthFn: (_, {redirectTo}) async {
           linkCalled = true;
           throw const AuthException(
@@ -344,21 +414,26 @@ void main() {
           return true;
         },
       );
+      when(() => mockUser.id).thenReturn('guest-1');
       when(() => mockUser.isAnonymous).thenReturn(true);
       when(() => mockAuth.currentUser).thenReturn(mockUser);
 
-      await repo.signInWithGoogle();
+      await repo.signInWithGoogle(linkGuestIdentity: true);
 
       expect(linkCalled, isTrue);
       expect(signInCalled, isTrue);
     });
 
-    test('anonymous guest rethrows non-conflict AuthException', () async {
+    test(
+        'anonymous guest with linkGuestIdentity: true rethrows non-conflict AuthException',
+        () async {
       var signInCalled = false;
 
       final repo = AuthRepository(
         mockClient,
         redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        guestDataChecker: (_) async =>
+            const GuestDataSummary(hasUserKeys: true),
         linkOAuthFn: (_, {redirectTo}) async {
           throw const AuthException(
             'Provider is not enabled',
@@ -370,17 +445,18 @@ void main() {
           return true;
         },
       );
+      when(() => mockUser.id).thenReturn('guest-1');
       when(() => mockUser.isAnonymous).thenReturn(true);
       when(() => mockAuth.currentUser).thenReturn(mockUser);
 
       await expectLater(
-        () => repo.signInWithGoogle(),
+        () => repo.signInWithGoogle(linkGuestIdentity: true),
         throwsA(isA<AuthException>()),
       );
       expect(signInCalled, isFalse);
     });
 
-    test('forceSignIn: true skips linkIdentity and calls signInWithOAuth',
+    test('forceSignIn: true skips linkIdentity even with linkGuestIdentity: true',
         () async {
       var linkCalled = false;
       var signInCalled = false;
@@ -388,6 +464,8 @@ void main() {
       final repo = AuthRepository(
         mockClient,
         redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        guestDataChecker: (_) async =>
+            const GuestDataSummary(hasSetlists: true),
         linkOAuthFn: (_, {redirectTo}) async {
           linkCalled = true;
           return true;
@@ -398,10 +476,14 @@ void main() {
           return true;
         },
       );
+      when(() => mockUser.id).thenReturn('guest-1');
       when(() => mockUser.isAnonymous).thenReturn(true);
       when(() => mockAuth.currentUser).thenReturn(mockUser);
 
-      await repo.signInWithGoogle(forceSignIn: true);
+      await repo.signInWithGoogle(
+        forceSignIn: true,
+        linkGuestIdentity: true,
+      );
 
       expect(linkCalled, isFalse);
       expect(signInCalled, isTrue);
@@ -423,20 +505,24 @@ void main() {
 
     test('throws AuthException when linkIdentity returns false', () async {
       var signInCalled = false;
-      final repo = AuthRepository(
+      when(() => mockUser.id).thenReturn('guest-1');
+      when(() => mockUser.isAnonymous).thenReturn(true);
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+
+      final repoWithGuestData = AuthRepository(
         mockClient,
         redirectUriFn: () => 'https://worship-lamal-f1b1c.web.app',
+        guestDataChecker: (_) async =>
+            const GuestDataSummary(hasSetlists: true),
         linkOAuthFn: (_, {redirectTo}) async => false,
         signInOAuthFn: (_, {redirectTo}) async {
           signInCalled = true;
           return true;
         },
       );
-      when(() => mockUser.isAnonymous).thenReturn(true);
-      when(() => mockAuth.currentUser).thenReturn(mockUser);
 
       await expectLater(
-        () => repo.signInWithGoogle(),
+        () => repoWithGuestData.signInWithGoogle(linkGuestIdentity: true),
         throwsA(isA<AuthException>()),
       );
       expect(signInCalled, isFalse);

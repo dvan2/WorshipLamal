@@ -1,6 +1,6 @@
 # Worship Lamal — Architecture Reference
 
-> **Version 1.6.1+14** · Flutter 3.9.2+ · Last updated 2026-11-28
+> **Version 1.6.2+15** · Flutter 3.9.2+ · Last updated 2026-11-28
 
 ---
 
@@ -148,7 +148,7 @@ lib/
     └── profile/      ← barrel: profile_feature.dart
         ├── data/
         │   └── repositories/
-        │       └── auth_repository.dart        # signIn/Up/Out, upgradeGuestAccount
+        │       └── auth_repository.dart        # signIn/Up/Out, upgradeGuestAccount, single-hop Google OAuth & Sync Data linking
         └── presentation/
             ├── profile_tab.dart
             ├── login_screen.dart
@@ -159,7 +159,7 @@ lib/
             │   ├── preferences_provider.dart    # PreferencesNotifier (VocalMode, ContentMode), ChordScaleNotifier
             │   └── shared_preferences.dart      # PreferencesService (read/write to SharedPreferences)
             └── widgets/
-                ├── google_sign_in_button.dart # Shared Google OAuth button
+                ├── google_sign_in_button.dart # Shared Google OAuth button (single-hop sign-in by default; linkGuestIdentity on Sync Data)
                 └── push_notification_tile.dart  # Web Push opt-in & iOS Add-to-Home-Screen guide
 
 test/

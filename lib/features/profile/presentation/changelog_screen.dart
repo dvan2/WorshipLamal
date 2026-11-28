@@ -11,6 +11,15 @@ class ChangelogScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: const [
           _UpdateBlock(
+            version: "1.6.2",
+            date: "Nov 28, 2026",
+            changes: [
+              "Single-Hop Google Sign-In: Returning users signing in with Google now connect in one redirect without an extra account-switch prompt, while Sync Data still migrates guest setlists and favorites. ⚡",
+              "Google Account Chooser & Clean URLs: Signing in after sign-out shows the Google account picker and automatically cleans OAuth callback parameters from the address bar. 🔐",
+            ],
+          ),
+          Divider(height: 32),
+          _UpdateBlock(
             version: "1.6.1",
             date: "Nov 28, 2026",
             changes: [

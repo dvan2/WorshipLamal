@@ -6,11 +6,13 @@ import 'package:worship_lamal/features/profile/presentation/providers/auth_provi
 class GoogleSignInButton extends ConsumerStatefulWidget {
   final bool enabled;
   final String label;
+  final bool linkGuestIdentity;
 
   const GoogleSignInButton({
     super.key,
     this.enabled = true,
     this.label = 'Continue with Google',
+    this.linkGuestIdentity = false,
   });
 
   @override
@@ -46,7 +48,9 @@ class _GoogleSignInButtonState extends ConsumerState<GoogleSignInButton> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      await ref.read(authRepositoryProvider).signInWithGoogle();
+      await ref
+          .read(authRepositoryProvider)
+          .signInWithGoogle(linkGuestIdentity: widget.linkGuestIdentity);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

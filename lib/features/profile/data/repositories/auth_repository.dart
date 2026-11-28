@@ -107,12 +107,15 @@ class AuthRepository {
 
   /// Signs in with Google OAuth.
   ///
-  /// For anonymous guests (unless [forceSignIn] is true), attempts
+  /// Uses `signInWithOAuth` directly for single-hop sign-in by default.
+  /// When [linkGuestIdentity] is `true` for an anonymous guest (unless
+  /// [forceSignIn] is `true`) and the guest has user-created data, attempts
   /// `linkIdentity` first to preserve the guest's `user_id`, falling back to
   /// `signInWithOAuth` if the Google identity is already linked to another user.
   Future<void> signInWithGoogle({
     String? redirectTo,
     bool forceSignIn = false,
+    bool linkGuestIdentity = false,
   }) async {
     final resolvedRedirect = redirectTo ?? _redirectUriFn();
     final isGuest = currentUser?.isAnonymous ?? false;
@@ -121,28 +124,38 @@ class AuthRepository {
         kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication;
     const oauthQueryParams = {'prompt': 'select_account'};
 
-    if (isGuest && !forceSignIn) {
+    if (isGuest && linkGuestIdentity && !forceSignIn) {
+      var shouldLink = true;
       try {
-        final linkFn = _linkOAuthFn ??
-            (provider, {redirectTo}) => _client.auth.linkIdentity(
-                  provider,
-                  redirectTo: redirectTo,
-                  authScreenLaunchMode: launchMode,
-                  queryParams: oauthQueryParams,
-                );
-        final linked =
-            await linkFn(OAuthProvider.google, redirectTo: resolvedRedirect);
-        if (!linked) {
-          throw const AuthException(
-            'Could not open Google sign-in. Please try again.',
-          );
+        final summary = await getGuestDataSummary();
+        shouldLink = summary.hasAny;
+      } catch (_) {
+        // Preserve link attempt if guest-data check fails transiently.
+      }
+
+      if (shouldLink) {
+        try {
+          final linkFn = _linkOAuthFn ??
+              (provider, {redirectTo}) => _client.auth.linkIdentity(
+                    provider,
+                    redirectTo: redirectTo,
+                    authScreenLaunchMode: launchMode,
+                    queryParams: oauthQueryParams,
+                  );
+          final linked =
+              await linkFn(OAuthProvider.google, redirectTo: resolvedRedirect);
+          if (!linked) {
+            throw const AuthException(
+              'Could not open Google sign-in. Please try again.',
+            );
+          }
+          return;
+        } on AuthException catch (e) {
+          final isAlreadyLinked =
+              e.code == identityAlreadyExistsCode ||
+              e.message.toLowerCase().contains('already');
+          if (!isAlreadyLinked) rethrow;
         }
-        return;
-      } on AuthException catch (e) {
-        final isAlreadyLinked =
-            e.code == identityAlreadyExistsCode ||
-            e.message.toLowerCase().contains('already');
-        if (!isAlreadyLinked) rethrow;
       }
     }
 

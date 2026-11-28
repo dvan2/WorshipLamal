@@ -70,6 +70,8 @@ void main() {
 
       when(() => mockAuthRepo.authStateChanges)
           .thenAnswer((_) => authStreamController.stream);
+      when(() => mockAuthRepo.getGuestDataSummary())
+          .thenAnswer((_) async => const GuestDataSummary(hasSetlists: true));
       when(
         () => mockAuthRepo.signInWithGoogle(
           redirectTo: any(named: 'redirectTo'),
@@ -219,6 +221,40 @@ void main() {
 
       expect(scrubCount, 1);
       expect(syncedRoute, '/');
+    });
+
+    testWidgets(
+        'identity_already_exists with no unsaved guest data falls back automatically without prompting',
+        (tester) async {
+      var scrubCount = 0;
+      String? syncedRoute;
+      final navKey = GlobalKey<NavigatorState>();
+      when(() => mockAuthRepo.getGuestDataSummary())
+          .thenAnswer((_) async => const GuestDataSummary());
+
+      final errorUri = Uri.parse(
+        'https://worship-lamal-f1b1c.web.app/?error=server_error&error_code=identity_already_exists',
+      );
+
+      await tester.pumpWidget(
+        buildHarness(
+          initialUri: errorUri,
+          onScrubUrl: () => scrubCount++,
+          onSyncRoute: (loc) => syncedRoute = loc,
+          navKey: navKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Account Already Linked'), findsNothing);
+      expect(scrubCount, 1);
+      expect(syncedRoute, '/');
+      verify(
+        () => mockAuthRepo.signInWithGoogle(
+          redirectTo: null,
+          forceSignIn: true,
+        ),
+      ).called(1);
     });
   });
 }

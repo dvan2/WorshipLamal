@@ -104,7 +104,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            GoogleSignInButton(enabled: !_isLoading),
+            GoogleSignInButton(
+              enabled: !_isLoading,
+              linkGuestIdentity: isGuest,
+            ),
           ],
         ),
       ),

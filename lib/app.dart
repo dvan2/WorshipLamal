@@ -139,6 +139,29 @@ class _AuthCallbackHostState extends ConsumerState<AuthCallbackHost> {
     }
   }
 
+  Future<void> _performForceSignIn(BuildContext navigatorContext) async {
+    if (!mounted) return;
+    if (_isWeb) {
+      unawaited(_cleanupPushSubscriptionBestEffort());
+    }
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .signInWithGoogle(forceSignIn: true);
+    } catch (e) {
+      if (navigatorContext.mounted) {
+        ScaffoldMessenger.maybeOf(navigatorContext)?.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Google Sign-In failed: ${e.toString().replaceAll('AuthException:', '').trim()}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _promptSwitchAccount() async {
     if (_isPromptingSwitch || _dismissedOAuthError || !mounted) return;
     final navigatorContext =
@@ -148,6 +171,23 @@ class _AuthCallbackHostState extends ConsumerState<AuthCallbackHost> {
 
     _isPromptingSwitch = true;
     try {
+      var hasUnsavedGuestData = true;
+      try {
+        final summary = await ref
+            .read(authRepositoryProvider)
+            .getGuestDataSummary()
+            .timeout(const Duration(milliseconds: 500));
+        hasUnsavedGuestData = summary.hasAny;
+      } catch (_) {
+        // Default to prompting if guest-data check fails or times out.
+      }
+
+      if (!hasUnsavedGuestData) {
+        _scrubOAuthUrlSafely();
+        await _performForceSignIn(navigatorContext);
+        return;
+      }
+
       final shouldSwitch = await showDialog<bool>(
         context: navigatorContext,
         builder: (dialogContext) => AlertDialog(
@@ -176,28 +216,7 @@ class _AuthCallbackHostState extends ConsumerState<AuthCallbackHost> {
         return;
       }
 
-      if (!mounted) return;
-
-      if (_isWeb) {
-        unawaited(_cleanupPushSubscriptionBestEffort());
-      }
-
-      try {
-        await ref
-            .read(authRepositoryProvider)
-            .signInWithGoogle(forceSignIn: true);
-      } catch (e) {
-        if (navigatorContext.mounted) {
-          ScaffoldMessenger.maybeOf(navigatorContext)?.showSnackBar(
-            SnackBar(
-              content: Text(
-                'Google Sign-In failed: ${e.toString().replaceAll('AuthException:', '').trim()}',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+      await _performForceSignIn(navigatorContext);
     } finally {
       _isPromptingSwitch = false;
     }
