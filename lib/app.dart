@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:worship_lamal/core/services/push_notification_provider.dart';
 import 'package:worship_lamal/core/theme/app_theme.dart';
+import 'package:worship_lamal/core/utils/web_url_cleaner.dart';
 import 'package:worship_lamal/features/favorites/favorites_feature.dart';
 import 'package:worship_lamal/features/profile/profile_feature.dart';
 import 'package:worship_lamal/features/songs/songs_feature.dart';
@@ -51,28 +54,46 @@ class WorshipLamal extends StatelessWidget {
           );
         }),
       ],
-      child: const _AuthCallbackHost(),
+      child: const AuthCallbackHost(),
     );
   }
 }
 
-class _AuthCallbackHost extends ConsumerStatefulWidget {
-  const _AuthCallbackHost();
+/// Hosts the root router and handles OAuth `identity_already_exists` callbacks.
+class AuthCallbackHost extends ConsumerStatefulWidget {
+  final Widget? child;
+  final Uri? initialUri;
+  final VoidCallback? onScrubUrl;
+  final bool? isWebOverride;
+  final GlobalKey<NavigatorState>? navigatorKey;
+
+  const AuthCallbackHost({
+    super.key,
+    this.child,
+    this.initialUri,
+    this.onScrubUrl,
+    this.isWebOverride,
+    this.navigatorKey,
+  });
 
   @override
-  ConsumerState<_AuthCallbackHost> createState() => _AuthCallbackHostState();
+  ConsumerState<AuthCallbackHost> createState() => _AuthCallbackHostState();
 }
 
-class _AuthCallbackHostState extends ConsumerState<_AuthCallbackHost> {
+class _AuthCallbackHostState extends ConsumerState<AuthCallbackHost> {
   bool _handledInitialUriError = false;
   bool _isPromptingSwitch = false;
+  bool _dismissedOAuthError = false;
+
+  bool get _isWeb => widget.isWebOverride ?? kIsWeb;
 
   @override
   void initState() {
     super.initState();
-    if (kIsWeb && !_handledInitialUriError) {
+    if (_isWeb && !_handledInitialUriError) {
       _handledInitialUriError = true;
-      if (hasIdentityAlreadyExistsError(Uri.base)) {
+      final uri = widget.initialUri ?? Uri.base;
+      if (hasIdentityAlreadyExistsError(uri)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _promptSwitchAccount();
         });
@@ -80,9 +101,28 @@ class _AuthCallbackHostState extends ConsumerState<_AuthCallbackHost> {
     }
   }
 
+  Future<void> _cleanupPushSubscriptionBestEffort() async {
+    try {
+      final sub = await ref
+          .read(pushNotificationServiceProvider)
+          .getCurrentSubscription()
+          .timeout(const Duration(milliseconds: 300));
+      if (sub != null) {
+        await ref
+            .read(pushSubscriptionRepositoryProvider)
+            .deleteSubscription(sub.endpoint)
+            .timeout(const Duration(milliseconds: 300));
+      }
+    } catch (_) {
+      // Best-effort cleanup; never block or fail account switch.
+    }
+  }
+
   Future<void> _promptSwitchAccount() async {
-    if (_isPromptingSwitch || !mounted) return;
-    final navigatorContext = appRouter.routerDelegate.navigatorKey.currentContext;
+    if (_isPromptingSwitch || _dismissedOAuthError || !mounted) return;
+    final navigatorContext =
+        (widget.navigatorKey ?? appRouter.routerDelegate.navigatorKey)
+            .currentContext;
     if (navigatorContext == null || !navigatorContext.mounted) return;
 
     _isPromptingSwitch = true;
@@ -108,24 +148,37 @@ class _AuthCallbackHostState extends ConsumerState<_AuthCallbackHost> {
         ),
       );
 
-      if (shouldSwitch != true || !mounted) return;
-
-      if (kIsWeb) {
-        try {
-          final sub = await ref
-              .read(pushNotificationServiceProvider)
-              .getCurrentSubscription();
-          if (sub != null) {
-            await ref
-                .read(pushSubscriptionRepositoryProvider)
-                .deleteSubscription(sub.endpoint);
-          }
-        } catch (_) {
-          // Do not block account switch on push cleanup failure.
-        }
+      if (_isWeb) {
+        (widget.onScrubUrl ?? scrubOAuthErrorFromBrowserUrl)();
       }
 
-      await ref.read(authRepositoryProvider).signInWithGoogle(forceSignIn: true);
+      if (shouldSwitch != true) {
+        _dismissedOAuthError = true;
+        return;
+      }
+
+      if (!mounted) return;
+
+      if (_isWeb) {
+        unawaited(_cleanupPushSubscriptionBestEffort());
+      }
+
+      try {
+        await ref
+            .read(authRepositoryProvider)
+            .signInWithGoogle(forceSignIn: true);
+      } catch (e) {
+        if (navigatorContext.mounted) {
+          ScaffoldMessenger.maybeOf(navigatorContext)?.showSnackBar(
+            SnackBar(
+              content: Text(
+                'Google Sign-In failed: ${e.toString().replaceAll('AuthException:', '').trim()}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     } finally {
       _isPromptingSwitch = false;
     }
@@ -134,6 +187,11 @@ class _AuthCallbackHostState extends ConsumerState<_AuthCallbackHost> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<AuthState>>(authStateProvider, (_, next) {
+      if (next is AsyncData<AuthState> &&
+          next.value.event == AuthChangeEvent.signedIn) {
+        _dismissedOAuthError = false;
+        return;
+      }
       if (next is AsyncError && next.error is AuthException) {
         final err = next.error as AuthException;
         final isAlreadyLinked =
@@ -144,6 +202,10 @@ class _AuthCallbackHostState extends ConsumerState<_AuthCallbackHost> {
         }
       }
     });
+
+    if (widget.child != null) {
+      return widget.child!;
+    }
 
     return MaterialApp.router(
       routerConfig: appRouter,

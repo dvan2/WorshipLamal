@@ -1,6 +1,6 @@
 # Worship Lamal — Architecture Reference
 
-> **Version 1.6.0+13** · Flutter 3.9.2+ · Last updated 2026-11-26
+> **Version 1.6.1+14** · Flutter 3.9.2+ · Last updated 2026-11-28
 
 ---
 
@@ -54,7 +54,8 @@ lib/
 │       ├── chord_parser.dart           # ChordParser.parse(line) → List<ChordChunk>
 │       ├── key_transposer.dart         # KeyTransposer.transpose(key, semitones)
 │       ├── music_theory.dart           # MusicTheory (chromaticScale, enharmonicAliases, normalizeNote)
-│       └── nashville_helper.dart       # NashvilleHelper.translate(nashvilleChord, keyRoot)
+│       ├── nashville_helper.dart       # NashvilleHelper.translate(nashvilleChord, keyRoot)
+│       └── web_url_cleaner.dart        # stripOAuthErrorParams() & browser URL scrubber (+ stub/web)
 │
 ├── shared/widgets/
 │   ├── app_scaffold.dart               # Shared layout scaffold
